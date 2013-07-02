@@ -5,18 +5,22 @@
 import os, glob, subprocess, sys
 import rpm
 import demjson
+import shutil
 
 
 class RpmError(Exception):
 	pass
  
-path = "SRPMS"
+srpmspath = "SRPMS"
+rpmspath = "RPMS"
+tmp_path = "/tmp/RPMS"
 
 def exists(path):
     return os.access(path,os.F_OK)
 
 def doexec(args, inputtext=None):
     """Execute a subprocess, then return its return code, stdout and stderr"""
+    print "Executing: %s" % args
     proc = subprocess.Popen(args,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,close_fds=True)
     (stdout,stderr) = proc.communicate(inputtext)
     rc = proc.returncode
@@ -63,7 +67,7 @@ def get_srpm_info(srpm):
     for x in glob.glob("SPECS/*.spec"):
         os.unlink(x)
     (rc,stdout,stderr) = doexec(["rpm","-i",srpm])
-    myspecfile = glob.glob("/tmp/rpmbuild/SPECS/*.spec")[0]	 
+    myspecfile = glob.glob("./SPECS/*.spec")[0]
     try:
 	(specfile,arch) = run_srpmutil(myspecfile,srpm) 
 	j = demjson.decode(specfile)
@@ -76,6 +80,14 @@ def get_srpm_info(srpm):
 	return j
     except:
 	return {'broken':True,'srcrpm':srpm}
+
+def extract_target(srpm_infos, srpm_filename):
+    """
+    Given a list of srpm_info and an srpm filename, return the target arch
+    """
+    for srpm_info in srpm_infos:
+        if srpm_info["srcrpm"] == srpm_filename:
+            return srpm_info["arch"]
 
 def get_package_to_srpm_map(srpm_info):
     m = {}
@@ -119,18 +131,41 @@ def toposort2(data):
     assert not data, "Cyclic dependencies exist among these items:\n%s" % '\n'.join(repr(x) for x in data.iteritems())
     return result
 
+def write_rpmmacros():
+    f = open('.rpmmacros', 'w')
+    f.write('%%_topdir %s\n' % os.getcwd())
+    f.close()
 
 if __name__ == "__main__":
-    packages = glob.glob( os.path.join(path, '*.src.rpm'))
-    srpm_info = map(get_srpm_info, packages)
-    deps = get_deps(srpm_info)
+    packages = glob.glob( os.path.join(srpmspath, '*.src.rpm'))
+    write_rpmmacros()
+    srpm_infos = map(get_srpm_info, packages)
+    deps = get_deps(srpm_infos)
     order = toposort2(deps)
 
+    if not os.path.exists(tmp_path):
+        os.makedirs(tmp_path)
     for batch in order:
         for srpm in batch:
+            target = extract_target(srpm_infos, srpm)
             print "Building %s" % srpm
-            (rc,stdout,stderr) = doexec(["rpmbuild","--rebuild","%s" % srpm])
+            cmd = ["rpmbuild", "--rebuild", "-v", "%s" % srpm,
+                   "--target", target, "--define", "_rpmdir %s" % tmp_path]
+            (rc, stdout, stderr) = doexec(cmd)
             if rc==0:
                 print "Success"
+                rpms = glob.glob(os.path.join(tmp_path, target, "*"))
+                (rc, stdout, stderr) = doexec(["rpm", "-i"] + rpms)
+                if rc != 0:
+                    print "Ignoring failure installing rpm: %s" % rpm
+                    print stderr
+                dst_dir = os.path.join(rpmspath, target)
+                if not os.path.exists(dst_dir):
+                    os.makedirs(dst_dir)
+                for rpm in rpms:
+                    shutil.copy(rpm, dst_dir)
             else:
-                print "Failure"
+                print "Failed to build rpm from srpm: %s" % srpm
+                print "\nstdout\n======\n%s" % stdout
+                print "\nstderr\n======\n%s" % stderr
+                sys.exit(1)

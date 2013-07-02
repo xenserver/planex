@@ -1,0 +1,6 @@
+.rpmmacros
+BUILD/*
+RPMS/*
+SPECS/*
+SRPMS/*
+*.pyc

@@ -8,23 +8,24 @@ import demjson
 import urlparse
 import subprocess
 import re
+import glob
+import shutil
 
 CONFIG = "./conf.json"
-SPECSDIR = "./SPECS"
 SOURCESDIR = "./SOURCES"
 
 number_skipped = 0
 number_fetched = 0
 
 
-def parse_config():
+def parse_config(conf_dir):
     """Returns _list_ of dictionaries of the following form:
         {
           'spec': <spec_filename>,
           'sources': [{'url': <url>, 'override': <name-override>}]
         }
     """
-    f = open(CONFIG, "r")
+    f = open(os.path.join(conf_dir, CONFIG), "r")
     json = f.read()
     f.close()
     return demjson.decode(json)
@@ -70,7 +71,7 @@ def fetch_git_source(path):
 def prepare_srpm(pkg):
     global number_skipped, number_fetched
 
-    spec = os.path.join(SPECSDIR, pkg['spec'])
+    spec = os.path.join(conf_dir, pkg['spec'])
     sources = pkg['sources']
     process_spec = False
 
@@ -113,11 +114,21 @@ def prepare_srpm(pkg):
             f.close()
 
 def build_srpm(pkg):
-    os.putenv("HOME",os.getcwd())
-    call(["rpmbuild","-bs","%s/%s" % (SPECSDIR, pkg['spec']), "--nodeps"])
+    call(["rpmbuild", "-bs", "%s/%s" % (conf_dir, pkg['spec']), "--nodeps", "--define", "_topdir ."])
 
 if __name__ == "__main__":
-    config = parse_config()
+    if len(sys.argv) != 2:
+        print "Usage:"
+        sys.exit(1)
+    conf_dir = sys.argv[1];
+
+    # pull in any required patches
+    sources_dir = os.path.join(conf_dir, 'SOURCES')
+    if os.path.exists(sources_dir):
+        for patch in glob.glob(os.path.join(sources_dir, '*')):
+            shutil.copy(patch, SOURCESDIR)
+
+    config = parse_config(conf_dir)
 
     for pkg in config:
         prepare_srpm(pkg)
