@@ -13,6 +13,7 @@ import shutil
 
 CONFIG = "./conf.json"
 SOURCESDIR = "./SOURCES"
+SRPMSDIR = "./SRPMS"
 
 number_skipped = 0
 number_fetched = 0
@@ -121,6 +122,10 @@ if __name__ == "__main__":
         print "Usage:"
         sys.exit(1)
     conf_dir = sys.argv[1];
+
+    for dir in [SOURCESDIR, SRPMSDIR]:
+        if not os.path.exists(dir):
+            os.makedirs(dir)	
 
     # pull in any required patches
     sources_dir = os.path.join(conf_dir, 'SOURCES')

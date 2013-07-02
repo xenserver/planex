@@ -13,6 +13,7 @@ class RpmError(Exception):
  
 srpmspath = "SRPMS"
 rpmspath = "RPMS"
+buildpath = "BUILD"
 tmp_path = "/tmp/RPMS"
 
 def exists(path):
@@ -64,6 +65,14 @@ def get_srpm_info(srpm):
     }
 
     """
+    if not os.path.exists("srpmutil/srpmutil"):
+        (rc,stdout,stderr) = doexec(["make","-C","srpmutil"])
+        if rc != 0:
+            print "Error while building srpmutil:"
+            print "stdout\n======\n%s\n\n" % stdout
+            print "stderr\n======\n%s\n\n" % stderr
+            sys.exit(1)
+
     for x in glob.glob("SPECS/*.spec"):
         os.unlink(x)
     (rc,stdout,stderr) = doexec(["rpm","-i",srpm])
@@ -143,8 +152,10 @@ if __name__ == "__main__":
     deps = get_deps(srpm_infos)
     order = toposort2(deps)
 
-    if not os.path.exists(tmp_path):
-        os.makedirs(tmp_path)
+    for path in [tmp_path, buildpath, srpmspath, rpmspath]: 
+        if not os.path.exists(path):
+            os.makedirs(path)
+
     for batch in order:
         for srpm in batch:
             target = extract_target(srpm_infos, srpm)
@@ -164,6 +175,7 @@ if __name__ == "__main__":
                     os.makedirs(dst_dir)
                 for rpm in rpms:
                     shutil.copy(rpm, dst_dir)
+                    os.unlink(rpm)
             else:
                 print "Failed to build rpm from srpm: %s" % srpm
                 print "\nstdout\n======\n%s" % stdout
