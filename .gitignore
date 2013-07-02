@@ -4,3 +4,4 @@ RPMS/*
 SPECS/*
 SRPMS/*
 *.pyc
+srpmutil/srpmutil
