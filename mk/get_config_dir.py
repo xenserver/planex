@@ -7,5 +7,5 @@ component = os.getenv("COMPONENT")
 if component == "ocaml":
     print "/repos/xen-dist-ocaml.hg"
 if component == "api-libs":
-    print "/repos/xen-api-libs-rpm-buildroot"
+    print "/repos/xen-api-libs-specs"
 
