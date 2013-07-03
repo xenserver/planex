@@ -26,7 +26,7 @@ def exists(path):
 
 def doexec(args, inputtext=None):
     """Execute a subprocess, then return its return code, stdout and stderr"""
-    print "Executing: %s" % args
+    print "Executing: %s" % " ".join(args)
     proc = subprocess.Popen(args, stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             close_fds=True)
