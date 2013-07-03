@@ -124,8 +124,9 @@ if __name__ == "__main__":
     conf_dir = sys.argv[1];
 
     for dir in [SOURCESDIR, SRPMSDIR]:
-        if not os.path.exists(dir):
-            os.makedirs(dir)	
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
+        os.makedirs(dir)
 
     # pull in any required patches
     sources_dir = os.path.join(conf_dir, 'SOURCES')
