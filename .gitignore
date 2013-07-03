@@ -3,5 +3,6 @@ BUILD/*
 RPMS/*
 SPECS/*
 SRPMS/*
+SOURCES/*
 *.pyc
 srpmutil/srpmutil
