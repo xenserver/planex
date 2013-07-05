@@ -137,7 +137,7 @@ def build_srpm(pkg):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print "Usage:"
+        print "Usage: %s <component-specs-dir>" % __file__
         sys.exit(1)
     conf_dir = sys.argv[1]
 
