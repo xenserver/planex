@@ -86,22 +86,17 @@ def prepare_srpm(pkg):
 
     spec = os.path.join(conf_dir, pkg['spec'])
     sources = pkg['sources']
-    process_spec = False
+    spec_path = spec
 
     # If the config file mentions a git repo, we assume we're building
     # a development RPM, whose spec file needs preprocessing
-    # (process_spec=True).
     for source in sources:
         scheme = urlparse.urlparse(source['url'])[0]
         if scheme == 'git':
-            process_spec = True
             if len(sources) > 1:
                 print "Can't cope with multiple source for a git type package"
                 sys.exit(1)
-
-    spec_path = spec
-    if process_spec:
-        spec_path = "%s.in" % spec
+            spec_path += '.in'
 
     # check the .spec file exists, or .spec.in if we're processing the spec
     if not(os.path.exists(spec_path)):
@@ -117,7 +112,7 @@ def prepare_srpm(pkg):
             result = fetch_url(url, override)
             number_fetched += result
             number_skipped += (1 - result)
-        if scheme == 'git':
+        if spec_path.endswith('.in'):
             print "Configuring package with spec file: %s" % spec
             (version, prefix, source_tarball) = fetch_git_source(path)
             spec_contents = subprocess.Popen(
