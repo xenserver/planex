@@ -70,9 +70,10 @@ def fetch_git_source(path):
     l = len(m.group())
     version = description[l:].translate(maketrans('-', '+'))
     final_name = path.split("/")[-1]
+    [os.remove(f)
+        for f in os.listdir('SOURCES')
+        if re.search('^(%s\.tar)(\.gz)?$' % final_name, f)]
     prefix = final_name
-    call(["rm", "-f", "%s/%s.tar" % (SOURCESDIR, final_name)])
-    call(["rm", "-f", "%s/%s.tar.gz" % (SOURCESDIR, final_name)])
     call(["git", "--git-dir=%s/.git" % path, "archive",
           "--prefix=%s/" % prefix, "--format=tar", "HEAD", "-o",
           "%s/%s.tar" % (SOURCESDIR, final_name)])
