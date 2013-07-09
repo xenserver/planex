@@ -8,16 +8,16 @@ import shutil
 
 import demjson
 
-CONFIG = "./install.json"
+CONFIG = "install.json"
 RPMS_DIR = "./RPMS/"
 
 
-def parse_config(component_dir):
+def parse_config(config_path):
     """Returns list of package names to install. These can be used in
     conjunction with rpm query to find the relevant .rpm files that need
     installing.
     """
-    f = open(os.path.join(component_dir, CONFIG), "r")
+    f = open(config_path, "r")
     json = f.read()
     f.close()
     pkgs = demjson.decode(json)
@@ -46,7 +46,13 @@ if __name__ == '__main__':
             print "Error: directory %s does not exist." % p
             sys.exit(1)
 
-    config = parse_config(component_dir)
+    config_path = os.path.join(component_dir, CONFIG)
+    if not os.path.exists(config_path):
+        print ("Config file %s not found, assuming no RPMs need packaging." %
+               config_path)
+        sys.exit(0)
+
+    config = parse_config(config_path)
 
     pkg_to_rpm = build_map(RPMS_DIR)
 
