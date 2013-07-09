@@ -14,7 +14,6 @@ buildrpms:
 	chown -R root.root $(CONFIG_DIR)/*
 	@cd .. && ./configure.py $(CONFIG_DIR)
 	@cd .. && ./build.py
-	mkdir -p $(MY_MAIN_PACKAGES)
 	@cd .. && ./install.py $(CONFIG_DIR) $(MY_MAIN_PACKAGES)
 	cp -r ../RPMS $(MY_OUTPUT_DIR)
 	cp -r ../SRPMS $(MY_OUTPUT_DIR)

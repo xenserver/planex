@@ -41,16 +41,18 @@ if __name__ == '__main__':
         sys.exit(1)
     (component_dir, dest_dir) = sys.argv[1:]
 
-    for p in (component_dir, dest_dir):
-        if not os.path.exists(p):
-            print "Error: directory %s does not exist." % p
-            sys.exit(1)
+    if not os.path.exists(component_dir):
+        print "Error: directory %s does not exist." % p
+        sys.exit(1)
 
     config_path = os.path.join(component_dir, CONFIG)
     if not os.path.exists(config_path):
         print ("Config file %s not found, assuming no RPMs need packaging." %
                config_path)
         sys.exit(0)
+
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir)
 
     config = parse_config(config_path)
 
