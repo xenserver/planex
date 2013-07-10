@@ -175,9 +175,11 @@ if __name__ == "__main__":
     deps = get_deps(srpm_infos)
     order = toposort2(deps)
 
-    for path in [TMP_RPM_PATH, BUILD_DIR, SRPMS_DIR, RPMS_DIR]:
-        if not os.path.exists(path):
-            os.makedirs(path)
+    for path in (TMP_RPM_PATH, BUILD_DIR, RPMS_DIR):
+        if os.path.exists(path):
+            print "Cleaning out directory: %s" % path
+            shutil.rmtree(path)
+        os.makedirs(path)
 
     for batch in order:
         for srpm in batch:
