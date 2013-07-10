@@ -12,7 +12,7 @@ import shutil
 
 import demjson
 
-CONFIG = "./conf.json"
+CONFIG = "conf.json"
 SOURCESDIR = "./SOURCES"
 SRPMSDIR = "./SRPMS"
 
@@ -20,14 +20,14 @@ number_skipped = 0
 number_fetched = 0
 
 
-def parse_config(conf_dir):
+def parse_config(conf_path):
     """Returns _list_ of dictionaries of the following form:
         {
           'spec': <spec_filename>,
           'sources': [{'url': <url>, 'override': <name-override>}]
         }
     """
-    f = open(os.path.join(conf_dir, CONFIG), "r")
+    f = open(conf_path, "r")
     json = f.read()
     f.close()
     return demjson.decode(json)
@@ -137,6 +137,12 @@ if __name__ == "__main__":
         sys.exit(1)
     conf_dir = sys.argv[1]
 
+    conf_path = os.path.join(conf_dir, CONFIG)
+    if not os.path.exists(conf_path):
+        print ("Error: Config file %s not found in component directory %s." %
+               (CONFIG, conf_dir))
+        sys.exit(1)
+
     for dir in [SOURCESDIR, SRPMSDIR]:
         if os.path.exists(dir):
             shutil.rmtree(dir)
@@ -148,7 +154,7 @@ if __name__ == "__main__":
         for patch in glob.glob(os.path.join(sources_dir, '*')):
             shutil.copy(patch, SOURCESDIR)
 
-    config = parse_config(conf_dir)
+    config = parse_config(conf_path)
 
     for pkg in config:
         prepare_srpm(pkg)
