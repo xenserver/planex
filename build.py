@@ -10,7 +10,7 @@ import shutil
 
 import demjson
 
-SRPMS_DIR = "SRPMS"
+SRPMS_DIR = "./SRPMS/"
 RPMS_DIR = "RPMS"
 BUILD_DIR = "BUILD"
 TMP_RPM_PATH = "/tmp/RPMS"
@@ -164,15 +164,22 @@ def write_rpmmacros():
     f.close()
 
 if __name__ == "__main__":
+    if not os.path.isdir(SRPMS_DIR) or not os.listdir(SRPMS_DIR):
+        print ("Error: No srpms found in %s; First run configure.py." %
+               SRPMS_DIR)
+        sys.exit(1)
+
     packages = glob.glob(os.path.join(SRPMS_DIR, '*.src.rpm'))
     write_rpmmacros()
     srpm_infos = map(get_srpm_info, packages)
     deps = get_deps(srpm_infos)
     order = toposort2(deps)
 
-    for path in [TMP_RPM_PATH, BUILD_DIR, SRPMS_DIR, RPMS_DIR]:
-        if not os.path.exists(path):
-            os.makedirs(path)
+    for path in (TMP_RPM_PATH, BUILD_DIR, RPMS_DIR):
+        if os.path.exists(path):
+            print "Cleaning out directory: %s" % path
+            shutil.rmtree(path)
+        os.makedirs(path)
 
     for batch in order:
         for srpm in batch:
