@@ -10,44 +10,35 @@ import re
 import glob
 import shutil
 
-import demjson
-
-CONFIG = "conf.json"
 SOURCESDIR = "./SOURCES"
 SRPMSDIR = "./SRPMS"
 
 number_skipped = 0
 number_fetched = 0
 
-
-def parse_config(conf_path):
-    """Returns _list_ of dictionaries of the following form:
-        {
-          'spec': <spec_filename>,
-          'sources': [{'url': <url>, 'override': <name-override>}]
-        }
+def rewrite_to_distfiles(url):
     """
-    f = open(conf_path, "r")
-    json = f.read()
-    f.close()
-    return demjson.decode(json)
-
-
-def fetch_url(url, override):
-    """ Fetch a url, renaming it to 'override' if it exists.
-
-    Only fetches if it doesn't already exist.
-
-    Returns 1 if it actually fetched something.
+    Rewrites url to refer to the local distfiles cache.
     """
-    final_name = url.split("/")[-1]
-    if override is not None:
-        final_name = override
-    final_path = os.path.join(SOURCESDIR, final_name)
+    basename = url.split("/")[-1]
+    return "file:///distfiles/ocaml/" + basename
+    
+
+def fetch_url(url, rewrite=None):
+    """ 
+    Fetches a url, rewriting it using 'rewrite' if it exists
+
+    Only fetches if the target file doesn't already exist.
+
+    Returns 1 if it actually fetched something, otherwise 0.
+    """
+    if rewrite:
+        url = rewrite(url)
+    basename = url.split("/")[-1]
+    final_path = os.path.join(SOURCESDIR, basename)
     if os.path.exists(final_path):
         return 0
     else:
-        print "fetching %s -> %s" % (url, final_path)
         if call(["curl", "-k", "-L", "-o", final_path, url]) != 0:
             print "Error downloading '%s'" % url
             sys.exit(1)
@@ -61,6 +52,9 @@ def fetch_git_source(path):
     Returns a version string, the tarball's prefix, and the pathname of
     the tarball.
     """
+    # strip the git:// url scheme
+    path = re.sub( "^git://", "", path )
+
     description = subprocess.Popen(
         ["git", "--git-dir=%s/.git" % path,
          "describe", "--tags"],
@@ -81,53 +75,76 @@ def fetch_git_source(path):
     return (version, prefix, "%s.tar.gz" % final_name)
 
 
-def prepare_srpm(pkg):
+def sources_from_spec(spec_path):
+    """
+    Extracts all source URLS from the spec file at spec_path.
+
+    Returns a list of source URLs with RPM macros expanded.
+    """
+    sources = []
+    lines = subprocess.Popen(
+        ["./spectool", "--list-files", "--sources", spec_path],
+         stdout=subprocess.PIPE).communicate()[0].strip().split("\n")
+    for l in lines:
+        m = re.match("^([Ss]ource\d*):\s+(\S+)$", l)
+	assert m
+        sources.append(m.groups()[1])
+    return sources 
+
+
+def prepare_srpm(spec_path):
+    """
+    Downloads sources needed to build an SRPM from the spec file
+    at spec_path.   Pre-processes the spec file, if needed.
+    """
     global number_skipped, number_fetched
-
-    spec = os.path.join(conf_dir, pkg['spec'])
-    sources = pkg['sources']
-    spec_path = spec
-
-    # If the config file mentions a git repo, we assume we're building
-    # a development RPM, whose spec file needs preprocessing
-    for source in sources:
-        scheme = urlparse.urlparse(source['url'])[0]
-        if scheme == 'git':
-            if len(sources) > 1:
-                print "Can't cope with multiple source for a git type package"
-                sys.exit(1)
-            spec_path += '.in'
 
     # check the .spec file exists, or .spec.in if we're processing the spec
     if not(os.path.exists(spec_path)):
         print "%s doesn't exist" % spec_path
         sys.exit(1)
 
-    for source in sources:
-        (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(
-            source['url'])
+    # Pull out the source list.   If the spec file pulls its sources 
+    # from a Git repository, we need to prepreprocess the spec file 
+    # to fill in the latest version tag from the repository.
+    sources = sources_from_spec(spec_path)
+    assert sources
 
-        if (scheme == 'file' or scheme == 'http' or scheme == 'https'):
-            url, override = source['url'], source['override']
-            result = fetch_url(url, override)
+    if spec_path.endswith('.in'):
+        print "Configuring package with spec file: %s" % spec_path
+        version, prefix, filename = fetch_git_source(sources[0])
+        # Rewrite the @VERSION@ and @PREFIX@ placeholders in the spec
+        # and add .tar.gz to the source URL, so rpmbuild finds the file.
+        spec_contents = subprocess.Popen(
+            ["sed", "-e", "s/@VERSION@/%s/g" % version, 
+             "-e", "s/@PREFIX@/%s/g" % prefix, 
+             "-e", "s$%s$%s.tar.gz$g" % (sources[0], sources[0]),
+             "%s" % spec_path],
+            stdout=subprocess.PIPE).communicate()[0]
+        f = open(os.path.splitext(spec_path)[0], "w")
+        f.write(spec_contents)
+        f.close()
+        spec_path = os.path.splitext(spec_path)[0]
+        return
+
+    for source in sources:
+        (scheme, _, path, _, _, _) = urlparse.urlparse(
+            source)
+
+        if scheme in ['file', 'http', 'https']:
+            result = fetch_url(source, rewrite_to_distfiles)
             number_fetched += result
             number_skipped += (1 - result)
-        if spec_path.endswith('.in'):
-            print "Configuring package with spec file: %s" % spec
-            (version, prefix, source_tarball) = fetch_git_source(path)
-            spec_contents = subprocess.Popen(
-                ["sed", "-e", "s/@VERSION@/%s/g" % version,
-                 "-e", "s/@PREFIX@/%s/g" % prefix,
-                 "-e", "s/@SOURCE@/%s/g" % source_tarball,
-                 "%s" % spec_path],
-                stdout=subprocess.PIPE).communicate()[0]
-            f = open(spec, "w")
-            f.write(spec_contents)
-            f.close()
 
 
-def build_srpm(pkg):
-    call(["rpmbuild", "-bs", "%s/%s" % (conf_dir, pkg['spec']),
+def build_srpm(spec_path):
+    """
+    Builds an SRPM from the spec file at spec_path.
+
+    Assumes that all source files have already been downloaded to 
+    the rpmbuild sources directory, and are correctly named. 
+    """
+    call(["rpmbuild", "-bs", spec_path, 
           "--nodeps", "--define", "_topdir ."])
 
 
@@ -136,12 +153,6 @@ if __name__ == "__main__":
         print "Usage: %s <component-specs-dir>" % __file__
         sys.exit(1)
     conf_dir = sys.argv[1]
-
-    conf_path = os.path.join(conf_dir, CONFIG)
-    if not os.path.exists(conf_path):
-        print ("Error: Config file %s not found in component directory %s." %
-               (CONFIG, conf_dir))
-        sys.exit(1)
 
     for dir in [SOURCESDIR, SRPMSDIR]:
         if os.path.exists(dir):
@@ -154,11 +165,10 @@ if __name__ == "__main__":
         for patch in glob.glob(os.path.join(sources_dir, '*')):
             shutil.copy(patch, SOURCESDIR)
 
-    config = parse_config(conf_path)
-
-    for pkg in config:
-        prepare_srpm(pkg)
-        build_srpm(pkg)
+    for spec_path in glob.glob(os.path.join(conf_dir, "*.spec*")):
+        prepare_srpm(spec_path)
+        spec_path = re.sub(".in$", "", spec_path) 
+        build_srpm(spec_path)
 
     print "number of packages skipped: %d" % number_skipped
     print "number of packages fetched: %d" % number_fetched
