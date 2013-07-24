@@ -73,11 +73,10 @@ def fetch_git_source(path):
     [os.remove(f)
         for f in os.listdir('SOURCES')
         if re.search('^(%s\.tar)(\.gz)?$' % basename, f)]
-    prefix = basename
     call(["git", "--git-dir=%s/.git" % path, "archive",
-          "--prefix=%s/" % prefix, "HEAD", "-o",
-          "%s/%s.tar.gz" % (SOURCESDIR, basename)])
-    return (version, prefix, "%s.tar.gz" % basename)
+          "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
+          "%s/%s-%s.tar.gz" % (SOURCESDIR, basename, version)])
+    return (version, basename, "%s-%s.tar.gz" % (basename, version))
 
 
 def sources_from_spec(spec_path):
@@ -107,8 +106,8 @@ def preprocess_spec(spec_path, version, prefix, sources):
     # and add .tar.gz to the source URL, so rpmbuild finds the file.
     spec_contents = subprocess.Popen(
         ["sed", "-e", "s/@VERSION@/%s/g" % version, 
-         "-e", "s/@PREFIX@/%s/g" % prefix, 
-         "-e", "s$%s$%s.tar.gz$g" % (sources[0], sources[0]),
+         "-e", "s/@PREFIX@/%s-%%{version}/g" % prefix, 
+         "-e", "s$%s$%s-%%{version}.tar.gz$g" % (sources[0], sources[0]),
          "%s" % spec_path],
         stdout=subprocess.PIPE).communicate()[0]
     f = open(os.path.splitext(spec_path)[0], "w")
