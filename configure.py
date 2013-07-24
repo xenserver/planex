@@ -11,6 +11,7 @@ import shutil
 
 SOURCESDIR = "./SOURCES"
 SRPMSDIR = "./SRPMS"
+SPECSDIR = "./SPECS"
 
 number_skipped = 0
 number_fetched = 0
@@ -165,7 +166,7 @@ if __name__ == "__main__":
         sys.exit(1)
     conf_dir = sys.argv[1]
 
-    for dir in [SOURCESDIR, SRPMSDIR]:
+    for dir in [SOURCESDIR, SRPMSDIR, SPECSDIR]:
         if os.path.exists(dir):
             shutil.rmtree(dir)
         os.makedirs(dir)
@@ -177,6 +178,9 @@ if __name__ == "__main__":
             shutil.copy(patch, SOURCESDIR)
 
     for spec_path in glob.glob(os.path.join(conf_dir, "*.spec*")):
+        shutil.copy(spec_path, SPECSDIR)
+
+    for spec_path in glob.glob(os.path.join(SPECSDIR, "*.spec*")):
         prepare_srpm(spec_path)
         spec_path = re.sub(".in$", "", spec_path) 
         build_srpm(spec_path)
