@@ -2,7 +2,6 @@
 
 import sys
 import os.path
-from string import maketrans
 from subprocess import call
 import urlparse
 import subprocess
@@ -44,6 +43,21 @@ def fetch_url(url, rewrite=None):
             sys.exit(1)
         return 1
 
+def latest_git_tag(path):
+    """
+    Returns numeric version tag closest to HEAD in the repository.
+    """
+    # strip the git:// url scheme
+    path = re.sub( "^git://", "", path )
+
+    description = subprocess.Popen(
+        ["git", "--git-dir=%s/.git" % path,
+         "describe", "--tags"],
+        stdout=subprocess.PIPE).communicate()[0].strip()
+    m = re.search("[^0-9]*", description)
+    l = len(m.group())
+    return description[l:].replace('-', '+')
+
 
 def fetch_git_source(path):
     """
@@ -54,15 +68,7 @@ def fetch_git_source(path):
     """
     # strip the git:// url scheme
     path = re.sub( "^git://", "", path )
-
-    description = subprocess.Popen(
-        ["git", "--git-dir=%s/.git" % path,
-         "describe", "--tags"],
-        stdout=subprocess.PIPE).communicate()[0].strip()
-    p = re.compile("[^0-9]*")
-    m = p.search(description)
-    l = len(m.group())
-    version = description[l:].translate(maketrans('-', '+'))
+    version = latest_git_tag(path)
     final_name = path.split("/")[-1]
     [os.remove(f)
         for f in os.listdir('SOURCES')
