@@ -97,6 +97,25 @@ def sources_from_spec(spec_path):
     return sources 
 
 
+def preprocess_spec(spec_path, version, prefix, sources):
+    """
+    Preprocesses a spec file containing placeholders and
+    returns the path to the resulting file.
+    """
+
+    # Rewrite the @VERSION@ and @PREFIX@ placeholders in the spec
+    # and add .tar.gz to the source URL, so rpmbuild finds the file.
+    spec_contents = subprocess.Popen(
+        ["sed", "-e", "s/@VERSION@/%s/g" % version, 
+         "-e", "s/@PREFIX@/%s/g" % prefix, 
+         "-e", "s$%s$%s.tar.gz$g" % (sources[0], sources[0]),
+         "%s" % spec_path],
+        stdout=subprocess.PIPE).communicate()[0]
+    f = open(os.path.splitext(spec_path)[0], "w")
+    f.write(spec_contents)
+    f.close()
+
+
 def prepare_srpm(spec_path):
     """
     Downloads sources needed to build an SRPM from the spec file
@@ -118,18 +137,7 @@ def prepare_srpm(spec_path):
     if spec_path.endswith('.in'):
         print "Configuring package with spec file: %s" % spec_path
         version, prefix, filename = fetch_git_source(sources[0])
-        # Rewrite the @VERSION@ and @PREFIX@ placeholders in the spec
-        # and add .tar.gz to the source URL, so rpmbuild finds the file.
-        spec_contents = subprocess.Popen(
-            ["sed", "-e", "s/@VERSION@/%s/g" % version, 
-             "-e", "s/@PREFIX@/%s/g" % prefix, 
-             "-e", "s$%s$%s.tar.gz$g" % (sources[0], sources[0]),
-             "%s" % spec_path],
-            stdout=subprocess.PIPE).communicate()[0]
-        f = open(os.path.splitext(spec_path)[0], "w")
-        f.write(spec_contents)
-        f.close()
-        spec_path = os.path.splitext(spec_path)[0]
+        preprocess_spec(spec_path, version, prefix, sources)
         return
 
     for source in sources:
