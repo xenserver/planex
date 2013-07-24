@@ -69,16 +69,15 @@ def fetch_git_source(path):
     # strip the git:// url scheme
     path = re.sub( "^git://", "", path )
     version = latest_git_tag(path)
-    final_name = path.split("/")[-1]
+    basename = path.split("/")[-1]
     [os.remove(f)
         for f in os.listdir('SOURCES')
-        if re.search('^(%s\.tar)(\.gz)?$' % final_name, f)]
-    prefix = final_name
+        if re.search('^(%s\.tar)(\.gz)?$' % basename, f)]
+    prefix = basename
     call(["git", "--git-dir=%s/.git" % path, "archive",
-          "--prefix=%s/" % prefix, "--format=tar", "HEAD", "-o",
-          "%s/%s.tar" % (SOURCESDIR, final_name)])
-    call(["gzip", "%s/%s.tar" % (SOURCESDIR, final_name)])
-    return (version, prefix, "%s.tar.gz" % final_name)
+          "--prefix=%s/" % prefix, "HEAD", "-o",
+          "%s/%s.tar.gz" % (SOURCESDIR, basename)])
+    return (version, prefix, "%s.tar.gz" % basename)
 
 
 def sources_from_spec(spec_path):
