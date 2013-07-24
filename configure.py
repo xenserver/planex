@@ -16,6 +16,11 @@ SPECSDIR = "./SPECS"
 number_skipped = 0
 number_fetched = 0
 
+# HACK: Monkey-patch urlparse to understand git:// URLs
+# This is not needed for more modern Pythons
+#    http://bugs.python.org/issue7904
+urlparse.uses_netloc.append('git')
+
 def rewrite_to_distfiles(url):
     """
     Rewrites url to refer to the local distfiles cache.
@@ -48,8 +53,11 @@ def latest_git_tag(path):
     """
     Returns numeric version tag closest to HEAD in the repository.
     """
-    # strip the git:// url scheme
-    path = re.sub( "^git://", "", path )
+    # We expect path to be a full git url pointing at a path on the local host
+    # We only need the path
+    (scheme, host, path, _, _, _) = urlparse.urlparse(path)
+    assert scheme == "git"
+    assert host == ""
 
     description = subprocess.Popen(
         ["git", "--git-dir=%s/.git" % path,
@@ -67,8 +75,13 @@ def fetch_git_source(path):
     Returns a version string, the tarball's prefix, and the pathname of
     the tarball.
     """
-    # strip the git:// url scheme
-    path = re.sub( "^git://", "", path )
+
+    # We expect path to be a full git url pointing at a path on the local host
+    # We only need the path
+    (scheme, host, path, _, _, _) = urlparse.urlparse(path)
+    assert scheme == "git"
+    assert host == ""
+
     version = latest_git_tag(path)
     basename = path.split("/")[-1]
     [os.remove(f)
