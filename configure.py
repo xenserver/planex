@@ -76,7 +76,7 @@ def fetch_git_source(path):
     call(["git", "--git-dir=%s/.git" % path, "archive",
           "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
           "%s/%s-%s.tar.gz" % (SOURCESDIR, basename, version)])
-    return (version, basename, "%s-%s.tar.gz" % (basename, version))
+    return (version, "%s-%s.tar.gz" % (basename, version))
 
 
 def sources_from_spec(spec_path):
@@ -96,17 +96,16 @@ def sources_from_spec(spec_path):
     return sources 
 
 
-def preprocess_spec(spec_path, version, prefix, sources):
+def preprocess_spec(spec_path, version, sources):
     """
     Preprocesses a spec file containing placeholders and
     returns the path to the resulting file.
     """
 
-    # Rewrite the @VERSION@ and @PREFIX@ placeholders in the spec
-    # and add .tar.gz to the source URL, so rpmbuild finds the file.
+    # Rewrite the @VERSION@ placeholder in the spec and 
+    # add .tar.gz to the source URL, so rpmbuild finds the file.
     spec_contents = subprocess.Popen(
         ["sed", "-e", "s/@VERSION@/%s/g" % version, 
-         "-e", "s/@PREFIX@/%s-%%{version}/g" % prefix, 
          "-e", "s$%s$%s-%%{version}.tar.gz$g" % (sources[0], sources[0]),
          "%s" % spec_path],
         stdout=subprocess.PIPE).communicate()[0]
@@ -135,8 +134,8 @@ def prepare_srpm(spec_path):
 
     if spec_path.endswith('.in'):
         print "Configuring package with spec file: %s" % spec_path
-        version, prefix, filename = fetch_git_source(sources[0])
-        preprocess_spec(spec_path, version, prefix, sources)
+        version, filename = fetch_git_source(sources[0])
+        preprocess_spec(spec_path, version, sources)
         return
 
     for source in sources:
