@@ -127,16 +127,21 @@ def preprocess_spec(spec_path, version, tarball_name):
     Preprocesses a spec file containing placeholders and
     returns the path to the resulting file.
     """
+    spec_in = open(spec_path)
+    spec_contents = spec_in.readlines()
+    spec_in.close()
 
-    # Rewrite the @VERSION@ placeholder in the spec and 
-    # add .tar.gz to the source URL, so rpmbuild finds the file.
-    spec_contents = subprocess.Popen(
-        ["sed", "-e", "s/@VERSION@/%s/g" % version, 
-         "-e", "s/Source0:.*/Source0: %s/g" % tarball_name,
-         "%s" % spec_path],
-        stdout=subprocess.PIPE).communicate()[0]
     f = open(os.path.splitext(spec_path)[0], "w")
-    f.write(spec_contents)
+    for line in spec_contents:
+        match = re.match( '^([Ss]ource0:\s+)(.+)\n', line )
+        if match:
+            line = match.group(1) + tarball_name + "\n"
+
+        match = re.match( '^([Vv]ersion:\s+)(.+)\n', line )
+        if match:
+            line = match.group(1) + version + "\n"
+
+        f.write(line)
     f.close()
 
 
