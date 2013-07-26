@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""
+Builds SRPMs for the tarballs or Git repositories in <component-specs-dir>.
+"""
+
 import sys
 import os.path
 from subprocess import call
@@ -9,17 +13,21 @@ import re
 import glob
 import shutil
 
+
 SOURCESDIR = "./SOURCES"
 SRPMSDIR = "./SRPMS"
 SPECSDIR = "./SPECS"
 
+
 number_skipped = 0
 number_fetched = 0
+
 
 # HACK: Monkey-patch urlparse to understand git:// URLs
 # This is not needed for more modern Pythons
 #    http://bugs.python.org/issue7904
 urlparse.uses_netloc.append('git')
+
 
 def rewrite_to_distfiles(url):
     """
@@ -68,26 +76,28 @@ def parse_extended_git_url(url):
         path, fragment = path.split("#")
 
     if fragment and "/" in fragment:
-       version, archive = fragment.split("/")
+        version, archive = fragment.split("/")
     
     return(scheme, host, path, version, archive) 
 
 
-def latest_git_tag(path):
+def latest_git_tag(url):
     """
     Returns numeric version tag closest to HEAD in the repository.
     """
     # We expect path to be a full git url pointing at a path on the local host
     # We only need the path
-    (scheme, host, path, _, _) = parse_extended_git_url(path)
+    (scheme, host, path, _, _) = parse_extended_git_url(url)
+    assert scheme == "git"
+    assert host == ""
 
     description = subprocess.Popen(
         ["git", "--git-dir=%s/.git" % path,
          "describe", "--tags"],
         stdout=subprocess.PIPE).communicate()[0].strip()
-    m = re.search("[^0-9]*", description)
-    l = len(m.group())
-    return description[l:].replace('-', '+')
+    match = re.search("[^0-9]*", description)
+    matchlen = len(match.group())
+    return description[matchlen:].replace('-', '+')
 
 
 def fetch_git_source(url):
@@ -104,9 +114,9 @@ def fetch_git_source(url):
     (_, _, path, version, archive_name) = parse_extended_git_url(url)
     basename = path.split("/")[-1]
 
-    [os.remove(f)
-        for f in os.listdir('SOURCES')
-        if re.search('^(%s\.tar)(\.gz)?$' % basename, f)]
+    for sourcefile in os.listdir('SOURCES'):
+        if re.search(r'^(%s\.tar)(\.gz)?$' % basename, sourcefile):
+            os.remove(sourcefile)
     call(["git", "--git-dir=%s/.git" % path, "archive",
           "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
           "%s/%s" % (SOURCESDIR, archive_name)])
@@ -115,10 +125,12 @@ def fetch_git_source(url):
 def name_from_spec(spec_path):
     """
     Returns the base name of the packages defined in the spec file at spec_path.
+    Ideally we would do this using the Python RPM library, but the version in 
+    CentOS 5 doesn't expose it.
     """
-    f = open(spec_path)
-    lines = f.readlines()
-    f.close()
+    spec = open(spec_path)
+    lines = spec.readlines()
+    spec.close()
 
     name = [l.strip() for l in lines 
             if l.strip().lower().startswith('name:')][0].split(':')[1].strip()
@@ -135,10 +147,10 @@ def sources_from_spec(spec_path):
     lines = subprocess.Popen(
         ["./spectool", "--list-files", "--sources", spec_path],
          stdout=subprocess.PIPE).communicate()[0].strip().split("\n")
-    for l in lines:
-        m = re.match("^([Ss]ource\d*):\s+(\S+)$", l)
-	assert m
-        sources.append(m.groups()[1])
+    for line in lines:
+        match = re.match(r"^([Ss]ource\d*):\s+(\S+)$", line)
+        if match:
+            sources.append(match.group(2))
     return sources 
 
 
@@ -151,18 +163,18 @@ def preprocess_spec(spec_path, version, tarball_name):
     spec_contents = spec_in.readlines()
     spec_in.close()
 
-    f = open(os.path.splitext(spec_path)[0], "w")
+    spec_out = open(os.path.splitext(spec_path)[0], "w")
     for line in spec_contents:
-        match = re.match( '^([Ss]ource0:\s+)(.+)\n', line )
+        match = re.match(r'^([Ss]ource0:\s+)(.+)\n', line)
         if match:
             line = match.group(1) + tarball_name + "\n"
 
-        match = re.match( '^([Vv]ersion:\s+)(.+)\n', line )
+        match = re.match(r'^([Vv]ersion:\s+)(.+)\n', line)
         if match:
             line = match.group(1) + version + "\n"
 
-        f.write(line)
-    f.close()
+        spec_out.write(line)
+    spec_out.close()
 
 
 def prepare_srpm(spec_path):
@@ -192,8 +204,7 @@ def prepare_srpm(spec_path):
     assert sources
 
     for source in sources:
-        (scheme, _, path, _, _, _) = urlparse.urlparse(
-            source)
+        (scheme, _, _, _, _, _) = urlparse.urlparse(source)
 
         if scheme in ['file', 'http', 'https']:
             result = fetch_url(source, rewrite_to_distfiles)
@@ -215,16 +226,21 @@ def build_srpm(spec_path):
           "--nodeps", "--define", "_topdir ."])
 
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
+def main(argv):
+    """
+    Main function.  Process all the specfiles in the directory
+    given in the argument list.
+    """
+
+    if len(argv) != 2:
         print "Usage: %s <component-specs-dir>" % __file__
         sys.exit(1)
-    conf_dir = sys.argv[1]
+    conf_dir = argv[1]
 
-    for dir in [SOURCESDIR, SRPMSDIR, SPECSDIR]:
-        if os.path.exists(dir):
-            shutil.rmtree(dir)
-        os.makedirs(dir)
+    for path in [SOURCESDIR, SRPMSDIR, SPECSDIR]:
+        if os.path.exists(path):
+            shutil.rmtree(path)
+        os.makedirs(path)
 
     # pull in any required patches
     sources_dir = os.path.join(conf_dir, 'SOURCES')
@@ -242,3 +258,7 @@ if __name__ == "__main__":
 
     print "number of packages skipped: %d" % number_skipped
     print "number of packages fetched: %d" % number_fetched
+
+
+if __name__ == "__main__":
+    main(sys.argv)
