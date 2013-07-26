@@ -49,15 +49,37 @@ def fetch_url(url, rewrite=None):
             sys.exit(1)
         return 1
 
+
+def parse_extended_git_url(url):
+    """
+    Parse one of our custom rewritten git urls of the form:
+      git:///repos/project#version/archive.tar.gz 
+    urlparse only parses the fragment part for a subset of URL
+
+    Returns the scheme, host, path, version and archive name 
+    """
+    (scheme, host, path, _, _, _) = urlparse.urlparse(url)
+    assert scheme == "git"
+    assert host == ""
+
+    fragment, version, archive = None, None, None
+
+    if "#" in path:
+        path, fragment = path.split("#")
+
+    if fragment and "/" in fragment:
+       version, archive = fragment.split("/")
+    
+    return(scheme, host, path, version, archive) 
+
+
 def latest_git_tag(path):
     """
     Returns numeric version tag closest to HEAD in the repository.
     """
     # We expect path to be a full git url pointing at a path on the local host
     # We only need the path
-    (scheme, host, path, _, _, _) = urlparse.urlparse(path)
-    assert scheme == "git"
-    assert host == ""
+    (scheme, host, path, _, _) = parse_extended_git_url(path)
 
     description = subprocess.Popen(
         ["git", "--git-dir=%s/.git" % path,
@@ -68,7 +90,7 @@ def latest_git_tag(path):
     return description[l:].replace('-', '+')
 
 
-def fetch_git_source(path, version, archive_name):
+def fetch_git_source(url):
     """
     Fetches an archive of HEAD of the git repository at path.
     Produces a tarball called 'archive_name' in SOURCESDIR,
@@ -77,13 +99,11 @@ def fetch_git_source(path, version, archive_name):
     URLs.
     """
 
-    # We expect path to be a full git url pointing at a path on the local host
-    # We only need the path
-    (scheme, host, path, _, _, _) = urlparse.urlparse(path)
-    assert scheme == "git"
-    assert host == ""
-
+    # We expect path to be a custom git url pointing at a path on 
+    # the local host.   We only need the path, version and archive_name
+    (_, _, path, version, archive_name) = parse_extended_git_url(url)
     basename = path.split("/")[-1]
+
     [os.remove(f)
         for f in os.listdir('SOURCES')
         if re.search('^(%s\.tar)(\.gz)?$' % basename, f)]
@@ -157,19 +177,19 @@ def prepare_srpm(spec_path):
         print "%s doesn't exist" % spec_path
         sys.exit(1)
 
+    if spec_path.endswith('.in'):
+        print "Configuring package with spec file: %s" % spec_path
+        sources = sources_from_spec(spec_path)
+        version = latest_git_tag(sources[0])
+        repo_url = "%s#%s/%%{name}-%%{version}.tar.gz" % (sources[0], version)
+        preprocess_spec(spec_path, version, repo_url)
+        spec_path = os.path.splitext(spec_path)[0]
+
     # Pull out the source list.   If the spec file pulls its sources 
     # from a Git repository, we need to prepreprocess the spec file 
     # to fill in the latest version tag from the repository.
     sources = sources_from_spec(spec_path)
     assert sources
-
-    if spec_path.endswith('.in'):
-        print "Configuring package with spec file: %s" % spec_path
-        version = latest_git_tag(sources[0])
-        tarball_name = "%s-%s.tar.gz" % (name_from_spec(spec_path), version)
-        fetch_git_source(sources[0], version, tarball_name)
-        preprocess_spec(spec_path, version, tarball_name)
-        return
 
     for source in sources:
         (scheme, _, path, _, _, _) = urlparse.urlparse(
@@ -179,6 +199,9 @@ def prepare_srpm(spec_path):
             result = fetch_url(source, rewrite_to_distfiles)
             number_fetched += result
             number_skipped += (1 - result)
+
+        if scheme in ['git']:
+            fetch_git_source(source)
 
 
 def build_srpm(spec_path):
