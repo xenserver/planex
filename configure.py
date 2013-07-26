@@ -68,12 +68,13 @@ def latest_git_tag(path):
     return description[l:].replace('-', '+')
 
 
-def fetch_git_source(path):
+def fetch_git_source(path, version, archive_name):
     """
-    Fetches an archive of a git repository.
-
-    Returns a version string, the tarball's prefix, and the pathname of
-    the tarball.
+    Fetches an archive of HEAD of the git repository at path.
+    Produces a tarball called 'archive_name' in SOURCESDIR,
+    which when unpacked will produce a directory called
+    "reponame-version".   This is similar to GitHub's archive
+    URLs.
     """
 
     # We expect path to be a full git url pointing at a path on the local host
@@ -82,15 +83,26 @@ def fetch_git_source(path):
     assert scheme == "git"
     assert host == ""
 
-    version = latest_git_tag(path)
     basename = path.split("/")[-1]
     [os.remove(f)
         for f in os.listdir('SOURCES')
         if re.search('^(%s\.tar)(\.gz)?$' % basename, f)]
     call(["git", "--git-dir=%s/.git" % path, "archive",
           "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
-          "%s/%s-%s.tar.gz" % (SOURCESDIR, basename, version)])
-    return (version, "%s-%s.tar.gz" % (basename, version))
+          "%s/%s" % (SOURCESDIR, archive_name)])
+
+
+def name_from_spec(spec_path):
+    """
+    Returns the base name of the packages defined in the spec file at spec_path.
+    """
+    f = open(spec_path)
+    lines = f.readlines()
+    f.close()
+
+    name = [l.strip() for l in lines 
+            if l.strip().lower().startswith('name:')][0].split(':')[1].strip()
+    return name 
 
 
 def sources_from_spec(spec_path):
@@ -110,7 +122,7 @@ def sources_from_spec(spec_path):
     return sources 
 
 
-def preprocess_spec(spec_path, version, sources):
+def preprocess_spec(spec_path, version, tarball_name):
     """
     Preprocesses a spec file containing placeholders and
     returns the path to the resulting file.
@@ -120,7 +132,7 @@ def preprocess_spec(spec_path, version, sources):
     # add .tar.gz to the source URL, so rpmbuild finds the file.
     spec_contents = subprocess.Popen(
         ["sed", "-e", "s/@VERSION@/%s/g" % version, 
-         "-e", "s$%s$%s-%%{version}.tar.gz$g" % (sources[0], sources[0]),
+         "-e", "s/Source0:.*/Source0: %s/g" % tarball_name,
          "%s" % spec_path],
         stdout=subprocess.PIPE).communicate()[0]
     f = open(os.path.splitext(spec_path)[0], "w")
@@ -148,8 +160,10 @@ def prepare_srpm(spec_path):
 
     if spec_path.endswith('.in'):
         print "Configuring package with spec file: %s" % spec_path
-        version, filename = fetch_git_source(sources[0])
-        preprocess_spec(spec_path, version, sources)
+        version = latest_git_tag(sources[0])
+        tarball_name = "%s-%s.tar.gz" % (name_from_spec(spec_path), version)
+        fetch_git_source(sources[0], version, tarball_name)
+        preprocess_spec(spec_path, version, tarball_name)
         return
 
     for source in sources:
