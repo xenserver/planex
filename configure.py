@@ -19,10 +19,6 @@ SRPMSDIR = "./SRPMS"
 SPECSDIR = "./SPECS"
 
 
-number_skipped = 0
-number_fetched = 0
-
-
 # HACK: Monkey-patch urlparse to understand git:// URLs
 # This is not needed for more modern Pythons
 #    http://bugs.python.org/issue7904
@@ -182,8 +178,6 @@ def prepare_srpm(spec_path):
     Downloads sources needed to build an SRPM from the spec file
     at spec_path.   Pre-processes the spec file, if needed.
     """
-    global number_skipped, number_fetched
-
     # check the .spec file exists, or .spec.in if we're processing the spec
     if not(os.path.exists(spec_path)):
         print "%s doesn't exist" % spec_path
@@ -203,6 +197,9 @@ def prepare_srpm(spec_path):
     sources = sources_from_spec(spec_path)
     assert sources
 
+    number_skipped = 0
+    number_fetched = 0
+
     for source in sources:
         (scheme, _, _, _, _, _) = urlparse.urlparse(source)
 
@@ -213,6 +210,8 @@ def prepare_srpm(spec_path):
 
         if scheme in ['git']:
             fetch_git_source(source)
+
+    return number_fetched, number_skipped
 
 
 def build_srpm(spec_path):
@@ -251,8 +250,13 @@ def main(argv):
     for spec_path in glob.glob(os.path.join(conf_dir, "*.spec*")):
         shutil.copy(spec_path, SPECSDIR)
 
+    number_fetched = 0
+    number_skipped = 0
+
     for spec_path in glob.glob(os.path.join(SPECSDIR, "*.spec*")):
-        prepare_srpm(spec_path)
+        fetched, skipped = prepare_srpm(spec_path)
+        number_fetched += fetched
+        number_skipped += skipped
         spec_path = re.sub(".in$", "", spec_path) 
         build_srpm(spec_path)
 
