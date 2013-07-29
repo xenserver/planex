@@ -1,3 +1,2 @@
-This git repository houses the spec files and logic required for the XenServer
-domain 0 RPMs.
+This Git repository contains scripts which build XenServer domain 0 RPMs.
 
