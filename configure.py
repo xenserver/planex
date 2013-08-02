@@ -133,6 +133,19 @@ def name_from_spec(spec_path):
     return name 
 
 
+def check_spec_name(spec_path):
+    """
+    The spec file name should match the base name of the packages it produces.
+    Exit with an error if this is not the case.
+    """
+    pkg_name = name_from_spec(spec_path)
+    if re.sub(r".spec.in$", "", os.path.basename(spec_path)) != pkg_name:
+        sys.stderr.write( "error: spec file name '%s' "
+                          "does not match package name '%s'\n" % 
+                          (spec_path, pkg_name))
+        sys.exit(1)
+
+
 def sources_from_spec(spec_path):
     """
     Extracts all source URLS from the spec file at spec_path.
@@ -248,6 +261,7 @@ def main(argv):
             shutil.copy(patch, SOURCESDIR)
 
     for spec_path in glob.glob(os.path.join(conf_dir, "*.spec*")):
+        check_spec_name(spec_path)
         shutil.copy(spec_path, SPECSDIR)
 
     number_fetched = 0
