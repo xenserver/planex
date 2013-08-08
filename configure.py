@@ -139,7 +139,7 @@ def check_spec_name(spec_path):
     Exit with an error if this is not the case.
     """
     pkg_name = name_from_spec(spec_path)
-    if re.sub(r".spec.in$", "", os.path.basename(spec_path)) != pkg_name:
+    if re.sub(r".spec(.in)?$", "", os.path.basename(spec_path)) != pkg_name:
         sys.stderr.write( "error: spec file name '%s' "
                           "does not match package name '%s'\n" % 
                           (spec_path, pkg_name))
