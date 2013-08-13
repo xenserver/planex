@@ -54,11 +54,22 @@ def fetch_url(url, rewrite=None):
         return 1
 
 
+def make_extended_git_url(base_url, version):
+    """
+    Generate a custom git repository URL of the form:
+       <base_url>#<version>/%{name}-%{version}.tar.gz 
+
+    Given such a URL, fetch_git_source() will generate a tarball
+    of the repository with the same form as a tarball downloaded
+    from a GitHub archive URL.
+    """
+    return "%s#%s/%%{name}-%%{version}.tar.gz" % (base_url, version)
+
+
 def parse_extended_git_url(url):
     """
-    Parse one of our custom rewritten git urls of the form:
-      git:///repos/project#version/archive.tar.gz 
-    urlparse only parses the fragment part for a subset of URL
+    Parse one of our custom rewritten git URLs of the form:
+       git:///repos/project#version/archive.tar.gz 
 
     Returns the scheme, host, path, version and archive name 
     """
@@ -68,6 +79,9 @@ def parse_extended_git_url(url):
 
     fragment, version, archive = None, None, None
 
+    # urlparse only parses fragments from some URLs, mainly http://,
+    # https:// and file://.   With a git:// URL, we have to do it
+    # ourselves
     if "#" in path:
         path, fragment = path.split("#")
 
@@ -163,16 +177,21 @@ def sources_from_spec(spec_path):
     return sources 
 
 
-def preprocess_spec(spec_path, version, tarball_name):
+def preprocess_spec(spec_in_path, spec_out_path, version, tarball_name):
     """
-    Preprocesses a spec file containing placeholders and
-    returns the path to the resulting file.
+    Preprocesses a spec file containing placeholders.
+    Writes the result to the same filename, with the '.in' extension
+    stripped, in spec_out_path.
     """
-    spec_in = open(spec_path)
+    assert spec_in_path.endswith('.in')
+
+    spec_in = open(spec_in_path)
     spec_contents = spec_in.readlines()
     spec_in.close()
 
-    spec_out = open(os.path.splitext(spec_path)[0], "w")
+    output_filename = os.path.basename(spec_in_path)[:-len(".in")]
+    spec_out = open(os.path.join(spec_out_path, output_filename), "w")
+
     for line in spec_contents:
         match = re.match(r'^([Ss]ource0:\s+)(.+)\n', line)
         if match:
@@ -183,6 +202,7 @@ def preprocess_spec(spec_path, version, tarball_name):
             line = match.group(1) + version + "\n"
 
         spec_out.write(line)
+
     spec_out.close()
 
 
@@ -195,14 +215,6 @@ def prepare_srpm(spec_path):
     if not(os.path.exists(spec_path)):
         print "%s doesn't exist" % spec_path
         sys.exit(1)
-
-    if spec_path.endswith('.in'):
-        print "Configuring package with spec file: %s" % spec_path
-        sources = sources_from_spec(spec_path)
-        version = latest_git_tag(sources[0])
-        repo_url = "%s#%s/%%{name}-%%{version}.tar.gz" % (sources[0], version)
-        preprocess_spec(spec_path, version, repo_url)
-        spec_path = os.path.splitext(spec_path)[0]
 
     # Pull out the source list.   If the spec file pulls its sources 
     # from a Git repository, we need to prepreprocess the spec file 
@@ -254,24 +266,31 @@ def main(argv):
             shutil.rmtree(path)
         os.makedirs(path)
 
-    # pull in any required patches
+    # Pull in any required patches
     sources_dir = os.path.join(conf_dir, 'SOURCES')
-    if os.path.exists(sources_dir):
-        for patch in glob.glob(os.path.join(sources_dir, '*')):
-            shutil.copy(patch, SOURCESDIR)
+    for patch in glob.glob(os.path.join(sources_dir, '*')):
+        shutil.copy(patch, SOURCESDIR)
 
+    # Pull in spec files, preprocessing if necessary
     for spec_path in glob.glob(os.path.join(conf_dir, "*.spec*")):
         check_spec_name(spec_path)
-        shutil.copy(spec_path, SPECSDIR)
+        if spec_path.endswith('.in'):
+            print "Configuring package with spec file: %s" % spec_path
+            sources = sources_from_spec(spec_path)
+            version = latest_git_tag(sources[0])
+            repo_url = make_extended_git_url(sources[0], version)
+            preprocess_spec(spec_path, SPECSDIR, version, repo_url)
+        else:
+            shutil.copy(spec_path, SPECSDIR)
 
     number_fetched = 0
     number_skipped = 0
 
-    for spec_path in glob.glob(os.path.join(SPECSDIR, "*.spec*")):
+    # Build SRPMs
+    for spec_path in glob.glob(os.path.join(SPECSDIR, "*.spec")):
         fetched, skipped = prepare_srpm(spec_path)
         number_fetched += fetched
         number_skipped += skipped
-        spec_path = re.sub(".in$", "", spec_path) 
         build_srpm(spec_path)
 
     print "number of packages skipped: %d" % number_skipped
