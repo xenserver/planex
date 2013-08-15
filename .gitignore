@@ -6,3 +6,4 @@ SRPMS/*
 SOURCES/*
 *.pyc
 srpmutil/srpmutil
+*.swp
