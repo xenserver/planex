@@ -191,7 +191,8 @@ if __name__ == "__main__":
             if rc == 0:
                 print "Success"
                 rpms = glob.glob(os.path.join(TMP_RPM_PATH, target, "*"))
-                (rc, stdout, stderr) = doexec(["rpm", "-U", "--force"] + rpms)
+                (rc, stdout, stderr) = doexec(["rpm", "-U", "--force",
+                "--nodeps"] + rpms)
                 if rc != 0:
                     print "Ignoring failure installing rpm batch: %s" % rpms
                     print stderr
