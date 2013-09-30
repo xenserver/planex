@@ -19,6 +19,7 @@ BUILD_DIR = "BUILD"
 TMP_RPM_PATH = "/tmp/RPMS"
 CACHE_DIR = "rpmcache"
 USE_MOCK = False
+XSBUILDSYS = True
 
 class RpmError(Exception):
     pass
@@ -26,7 +27,6 @@ class RpmError(Exception):
 
 def exists(path):
     return os.access(path, os.F_OK)
-
 
 def doexec(args, inputtext=None):
     """Execute a subprocess, then return its return code, stdout and stderr"""
@@ -122,13 +122,14 @@ def get_srpm_info_srpmutil(srpm):
         content_file.close()
         return j
     except:
+	print "Got a broken package: %s" % srpm
         return {'broken': True, 'srcrpm': srpm}
 
-def get_rpm_info(srpm):
+def get_srpm_info(srpm):
     try:
-	get_rpm_info_native(srpm)
+	return get_srpm_info_native(srpm)
     except:
-	get_rpm_info_srpmutil(srpm)
+	return get_srpm_info_srpmutil(srpm)
 
 def extract_target(srpm_infos, srpm_filename):
     """
@@ -219,7 +220,7 @@ def get_srpm_hash(srpm_infos, external, deps, srpm):
     return m.hexdigest()
 
 def get_cache_dir(srpm_infos, external, deps, srpm):
-    if os.path.exists(CACHE_DIR):
+    if not os.path.exists(CACHE_DIR):
         return None
     myhash = get_srpm_hash(srpm_infos, external, deps, srpm)
     dst_dir = os.path.join(CACHE_DIR, myhash)
@@ -232,7 +233,7 @@ def need_to_build(srpm_infos, external, deps, srpm):
     return (not os.path.exists(dst_dir))
 
 def get_new_number(srpm,cache_dir):
-    if cache_dir=None:
+    if cache_dir==None:
         return 1
     latest_path = os.path.join(CACHE_DIR, srpm, "latest")
     if os.path.exists(latest_path):
@@ -269,7 +270,7 @@ if __name__ == "__main__":
 
     packages = glob.glob(os.path.join(SRPMS_DIR, '*.src.rpm'))
     write_rpmmacros()
-    srpm_infos = map(get_srpm_info_native, packages)
+    srpm_infos = map(get_srpm_info, packages)
     deps = get_deps(srpm_infos)
     order = toposort2(deps)
     external = "external dependencies hash"
@@ -279,6 +280,7 @@ if __name__ == "__main__":
             print "Cleaning out directory: %s" % path
             shutil.rmtree(path)
         os.makedirs(path)
+	os.chmod(path,0777)
 
     createrepo()
 
@@ -290,15 +292,18 @@ if __name__ == "__main__":
                 build_number = get_new_number(srpm,cache_dir)
                 print "Building %s - build number: %d" % (srpm, build_number)
                 if USE_MOCK:
-                    cmd = ["sudo", "mock", "--configdir=mock", "-r", "xenserver",
+                    cmd = ["mock", "--configdir=mock", "-r", "xenserver",
                            "--resultdir=%s" % TMP_RPM_PATH, "--rebuild", 
-                           "--disable-plugin=package_state", "--target", target, 
+			   "--target", target, 
                            "--enable-plugin=tmpfs",
                            "--define", "extrarelease .%d" % build_number,
                            "-v", srpm] 
+		    if not XSBUILDSYS:
+			cmd = ["sudo"] + cmd + ["--disable-plugin=package_state"] 
                 else:
                     cmd = ["rpmbuild", "--rebuild", "-v", "%s" % srpm,
-                           "--target", target, "--define", "_rpmdir %s" % TMP_RPM_PATH]
+                           "--target", target, "--define", "_rpmdir %s" % TMP_RPM_PATH,
+			   "--define", "_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm"]
 
                 (rc, stdout, stderr) = doexec(cmd)
 
@@ -317,18 +322,20 @@ if __name__ == "__main__":
                         print "Copying output file %s to %s\n" % (f, cache_dir)
                         shutil.copy(f, cache_dir)                
 
-                files = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
-                for f in files:
-                    print "Copying output RPM %s to %s\n" % (f, RPMS_DIR)
-                    shutil.copy(f, RPMS_DIR)                
-                    os.unlink(f)
                 if not USE_MOCK:
-                    rpms = glob.glob(os.path.join(TMP_RPM_PATH, target, "*"))
+                    rpms = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
                     (rc, stdout, stderr) = doexec(["rpm", "-U", "--force",
                                                    "--nodeps"] + rpms)
                     if rc != 0:
                         print "Ignoring failure installing rpm batch: %s" % rpms
                         print stderr
+
+
+                files = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
+                for f in files:
+                    print "Copying output RPM %s to %s\n" % (f, RPMS_DIR)
+                    shutil.copy(f, RPMS_DIR)                
+                    os.unlink(f)
 
             else:
                 print "Not building %s - getting from cache" % srpm
@@ -336,6 +343,12 @@ if __name__ == "__main__":
                 for f in rpms:
                     print "Copying cached rpm %s to %s" % (f, RPMS_DIR)
                     shutil.copy(f, RPMS_DIR)
+		if not USE_MOCK:
+		    (rc, stdout, stderr) = doexec(["rpm", "-U", "--force",
+                                                   "--nodeps"] + rpms)
+                    if rc != 0:
+                        print "Ignoring failure installing rpm batch: %s" % rpms
+                        print stderr
 
             print "Success"
             createrepo()

@@ -17,6 +17,7 @@ buildrpms:
 	@cd .. && ./install.py $(CONFIG_DIR) $(MY_MAIN_PACKAGES)
 	cp -r ../RPMS $(MY_OUTPUT_DIR)
 	cp -r ../SRPMS $(MY_OUTPUT_DIR)
+	rpm -Uvh --force --nodeps ../RPMS/*.rpm
 
 #### Build-system boilerplate below ####
 
