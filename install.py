@@ -27,7 +27,7 @@ def parse_config(config_path):
 def build_map(rpms_dir):
     """Returns a map from package name to rpm file"""
     result = {}
-    for rpm_file in glob.glob(os.path.join(rpms_dir, '*', '*.rpm')):
+    for rpm_file in glob.glob(os.path.join(rpms_dir, '*.rpm')):
         pkg_name = subprocess.Popen(
             ["rpm", "-qp", rpm_file, "--qf", "%{name}"],
             stdout=subprocess.PIPE).communicate()[0].strip()
