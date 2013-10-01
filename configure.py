@@ -269,6 +269,9 @@ def main(argv):
             shutil.rmtree(path)
         os.makedirs(path)
 
+    if not os.path.exists(SOURCESDIR):
+	os.makedirs(SOURCESDIR)
+
     # Pull in any required patches
     sources_dir = os.path.join(conf_dir, 'SOURCES')
     for patch in glob.glob(os.path.join(sources_dir, '*')):
