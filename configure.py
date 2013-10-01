@@ -18,6 +18,7 @@ SOURCESDIR = "./SOURCES"
 SRPMSDIR = "./SRPMS"
 SPECSDIR = "./SPECS"
 
+USE_DISTFILES = True
 
 # HACK: Monkey-patch urlparse to understand git:// URLs
 # This is not needed for more modern Pythons
@@ -29,9 +30,11 @@ def rewrite_to_distfiles(url):
     """
     Rewrites url to refer to the local distfiles cache.
     """
-    basename = url.split("/")[-1]
-    return "file:///distfiles/ocaml/" + basename
-    
+    if USE_DISTFILES:
+    	basename = url.split("/")[-1]
+    	return "file:///distfiles/ocaml2/" + basename
+    else:
+	return url
 
 def fetch_url(url, rewrite=None):
     """ 
@@ -261,10 +264,13 @@ def main(argv):
         sys.exit(1)
     conf_dir = argv[1]
 
-    for path in [SOURCESDIR, SRPMSDIR, SPECSDIR]:
+    for path in [SRPMSDIR, SPECSDIR]:
         if os.path.exists(path):
             shutil.rmtree(path)
         os.makedirs(path)
+
+    if not os.path.exists(SOURCESDIR):
+	os.makedirs(SOURCESDIR)
 
     # Pull in any required patches
     sources_dir = os.path.join(conf_dir, 'SOURCES')
