@@ -28,13 +28,13 @@ def rewrite_to_distfiles(url):
     Rewrites url to refer to the local distfiles cache.
     """
     if USE_DISTFILES:
-    	basename = url.split("/")[-1]
-    	return "file:///distfiles/ocaml2/" + basename
+        basename = url.split("/")[-1]
+        return "file:///distfiles/ocaml2/" + basename
     else:
-	return url
+        return url
 
 def fetch_url(url, rewrite=None):
-    """ 
+    """
     Fetches a url, rewriting it using 'rewrite' if it exists
 
     Only fetches if the target file doesn't already exist.
@@ -57,7 +57,7 @@ def fetch_url(url, rewrite=None):
 def make_extended_git_url(base_url, version):
     """
     Generate a custom git repository URL of the form:
-       <base_url>#<version>/%{name}-%{version}.tar.gz 
+       <base_url>#<version>/%{name}-%{version}.tar.gz
 
     Given such a URL, fetch_git_source() will generate a tarball
     of the repository with the same form as a tarball downloaded
@@ -69,9 +69,9 @@ def make_extended_git_url(base_url, version):
 def parse_extended_git_url(url):
     """
     Parse one of our custom rewritten git URLs of the form:
-       git:///repos/project#version/archive.tar.gz 
+       git:///repos/project#version/archive.tar.gz
 
-    Returns the scheme, host, path, version and archive name 
+    Returns the scheme, host, path, version and archive name
     """
     (scheme, host, path, _, _, _) = urlparse.urlparse(url)
     assert scheme == "git"
@@ -87,8 +87,8 @@ def parse_extended_git_url(url):
 
     if fragment and "/" in fragment:
         version, archive = fragment.split("/")
-    
-    return(scheme, host, path, version, archive) 
+
+    return(scheme, host, path, version, archive)
 
 
 def latest_git_tag(url):
@@ -119,7 +119,7 @@ def fetch_git_source(url):
     URLs.
     """
 
-    # We expect path to be a custom git url pointing at a path on 
+    # We expect path to be a custom git url pointing at a path on
     # the local host.   We only need the path, version and archive_name
     (_, _, path, version, archive_name) = parse_extended_git_url(url)
     basename = path.split("/")[-1]
@@ -135,16 +135,16 @@ def fetch_git_source(url):
 def name_from_spec(spec_path):
     """
     Returns the base name of the packages defined in the spec file at spec_path.
-    Ideally we would do this using the Python RPM library, but the version in 
+    Ideally we would do this using the Python RPM library, but the version in
     CentOS 5 doesn't expose it.
     """
     spec = open(spec_path)
     lines = spec.readlines()
     spec.close()
 
-    name = [l.strip() for l in lines 
+    name = [l.strip() for l in lines
             if l.strip().lower().startswith('name:')][0].split(':')[1].strip()
-    return name 
+    return name
 
 
 def check_spec_name(spec_path):
@@ -155,7 +155,7 @@ def check_spec_name(spec_path):
     pkg_name = name_from_spec(spec_path)
     if re.sub(r".spec(.in)?$", "", os.path.basename(spec_path)) != pkg_name:
         sys.stderr.write( "error: spec file name '%s' "
-                          "does not match package name '%s'\n" % 
+                          "does not match package name '%s'\n" %
                           (spec_path, pkg_name))
         sys.exit(1)
 
@@ -174,7 +174,7 @@ def sources_from_spec(spec_path):
         match = re.match(r"^([Ss]ource\d*):\s+(\S+)$", line)
         if match:
             sources.append(match.group(2))
-    return sources 
+    return sources
 
 
 def preprocess_spec(spec_in_path, spec_out_path, version, tarball_name):
@@ -216,8 +216,8 @@ def prepare_srpm(spec_path):
         print "%s doesn't exist" % spec_path
         sys.exit(1)
 
-    # Pull out the source list.   If the spec file pulls its sources 
-    # from a Git repository, we need to prepreprocess the spec file 
+    # Pull out the source list.   If the spec file pulls its sources
+    # from a Git repository, we need to prepreprocess the spec file
     # to fill in the latest version tag from the repository.
     sources = sources_from_spec(spec_path)
     assert sources
@@ -243,8 +243,8 @@ def build_srpm(spec_path):
     """
     Builds an SRPM from the spec file at spec_path.
 
-    Assumes that all source files have already been downloaded to 
-    the rpmbuild sources directory, and are correctly named. 
+    Assumes that all source files have already been downloaded to
+    the rpmbuild sources directory, and are correctly named.
     """
     call(["rpmbuild", "-bs", spec_path, 
           "--nodeps", "--define", "_topdir %s" % BUILD_ROOT_DIR])
@@ -267,7 +267,7 @@ def main(argv):
         os.makedirs(path)
 
     if not os.path.exists(SOURCES_DIR):
-	os.makedirs(SOURCES_DIR)
+        os.makedirs(SOURCES_DIR)
 
     # Pull in any required patches
     patches_dir = os.path.join(conf_dir, 'SOURCES')
