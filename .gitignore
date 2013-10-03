@@ -1,3 +1,6 @@
+MANIFEST
+build
+dist
 .rpmmacros
 BUILD/*
 RPMS/*
@@ -7,3 +10,4 @@ SOURCES/*
 *.pyc
 srpmutil/srpmutil
 *.swp
+tags
