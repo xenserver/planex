@@ -9,12 +9,14 @@ CONFIG_DIR=$(shell ./get_config_dir.py)
 build: $(MY_SOURCES)/MANIFEST
 
 buildrpms:
+	echo "Installing latest planex"
+	@cd .. && python setup.py install
 	echo "%_topdir /repos/planex" > .rpmmacros
 	echo confdir $(CONFIG_DIR)
 	chown -R root.root $(CONFIG_DIR)/*
-	@cd .. && ./configure.py $(CONFIG_DIR)
-	@cd .. && ./build.py
-	@cd .. && ./install.py $(CONFIG_DIR) $(MY_MAIN_PACKAGES)
+	@cd .. && planex-configure $(CONFIG_DIR)
+	@cd .. && planex-build
+	@cd .. && planex-install $(CONFIG_DIR) $(MY_MAIN_PACKAGES)
 	cp -r ../RPMS $(MY_OUTPUT_DIR)
 	rm -rf $(MY_OUTPUT_DIR)/RPMS/repodata
 	cp -r ../SRPMS $(MY_OUTPUT_DIR)
