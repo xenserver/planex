@@ -16,6 +16,7 @@ buildrpms:
 	@cd .. && ./build.py
 	@cd .. && ./install.py $(CONFIG_DIR) $(MY_MAIN_PACKAGES)
 	cp -r ../RPMS $(MY_OUTPUT_DIR)
+	rm -rf $(MY_OUTPUT_DIR)/RPMS/repodata
 	cp -r ../SRPMS $(MY_OUTPUT_DIR)
 	rpm -Uvh --force --nodeps ../RPMS/*.rpm
 
