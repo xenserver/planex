@@ -16,8 +16,6 @@ import shutil
 from planex_globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
                             SPECS_GLOB)
 
-USE_DISTFILES = True
-
 # HACK: Monkey-patch urlparse to understand git:// URLs
 # This is not needed for more modern Pythons
 #    http://bugs.python.org/issue7904
@@ -28,11 +26,8 @@ def rewrite_to_distfiles(url):
     """
     Rewrites url to refer to the local distfiles cache.
     """
-    if USE_DISTFILES:
-        basename = url.split("/")[-1]
-        return "file:///distfiles/ocaml2/" + basename
-    else:
-        return url
+    basename = url.split("/")[-1]
+    return "file:///distfiles/ocaml2/" + basename
 
 def fetch_url(url, rewrite=None):
     """
@@ -207,7 +202,7 @@ def preprocess_spec(spec_in_path, spec_out_path, version, tarball_name):
     spec_out.close()
 
 
-def prepare_srpm(spec_path):
+def prepare_srpm(spec_path, use_distfiles):
     """
     Downloads sources needed to build an SRPM from the spec file
     at spec_path.   Pre-processes the spec file, if needed.
@@ -230,7 +225,10 @@ def prepare_srpm(spec_path):
         (scheme, _, _, _, _, _) = urlparse.urlparse(source)
 
         if scheme in ['file', 'http', 'https']:
-            result = fetch_url(source, rewrite_to_distfiles)
+            rewrite_fn = None
+            if use_distfiles:
+                rewrite_fn = rewrite_to_distfiles
+            result = fetch_url(source, rewrite_fn)
             number_fetched += result
             number_skipped += (1 - result)
 
@@ -251,7 +249,7 @@ def build_srpm(spec_path):
           "--nodeps", "--define", "_topdir %s" % BUILD_ROOT_DIR])
 
 
-def main(config_dir):
+def main(config_dir, use_distfiles):
     """
     Main function.  Process all the specfiles in the directory
     given by config_dir.
@@ -287,7 +285,7 @@ def main(config_dir):
 
     # Build SRPMs
     for spec_path in glob.glob(SPECS_GLOB):
-        fetched, skipped = prepare_srpm(spec_path)
+        fetched, skipped = prepare_srpm(spec_path, use_distfiles)
         number_fetched += fetched
         number_skipped += skipped
         build_srpm(spec_path)
@@ -300,8 +298,10 @@ def usage():
 
 if __name__ == "__main__":
     config_dir = None
+    use_distfiles = False
     try:
-        opts, _ = getopt.getopt(sys.argv[1:], "", ["config-dir="])
+        longopts = ["config-dir=", "use-distfiles"]
+        opts, _ = getopt.getopt(sys.argv[1:], "", longopts)
     except getopt.GetoptError, err:
         print str(err)
         usage()
@@ -309,7 +309,9 @@ if __name__ == "__main__":
     for o, a in opts:
         if o == "--config-dir":
             config_dir = a
+        if o == "--use-distfiles":
+            use_distfiles = True
     if config_dir == None:
         usage()
         sys.exit(1)
-    main(config_dir)
+    main(config_dir, use_distfiles)
