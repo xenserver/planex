@@ -2,11 +2,7 @@ MANIFEST
 build
 dist
 .rpmmacros
-BUILD/*
-RPMS/*
-SPECS/*
-SRPMS/*
-SOURCES/*
+planex-build-root
 *.pyc
 srpmutil/srpmutil
 *.swp

@@ -13,9 +13,8 @@ import demjson
 # Nb. This is deprecated since 2.5
 import md5
 
-SRPMS_DIR = "./SRPMS/"
-RPMS_DIR = "RPMS"
-BUILD_DIR = "BUILD"
+from planex_globals import BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR
+
 TMP_RPM_PATH = "/tmp/RPMS"
 CACHE_DIR = "rpmcache"
 USE_MOCK = False
@@ -189,7 +188,7 @@ def toposort2(data):
 
 def write_rpmmacros():
     f = open('.rpmmacros', 'w')
-    f.write('%%_topdir %s\n' % os.getcwd())
+    f.write('%%_topdir %s\n' % os.path.join(BUILD_ROOT_DIR, os.getcwd()))
     f.close()
 
 def find_pkg(srpm_infos, srpm):
