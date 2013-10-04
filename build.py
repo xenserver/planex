@@ -2,6 +2,7 @@
 
 # Build a bunch of SRPMs
 
+import getopt
 import sys
 import os
 import glob
@@ -19,8 +20,6 @@ from planex_globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
 TMP_RPM_PATH = "/tmp/RPMS"
 RPM_TOP_DIR = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
 CACHE_DIR = "rpmcache"
-USE_MOCK = False
-XSBUILDSYS = True
 
 class RpmError(Exception):
     pass
@@ -259,6 +258,20 @@ def createrepo():
         sys.exit(1)
 
 if __name__ == "__main__":
+    use_mock = False
+    xs_build_sys = False
+    try:
+        longopts = ["use-mock", "xs-build-sys"]
+        opts, _ = getopt.getopt(sys.argv[1:], "", longopts)
+    except getopt.GetoptError, err:
+        print str(err)
+        sys.exit(1)
+    for o, _ in opts:
+        if o == "--use-mock":
+            use_mock = True
+        if o == "--xs-build-sys":
+            xs_build_sys = True
+
     if not os.path.isdir(SRPMS_DIR) or not os.listdir(SRPMS_DIR):
         print ("Error: No srpms found in %s; First run configure.py." %
                SRPMS_DIR)
@@ -287,14 +300,14 @@ if __name__ == "__main__":
             if(need_to_build(srpm_infos, external, deps, srpm)):
                 build_number = get_new_number(srpm,cache_dir)
                 print "Building %s - build number: %d" % (srpm, build_number)
-                if USE_MOCK:
+                if use_mock:
                     cmd = ["mock", "--configdir=mock", "-r", "xenserver",
                            "--resultdir=%s" % TMP_RPM_PATH, "--rebuild",
                            "--target", target,
                            "--enable-plugin=tmpfs",
                            "--define", "extrarelease .%d" % build_number,
                            "-v", srpm]
-                    if not XSBUILDSYS:
+                    if not xs_build_sys:
                         cmd = ["sudo"] + cmd + ["--disable-plugin=package_state"]
                 else:
                     cmd = ["rpmbuild", "--rebuild", "-v", "%s" % srpm,
@@ -318,7 +331,7 @@ if __name__ == "__main__":
                         print "Copying output file %s to %s\n" % (f, cache_dir)
                         shutil.copy(f, cache_dir)
 
-                if not USE_MOCK:
+                if not use_mock:
                     rpms = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
                     (rc, stdout, stderr) = doexec(["rpm", "-U", "--force",
                                                    "--nodeps"] + rpms)
@@ -339,7 +352,7 @@ if __name__ == "__main__":
                 for f in rpms:
                     print "Copying cached rpm %s to %s" % (f, RPMS_DIR)
                     shutil.copy(f, RPMS_DIR)
-                if not USE_MOCK:
+                if not use_mock:
                     (rc, stdout, stderr) = doexec(["rpm", "-U", "--force",
                                                    "--nodeps"] + rpms)
                     if rc != 0:
