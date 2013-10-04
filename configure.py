@@ -4,6 +4,7 @@
 Builds SRPMs for the tarballs or Git repositories in <component-specs-dir>.
 """
 
+import getopt
 import sys
 import os.path
 from subprocess import call
@@ -250,16 +251,11 @@ def build_srpm(spec_path):
           "--nodeps", "--define", "_topdir %s" % BUILD_ROOT_DIR])
 
 
-def main(argv):
+def main(config_dir):
     """
     Main function.  Process all the specfiles in the directory
-    given in the argument list.
+    given by config_dir.
     """
-
-    if len(argv) != 2:
-        print "Usage: %s <component-specs-dir>" % __file__
-        sys.exit(1)
-    conf_dir = argv[1]
 
     for path in [SRPMS_DIR, SPECS_DIR]:
         if os.path.exists(path):
@@ -270,12 +266,12 @@ def main(argv):
         os.makedirs(SOURCES_DIR)
 
     # Pull in any required patches
-    patches_dir = os.path.join(conf_dir, 'SOURCES')
+    patches_dir = os.path.join(config_dir, 'SOURCES')
     for patch in glob.glob(os.path.join(patches_dir, '*')):
         shutil.copy(patch, SOURCES_DIR)
 
     # Pull in spec files, preprocessing if necessary
-    for spec_path in glob.glob(os.path.join(conf_dir, "*.spec*")):
+    for spec_path in glob.glob(os.path.join(config_dir, "*.spec*")):
         check_spec_name(spec_path)
         if spec_path.endswith('.in'):
             print "Configuring package with spec file: %s" % spec_path
@@ -299,6 +295,21 @@ def main(argv):
     print "number of packages skipped: %d" % number_skipped
     print "number of packages fetched: %d" % number_fetched
 
+def usage():
+    print "%s --config-dir=<config-dir>" % __file__
 
 if __name__ == "__main__":
-    main(sys.argv)
+    config_dir = None
+    try:
+        opts, _ = getopt.getopt(sys.argv[1:], "", ["config-dir="])
+    except getopt.GetoptError, err:
+        print str(err)
+        usage()
+        sys.exit(1)
+    for o, a in opts:
+        if o == "--config-dir":
+            config_dir = a
+    if config_dir == None:
+        usage()
+        sys.exit(1)
+    main(config_dir)
