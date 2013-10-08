@@ -12,7 +12,8 @@ import subprocess
 import re
 import glob
 import shutil
-from planex_globals import BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR
+from planex_globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
+                            SPECS_GLOB)
 
 USE_DISTFILES = True
 
@@ -167,7 +168,7 @@ def sources_from_spec(spec_path):
     """
     sources = []
     lines = subprocess.Popen(
-        ["./spectool", "--list-files", "--sources", spec_path],
+        ["spectool", "--list-files", "--sources", spec_path],
          stdout=subprocess.PIPE).communicate()[0].strip().split("\n")
     for line in lines:
         match = re.match(r"^([Ss]ource\d*):\s+(\S+)$", line)
@@ -269,8 +270,8 @@ def main(argv):
 	os.makedirs(SOURCES_DIR)
 
     # Pull in any required patches
-    sources_dir = os.path.join(conf_dir, 'SOURCES')
-    for patch in glob.glob(os.path.join(sources_dir, '*')):
+    patches_dir = os.path.join(conf_dir, 'SOURCES')
+    for patch in glob.glob(os.path.join(patches_dir, '*')):
         shutil.copy(patch, SOURCES_DIR)
 
     # Pull in spec files, preprocessing if necessary
@@ -289,7 +290,7 @@ def main(argv):
     number_skipped = 0
 
     # Build SRPMs
-    for spec_path in glob.glob(os.path.join(SPECS_DIR, "*.spec")):
+    for spec_path in glob.glob(SPECS_GLOB):
         fetched, skipped = prepare_srpm(spec_path)
         number_fetched += fetched
         number_skipped += skipped
