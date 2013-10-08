@@ -13,10 +13,11 @@ import demjson
 # Nb. This is deprecated since 2.5
 import md5
 
-SRPMS_DIR = "./SRPMS/"
-RPMS_DIR = "RPMS"
-BUILD_DIR = "BUILD"
+from planex_globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
+                            SPECS_GLOB)
+
 TMP_RPM_PATH = "/tmp/RPMS"
+RPM_TOP_DIR = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
 CACHE_DIR = "rpmcache"
 USE_MOCK = False
 XSBUILDSYS = True
@@ -31,7 +32,9 @@ def exists(path):
 def doexec(args, inputtext=None):
     """Execute a subprocess, then return its return code, stdout and stderr"""
     print "Executing: %s" % " ".join(args)
-    proc = subprocess.Popen(args, stdin=subprocess.PIPE,
+    myenv = os.environ.copy()
+    myenv['HOME'] = RPM_TOP_DIR
+    proc = subprocess.Popen(args, env=myenv, stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             close_fds=True)
     (stdout, stderr) = proc.communicate(inputtext)
@@ -41,17 +44,17 @@ def doexec(args, inputtext=None):
 
 def run_srpmutil(specfile, srpm):
     for x in ['i686', 'i386', 'noarch']:
-        (rc, stdout, stderr) = doexec(["srpmutil/srpmutil", specfile, srpm, x])
+        (rc, stdout, stderr) = doexec(["srpmutil", specfile, srpm, x])
         if rc == 0:
             return (stdout, x)
     raise RpmError
 
 
 def get_srpm_info_native(srpm):
-    for x in glob.glob("SPECS/*.spec"):
+    for x in glob.glob(SPECS_GLOB):
         os.unlink(x)
     (rc, stdout, stderr) = doexec(["rpm", "-i", srpm])
-    myspecfile = glob.glob("./SPECS/*.spec")[0]
+    myspecfile = glob.glob(SPECS_GLOB)[0]
     spec = rpm.ts().parseSpec(myspecfile)
     info = {}
     info['deps'] = spec.sourceHeader["requires"]
@@ -94,18 +97,10 @@ def get_srpm_info_srpmutil(srpm):
     }
 
     """
-    if not os.path.exists("srpmutil/srpmutil"):
-        (rc, stdout, stderr) = doexec(["make", "-C", "srpmutil"])
-        if rc != 0:
-            print "Error while building srpmutil:"
-            print "stdout\n======\n%s\n\n" % stdout
-            print "stderr\n======\n%s\n\n" % stderr
-	    raise Exception
-
-    for x in glob.glob("SPECS/*.spec"):
+    for x in glob.glob(SPECS_GLOB):
         os.unlink(x)
     (rc, stdout, stderr) = doexec(["rpm", "-i", srpm])
-    myspecfile = glob.glob("./SPECS/*.spec")[0]
+    myspecfile = glob.glob(SPECS_GLOB)[0]
     try:
         (specfile, arch) = run_srpmutil(myspecfile, srpm)
         j = demjson.decode(specfile)
@@ -188,8 +183,9 @@ def toposort2(data):
 
 
 def write_rpmmacros():
-    f = open('.rpmmacros', 'w')
-    f.write('%%_topdir %s\n' % os.getcwd())
+    f = open(os.path.join(RPM_TOP_DIR, '.rpmmacros'), 'w')
+    f.write('%%_topdir %s\n' % RPM_TOP_DIR)
+    f.write('%%_rpmdir %s\n' % TMP_RPM_PATH)
     f.close()
 
 def find_pkg(srpm_infos, srpm):
@@ -302,8 +298,8 @@ if __name__ == "__main__":
 			cmd = ["sudo"] + cmd + ["--disable-plugin=package_state"] 
                 else:
                     cmd = ["rpmbuild", "--rebuild", "-v", "%s" % srpm,
-                           "--target", target, "--define", "_rpmdir %s" % TMP_RPM_PATH,
-			   "--define", "_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm"]
+                           "--target", target, "--define",
+                           "_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm"]
 
                 (rc, stdout, stderr) = doexec(cmd)
 
