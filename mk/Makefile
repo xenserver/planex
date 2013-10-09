@@ -16,8 +16,8 @@ buildrpms: srpmutil
 	@cd .. && python setup.py install
 	echo confdir $(CONFIG_DIR)
 	chown -R root.root $(CONFIG_DIR)/*
-	planex-configure $(CONFIG_DIR)
-	planex-build
+	planex-configure --config-dir=$(CONFIG_DIR) --use-distfiles
+	planex-build --xs-build-sys
 	planex-install $(CONFIG_DIR) $(MY_MAIN_PACKAGES)
 	cp -r ./planex-build-root/RPMS $(MY_OUTPUT_DIR)
 	rm -rf $(MY_OUTPUT_DIR)/RPMS/repodata
