@@ -7,9 +7,9 @@ import subprocess
 import shutil
 
 import demjson
+from planex_globals import RPMS_DIR
 
 CONFIG = "install.json"
-RPMS_DIR = "./RPMS/"
 
 
 def parse_config(config_path):

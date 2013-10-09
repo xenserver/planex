@@ -12,11 +12,8 @@ import subprocess
 import re
 import glob
 import shutil
-
-
-SOURCESDIR = "./SOURCES"
-SRPMSDIR = "./SRPMS"
-SPECSDIR = "./SPECS"
+from planex_globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
+                            SPECS_GLOB)
 
 USE_DISTFILES = True
 
@@ -47,7 +44,7 @@ def fetch_url(url, rewrite=None):
     if rewrite:
         url = rewrite(url)
     basename = url.split("/")[-1]
-    final_path = os.path.join(SOURCESDIR, basename)
+    final_path = os.path.join(SOURCES_DIR, basename)
     if os.path.exists(final_path):
         return 0
     else:
@@ -116,7 +113,7 @@ def latest_git_tag(url):
 def fetch_git_source(url):
     """
     Fetches an archive of HEAD of the git repository at path.
-    Produces a tarball called 'archive_name' in SOURCESDIR,
+    Produces a tarball called 'archive_name' in SOURCES_DIR,
     which when unpacked will produce a directory called
     "reponame-version".   This is similar to GitHub's archive
     URLs.
@@ -127,12 +124,12 @@ def fetch_git_source(url):
     (_, _, path, version, archive_name) = parse_extended_git_url(url)
     basename = path.split("/")[-1]
 
-    for sourcefile in os.listdir('SOURCES'):
+    for sourcefile in os.listdir(SOURCES_DIR):
         if re.search(r'^(%s\.tar)(\.gz)?$' % basename, sourcefile):
             os.remove(sourcefile)
     call(["git", "--git-dir=%s/.git" % path, "archive",
           "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
-          "%s/%s" % (SOURCESDIR, archive_name)])
+          "%s/%s" % (SOURCES_DIR, archive_name)])
 
 
 def name_from_spec(spec_path):
@@ -171,7 +168,7 @@ def sources_from_spec(spec_path):
     """
     sources = []
     lines = subprocess.Popen(
-        ["./spectool", "--list-files", "--sources", spec_path],
+        ["spectool", "--list-files", "--sources", spec_path],
          stdout=subprocess.PIPE).communicate()[0].strip().split("\n")
     for line in lines:
         match = re.match(r"^([Ss]ource\d*):\s+(\S+)$", line)
@@ -250,7 +247,7 @@ def build_srpm(spec_path):
     the rpmbuild sources directory, and are correctly named. 
     """
     call(["rpmbuild", "-bs", spec_path, 
-          "--nodeps", "--define", "_topdir ."])
+          "--nodeps", "--define", "_topdir %s" % BUILD_ROOT_DIR])
 
 
 def main(argv):
@@ -264,18 +261,18 @@ def main(argv):
         sys.exit(1)
     conf_dir = argv[1]
 
-    for path in [SRPMSDIR, SPECSDIR]:
+    for path in [SRPMS_DIR, SPECS_DIR]:
         if os.path.exists(path):
             shutil.rmtree(path)
         os.makedirs(path)
 
-    if not os.path.exists(SOURCESDIR):
-	os.makedirs(SOURCESDIR)
+    if not os.path.exists(SOURCES_DIR):
+	os.makedirs(SOURCES_DIR)
 
     # Pull in any required patches
-    sources_dir = os.path.join(conf_dir, 'SOURCES')
-    for patch in glob.glob(os.path.join(sources_dir, '*')):
-        shutil.copy(patch, SOURCESDIR)
+    patches_dir = os.path.join(conf_dir, 'SOURCES')
+    for patch in glob.glob(os.path.join(patches_dir, '*')):
+        shutil.copy(patch, SOURCES_DIR)
 
     # Pull in spec files, preprocessing if necessary
     for spec_path in glob.glob(os.path.join(conf_dir, "*.spec*")):
@@ -285,15 +282,15 @@ def main(argv):
             sources = sources_from_spec(spec_path)
             version = latest_git_tag(sources[0])
             repo_url = make_extended_git_url(sources[0], version)
-            preprocess_spec(spec_path, SPECSDIR, version, repo_url)
+            preprocess_spec(spec_path, SPECS_DIR, version, repo_url)
         else:
-            shutil.copy(spec_path, SPECSDIR)
+            shutil.copy(spec_path, SPECS_DIR)
 
     number_fetched = 0
     number_skipped = 0
 
     # Build SRPMs
-    for spec_path in glob.glob(os.path.join(SPECSDIR, "*.spec")):
+    for spec_path in glob.glob(SPECS_GLOB):
         fetched, skipped = prepare_srpm(spec_path)
         number_fetched += fetched
         number_skipped += skipped
