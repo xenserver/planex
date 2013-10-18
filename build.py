@@ -273,7 +273,7 @@ if __name__ == "__main__":
             xs_build_sys = True
 
     if not os.path.isdir(SRPMS_DIR) or not os.listdir(SRPMS_DIR):
-        print ("Error: No srpms found in %s; First run configure.py." %
+        print ("Error: No srpms found in %s; First run planex-configure." %
                SRPMS_DIR)
         sys.exit(1)
 
