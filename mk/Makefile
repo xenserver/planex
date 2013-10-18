@@ -1,17 +1,19 @@
 include $(B_BASE)/common.mk
 include $(B_BASE)/rpmbuild.mk
 
-# Figure out which set of spec files we're building based on 'COMPONENT'
-CONFIG_DIR=$(shell ./get_config_dir.py)
-
 #### Build-system boilerplate above ####
 .PHONY: build buildrpms
 build: $(MY_SOURCES)/MANIFEST
 
+conf_dir:
+	# Figure out which set of spec files we're building based on 'COMPONENT'
+	./get_config_dir.py
+	$(eval CONFIG_DIR=$(shell ./get_config_dir.py))
+
 srpmutil:
 	make -C ../srpmutil
 
-buildrpms: srpmutil
+buildrpms: conf_dir srpmutil
 	echo "Installing latest planex"
 	@cd .. && python setup.py install
 	echo confdir $(CONFIG_DIR)
