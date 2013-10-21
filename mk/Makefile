@@ -8,15 +8,21 @@ CONFIG_DIR=$(shell ./get_config_dir.py)
 .PHONY: build buildrpms
 build: $(MY_SOURCES)/MANIFEST
 
-buildrpms:
-	echo "%_topdir /repos/planex" > .rpmmacros
+srpmutil:
+	make -C ../srpmutil
+
+buildrpms: srpmutil
+	echo "Installing latest planex"
+	@cd .. && python setup.py install
 	echo confdir $(CONFIG_DIR)
 	chown -R root.root $(CONFIG_DIR)/*
-	@cd .. && ./configure.py $(CONFIG_DIR)
-	@cd .. && ./build.py
-	@cd .. && ./install.py $(CONFIG_DIR) $(MY_MAIN_PACKAGES)
-	cp -r ../RPMS $(MY_OUTPUT_DIR)
-	cp -r ../SRPMS $(MY_OUTPUT_DIR)
+	planex-configure --config-dir=$(CONFIG_DIR) --use-distfiles
+	planex-build --xs-build-sys
+	planex-install $(CONFIG_DIR) $(MY_MAIN_PACKAGES)
+	cp -r ./planex-build-root/RPMS $(MY_OUTPUT_DIR)
+	rm -rf $(MY_OUTPUT_DIR)/RPMS/repodata
+	cp -r ./planex-build-root/SRPMS $(MY_OUTPUT_DIR)
+	rpm -Uvh --force --nodeps ./planex-build-root/RPMS/*.rpm
 
 #### Build-system boilerplate below ####
 
@@ -31,7 +37,4 @@ $(MY_SOURCES)/MANIFEST: $(MY_SOURCES_DIRSTAMP) buildrpms
 
 .PHONY: clean
 clean:
-	rm -rf $(RPM_SRPMSDIR) $(RPM_SPECSDIR) $(RPM_SOURCESDIR) $(RPM_RPMSDIR)
-	rm -f SOURCES/*.tar.gz
-	rm -f SPECS/*.spec
-	rm -f targets.mk
+	rm -rf ./planex-build-root
