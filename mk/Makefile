@@ -19,6 +19,7 @@ buildrpms: conf_dir srpmutil
 	echo confdir $(CONFIG_DIR)
 	chown -R root.root $(CONFIG_DIR)/*
 	planex-configure --config-dir=$(CONFIG_DIR) --use-distfiles
+	touch /etc/hosts
 	planex-build --xs-build-sys --use-mock
 	planex-install $(CONFIG_DIR) $(MY_MAIN_PACKAGES)
 	cp -r ./planex-build-root/RPMS $(MY_OUTPUT_DIR)
