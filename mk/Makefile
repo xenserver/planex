@@ -25,7 +25,6 @@ buildrpms: conf_dir srpmutil
 	cp -r ./planex-build-root/RPMS $(MY_OUTPUT_DIR)
 	rm -rf $(MY_OUTPUT_DIR)/RPMS/repodata
 	cp -r ./planex-build-root/SRPMS $(MY_OUTPUT_DIR)
-	rpm -Uvh --force --nodeps ./planex-build-root/RPMS/*.rpm
 
 #### Build-system boilerplate below ####
 
