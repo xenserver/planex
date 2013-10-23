@@ -342,9 +342,10 @@ if __name__ == "__main__":
 
                 files = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
                 for f in files:
-                    print "Copying output RPM %s to %s\n" % (f, RPMS_DIR)
-                    shutil.copy(f, RPMS_DIR)
-                    os.unlink(f)
+                    if not f.endswith('.src.rpm'):
+                        print "Copying output RPM %s to %s\n" % (f, RPMS_DIR)
+                        shutil.copy(f, RPMS_DIR)
+                        os.unlink(f)
 
             else:
                 print "Not building %s - getting from cache" % srpm
