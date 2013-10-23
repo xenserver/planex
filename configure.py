@@ -163,9 +163,18 @@ def sources_from_spec(spec_path):
     Returns a list of source URLs with RPM macros expanded.
     """
     sources = []
-    lines = subprocess.Popen(
-        ["spectool", "--list-files", "--sources", spec_path],
-         stdout=subprocess.PIPE).communicate()[0].strip().split("\n")
+    p1 = subprocess.Popen(
+        ['perl', '-pe', 's/^\\s*Version\\s*:\\s*\\@VERSION\\@.*/Version: 123.planex789\\n/i', spec_path],
+         stdout=subprocess.PIPE)
+    p2 = subprocess.Popen(
+        ["spectool", "--list-files", "--sources", '<&STDIN'],
+         stdout=subprocess.PIPE,stdin=p1.stdout)
+    p1.stdout.close()
+    lines = p2.communicate()[0].strip().split("\n")
+    p1.wait()
+    if p2.returncode != 0 or p1.returncode != 0:
+        sys.stderr.write("error parsing spec file '%s'\n" % spec_path)
+        sys.exit(1)
     for line in lines:
         match = re.match(r"^([Ss]ource\d*):\s+(\S+)$", line)
         if match:
