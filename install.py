@@ -28,10 +28,12 @@ def build_map(rpms_dir):
     """Returns a map from package name to rpm file"""
     result = {}
     for rpm_file in glob.glob(os.path.join(rpms_dir, '*.rpm')):
-        pkg_name = subprocess.Popen(
-            ["rpm", "-qp", rpm_file, "--qf", "%{name}"],
-            stdout=subprocess.PIPE).communicate()[0].strip()
-        result[pkg_name] = rpm_file
+        # Make sure we haven't picked up a src rpm
+        if not rpm_file.endswith('.src.rpm'):
+            pkg_name = subprocess.Popen(
+                ["rpm", "-qp", rpm_file, "--qf", "%{name}"],
+                stdout=subprocess.PIPE).communicate()[0].strip()
+            result[pkg_name] = rpm_file
     return result
 
 
