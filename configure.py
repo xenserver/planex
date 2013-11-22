@@ -16,6 +16,9 @@ import shutil
 from planex_globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
                             SPECS_GLOB)
 
+GITHUB_MIRROR="~/github_mirror"
+MYREPOS="~/devel"
+
 # HACK: Monkey-patch urlparse to understand git:// URLs
 # This is not needed for more modern Pythons
 #    http://bugs.python.org/issue7904
@@ -69,11 +72,12 @@ def parse_extended_git_url(url):
 
     Returns the scheme, host, path, version and archive name
     """
-    (scheme, host, path, _, _, _) = urlparse.urlparse(url)
+    print "url=%s" % url
+    (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
     assert scheme == "git"
-    assert host == ""
 
-    fragment, version, archive = None, None, None
+    print "path=%s" % path
+    version, archive = None, None
 
     # urlparse only parses fragments from some URLs, mainly http://,
     # https:// and file://.   With a git:// URL, we have to do it
@@ -81,11 +85,39 @@ def parse_extended_git_url(url):
     if "#" in path:
         path, fragment = path.split("#")
 
+    print "fragment=%s" % fragment
     if fragment and "/" in fragment:
         version, archive = fragment.split("/")
+    else:
+        version = fragment
 
     return(scheme, host, path, version, archive)
 
+
+def locate_repo(path):
+    """
+    Returns the location of the repository
+    """
+    if path.endswith(".git"):
+        path=path[:-4]
+
+    if len(path)==0:
+        print "Zero length path!"
+        exit(1)
+
+    basename = path.split("/")[-1]
+
+    trials=[
+        os.path.expanduser("%s/%s" % (MYREPOS, basename)),
+        os.path.expanduser("%s/%s.git" % (MYREPOS, basename)),
+        "/repos/%s" % basename,
+        os.path.expanduser("%s/%s.git" % (GITHUB_MIRROR, path))]
+
+    for trial in trials:
+        if os.path.exists(trial):
+            return trial
+
+    return None
 
 def latest_git_tag(url):
     """
@@ -93,13 +125,26 @@ def latest_git_tag(url):
     """
     # We expect path to be a full git url pointing at a path on the local host
     # We only need the path
-    (scheme, host, path, _, _) = parse_extended_git_url(url)
+    (scheme, host, path, committish, _) = parse_extended_git_url(url)
     assert scheme == "git"
-    assert host == ""
+    
+    repo_location=locate_repo(path)
 
-    description = subprocess.Popen(
-        ["git", "--git-dir=%s/.git" % path,
-         "describe", "--tags"],
+    print "Located git repo at: %s" % repo_location
+
+    # We support bare mirrors - check if repos_location is one of them:
+
+    if(os.path.exists("%s/.git" % repo_location)):
+        dotgitdir="%s/.git" % repo_location
+    else:
+        dotgitdir=repo_location
+        
+    cmd = ["git", "--git-dir=%s" % dotgitdir,
+         "describe", "--tags"]
+    if committish:
+        cmd.append(committish)
+
+    description = subprocess.Popen(cmd,
         stdout=subprocess.PIPE).communicate()[0].strip()
     match = re.search("[^0-9]*", description)
     matchlen = len(match.group())
@@ -117,13 +162,21 @@ def fetch_git_source(url):
 
     # We expect path to be a custom git url pointing at a path on
     # the local host.   We only need the path, version and archive_name
+    print "url=%s" % url
     (_, _, path, version, archive_name) = parse_extended_git_url(url)
     basename = path.split("/")[-1]
+
+    repo_location = locate_repo(path)
+
+    if(os.path.exists("%s/.git" % repo_location)):
+        dotgitdir="%s/.git" % repo_location
+    else:
+        dotgitdir=repo_location
 
     for sourcefile in os.listdir(SOURCES_DIR):
         if re.search(r'^(%s\.tar)(\.gz)?$' % basename, sourcefile):
             os.remove(sourcefile)
-    call(["git", "--git-dir=%s/.git" % path, "archive",
+    call(["git", "--git-dir=%s" % dotgitdir, "archive",
           "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
           "%s/%s" % (SOURCES_DIR, archive_name)])
 
@@ -163,9 +216,18 @@ def sources_from_spec(spec_path):
     Returns a list of source URLs with RPM macros expanded.
     """
     sources = []
-    lines = subprocess.Popen(
-        ["spectool", "--list-files", "--sources", spec_path],
-         stdout=subprocess.PIPE).communicate()[0].strip().split("\n")
+    p1 = subprocess.Popen(
+        ['perl', '-pe', 's/^\\s*Version\\s*:\\s*\\@VERSION\\@.*/Version: 123.planex789\\n/i', spec_path],
+         stdout=subprocess.PIPE)
+    p2 = subprocess.Popen(
+        ["spectool", "--list-files", "--sources", '<&STDIN'],
+         stdout=subprocess.PIPE,stdin=p1.stdout)
+    p1.stdout.close()
+    lines = p2.communicate()[0].strip().split("\n")
+    p1.wait()
+    if p2.returncode != 0 or p1.returncode != 0:
+        sys.stderr.write("error parsing spec file '%s'\n" % spec_path)
+        sys.exit(1)
     for line in lines:
         match = re.match(r"^([Ss]ource\d*):\s+(\S+)$", line)
         if match:
