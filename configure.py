@@ -17,7 +17,7 @@ from planex_globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
                             SPECS_GLOB)
 
 GITHUB_MIRROR="~/github_mirror"
-MYREPOS="~/devel"
+MYREPOS="~/devel2"
 
 # HACK: Monkey-patch urlparse to understand git:// URLs
 # This is not needed for more modern Pythons
@@ -62,6 +62,7 @@ def make_extended_git_url(base_url, version):
     of the repository with the same form as a tarball downloaded
     from a GitHub archive URL.
     """
+    base_url = base_url.split('#')[0]
     return "%s#%s/%%{name}-%%{version}.tar.gz" % (base_url, version)
 
 
@@ -132,13 +133,18 @@ def latest_git_tag(url):
 
     print "Located git repo at: %s" % repo_location
 
-    # We support bare mirrors - check if repos_location is one of them:
-
     if(os.path.exists("%s/.git" % repo_location)):
         dotgitdir="%s/.git" % repo_location
     else:
         dotgitdir=repo_location
-        
+    
+    # Hack hack. if the repo name starts with /repos then it's an XS build
+    # system one. In that case, the committish isn't going to work (we
+    # explicitly only ever build from master, which is synced from a
+    # possibly different github branch). 
+    if dotgitdir.startswith("/repos"):
+	committish = None
+    
     cmd = ["git", "--git-dir=%s" % dotgitdir,
          "describe", "--tags"]
     if committish:
@@ -278,7 +284,9 @@ def prepare_srpm(spec_path, use_distfiles):
     # from a Git repository, we need to prepreprocess the spec file
     # to fill in the latest version tag from the repository.
     sources = sources_from_spec(spec_path)
-    assert sources
+    if sources == []:
+        print "Failed to get sources for %s" % spec_path
+        sys.exit(1)
 
     number_skipped = 0
     number_fetched = 0
