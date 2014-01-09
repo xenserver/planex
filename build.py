@@ -40,23 +40,23 @@ def doexec(args, inputtext=None):
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             close_fds=True)
     (stdout, stderr) = proc.communicate(inputtext)
-    rc = proc.returncode
-    return (rc, stdout, stderr)
+    ret = proc.returncode
+    return (ret, stdout, stderr)
 
 
 def run_srpmutil(specfile, srpm):
-    for x in ['i686', 'i386', 'noarch']:
-        (rc, stdout, _) = doexec(["srpmutil", specfile, srpm, x])
-        if rc == 0:
-            return (stdout, x)
+    for arch in ['i686', 'i386', 'noarch']:
+        (ret, stdout, _) = doexec(["srpmutil", specfile, srpm, arch])
+        if ret == 0:
+            return (stdout, arch)
     raise RpmError
 
 
 def get_srpm_info_native(srpm):
-    for x in glob.glob(SPECS_GLOB):
-        os.unlink(x)
-    (rc, _, _) = doexec(["rpm", "-i", srpm])
-    assert rc == 0
+    for spec_path in glob.glob(SPECS_GLOB):
+        os.unlink(spec_path)
+    (ret, _, _) = doexec(["rpm", "-i", srpm])
+    assert ret == 0
     myspecfile = glob.glob(SPECS_GLOB)[0]
     spec = rpm.ts().parseSpec(myspecfile)
     info = {}
@@ -101,16 +101,16 @@ def get_srpm_info_srpmutil(srpm):
     }
 
     """
-    for x in glob.glob(SPECS_GLOB):
-        os.unlink(x)
-    (rc, _, _) = doexec(["rpm", "-i", srpm])
-    assert rc == 0
+    for spec_path in glob.glob(SPECS_GLOB):
+        os.unlink(spec_path)
+    (ret, _, _) = doexec(["rpm", "-i", srpm])
+    assert ret == 0
     myspecfile = glob.glob(SPECS_GLOB)[0]
     try:
         (specfile, arch) = run_srpmutil(myspecfile, srpm)
         j = demjson.decode(specfile)
-        (rc, stdout, _) = doexec(["rpm", "-qp", srpm, "-R"])
-        assert rc == 0
+        (ret, stdout, _) = doexec(["rpm", "-qp", srpm, "-R"])
+        assert ret == 0
         lines = stdout.split('\n')
         alldeps = map(lambda x: x.split(' ')[0], lines)
         realdeps = filter(
@@ -144,11 +144,11 @@ def extract_target(srpm_infos, srpm_filename):
 
 
 def get_package_to_srpm_map(srpm_info):
-    m = {}
+    pkg_map = {}
     for srpm in srpm_info:
         for package in srpm['packages']:
-            m[package['name']] = srpm['srcrpm']
-    return m
+            pkg_map[package['name']] = srpm['srcrpm']
+    return pkg_map
 
 
 def get_deps(srpm_infos):
@@ -164,8 +164,8 @@ def get_deps(srpm_infos):
 
 def toposort2(data):
     # Ignore self dependencies.
-    for k, v in data.items():
-        v.discard(k)
+    for key, val in data.items():
+        val.discard(key)
     # Find all items that don't depend on anything.
     extra_items_in_deps = reduce(set.union,
                                  data.itervalues()) - set(data.iterkeys())
@@ -191,10 +191,10 @@ def toposort2(data):
 
 
 def write_rpmmacros():
-    f = open(os.path.join(RPM_TOP_DIR, '.rpmmacros'), 'w')
-    f.write('%%_topdir %s\n' % RPM_TOP_DIR)
-    f.write('%%_rpmdir %s\n' % TMP_RPM_PATH)
-    f.close()
+    rpmmacros = open(os.path.join(RPM_TOP_DIR, '.rpmmacros'), 'w')
+    rpmmacros.write('%%_topdir %s\n' % RPM_TOP_DIR)
+    rpmmacros.write('%%_rpmdir %s\n' % TMP_RPM_PATH)
+    rpmmacros.close()
 
 
 def find_pkg(srpm_infos, srpm):
@@ -219,12 +219,12 @@ def get_srpm_hash(srpm_infos, external, deps, srpm):
     allpkgs = get_pkg_ddeps(deps, srpm)
     allpkgs.append(srpm)
     allpkgs.sort()
-    m = md5.new()
+    srpm_hash = md5.new()
     for mypkg in allpkgs:
         srpm_info = find_pkg(srpm_infos, mypkg)
-        m.update(srpm_info['spec'])
-    m.update(external)
-    return m.hexdigest()
+        srpm_hash.update(srpm_info['spec'])
+    srpm_hash.update(external)
+    return srpm_hash.hexdigest()
 
 
 def get_cache_dir(srpm_infos, external, deps, srpm):
@@ -258,17 +258,17 @@ def get_new_number(srpm, cache_dir):
         build_number = 1
 
     os.symlink("%d" % build_number, latest_path)
-    num_file = os.path.join(CACHE_DIR, srpm, "%d" % build_number)
-    print "Creating: %s" % num_file
-    f = open(num_file, 'w')
-    f.write(cache_dir)
-    f.close()
+    num_file_path = os.path.join(CACHE_DIR, srpm, "%d" % build_number)
+    print "Creating: %s" % num_file_path
+    num_file = open(num_file_path, 'w')
+    num_file.write(cache_dir)
+    num_file.close()
     return build_number
 
 
 def createrepo():
-    (rc, _, stderr) = doexec(["createrepo", "--update", RPMS_DIR])
-    if rc != 0:
+    (ret, _, stderr) = doexec(["createrepo", "--update", RPMS_DIR])
+    if ret != 0:
         print "Error running createrepo:"
         print stderr
         sys.exit(1)
@@ -294,9 +294,9 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
                    "--target", target, "--define",
                    "_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm"]
 
-        (rc, stdout, stderr) = doexec(cmd)
+        (ret, stdout, stderr) = doexec(cmd)
 
-        if rc == 0:
+        if ret == 0:
             print "Success"
         else:
             print "Failed to build rpm from srpm: %s" % srpm
@@ -304,39 +304,39 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
             print "\nstderr\n======\n%s" % stderr
             sys.exit(1)
 
-        files = glob.glob(os.path.join(TMP_RPM_PATH, "*"))
+        pkgs = glob.glob(os.path.join(TMP_RPM_PATH, "*"))
         if cache_dir:
             os.makedirs(cache_dir)
-            for f in files:
-                print "Copying output file %s to %s\n" % (f, cache_dir)
-                shutil.copy(f, cache_dir)
+            for pkg in pkgs:
+                print "Copying output file %s to %s\n" % (pkg, cache_dir)
+                shutil.copy(pkg, cache_dir)
 
         if not use_mock:
-            rpms = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
-            (rc, stdout, stderr) = doexec(["rpm", "-U", "--force",
-                                           "--nodeps"] + rpms)
-            if rc != 0:
-                print "Ignoring failure installing rpm batch: %s" % rpms
+            pkgs = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
+            (ret, stdout, stderr) = doexec(["rpm", "-U", "--force",
+                                           "--nodeps"] + pkgs)
+            if ret != 0:
+                print "Ignoring failure installing rpm batch: %s" % pkgs
                 print stderr
 
 
-        files = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
-        for f in files:
-            print "Copying output RPM %s to %s\n" % (f, RPMS_DIR)
-            shutil.copy(f, RPMS_DIR)
-            os.unlink(f)
+        pkgs = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
+        for pkg in pkgs:
+            print "Copying output RPM %s to %s\n" % (pkg, RPMS_DIR)
+            shutil.copy(pkg, RPMS_DIR)
+            os.unlink(pkg)
 
     else:
         print "Not building %s - getting from cache" % srpm
-        rpms = glob.glob(os.path.join(cache_dir, "*.rpm"))
-        for f in rpms:
-            print "Copying cached rpm %s to %s" % (f, RPMS_DIR)
-            shutil.copy(f, RPMS_DIR)
+        pkgs = glob.glob(os.path.join(cache_dir, "*.rpm"))
+        for pkg in pkgs:
+            print "Copying cached rpm %s to %s" % (pkg, RPMS_DIR)
+            shutil.copy(pkg, RPMS_DIR)
         if not use_mock:
-            (rc, stdout, stderr) = doexec(["rpm", "-U", "--force",
-                                           "--nodeps"] + rpms)
-            if rc != 0:
-                print "Ignoring failure installing rpm batch: %s" % rpms
+            (ret, stdout, stderr) = doexec(["rpm", "-U", "--force",
+                                           "--nodeps"] + pkgs)
+            if ret != 0:
+                print "Ignoring failure installing rpm batch: %s" % pkgs
                 print stderr
 
     print "Success"
@@ -352,10 +352,10 @@ def main():
     except getopt.GetoptError, err:
         print str(err)
         sys.exit(1)
-    for o, _ in opts:
-        if o == "--use-mock":
+    for opt, _ in opts:
+        if opt == "--use-mock":
             use_mock = True
-        if o == "--xs-build-sys":
+        if opt == "--xs-build-sys":
             xs_build_sys = True
 
     if not os.path.isdir(SRPMS_DIR) or not os.listdir(SRPMS_DIR):
