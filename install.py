@@ -42,7 +42,7 @@ if __name__ == '__main__':
     (component_dir, dest_dir) = sys.argv[1:]
 
     if not os.path.exists(component_dir):
-        print "Error: directory %s does not exist." % p
+        print "Error: directory %s does not exist." % component_dir
         sys.exit(1)
 
     config_path = os.path.join(component_dir, CONFIG)
