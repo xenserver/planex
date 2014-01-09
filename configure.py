@@ -321,11 +321,12 @@ def build_srpm(spec_path):
           "--nodeps", "--define", "_topdir %s" % BUILD_ROOT_DIR])
 
 
-def main(config_dir, use_distfiles):
+def main():
     """
     Main function.  Process all the specfiles in the directory
     given by config_dir.
     """
+    config_dir, use_distfiles = parse_cmdline()
 
     for path in [SRPMS_DIR, SPECS_DIR]:
         if os.path.exists(path):
@@ -365,13 +366,18 @@ def main(config_dir, use_distfiles):
     print "number of packages skipped: %d" % number_skipped
     print "number of packages fetched: %d" % number_fetched
 
+
 def usage():
     """
     Print usage string
     """
     print "%s --config-dir=<config-dir>" % __file__
 
-if __name__ == "__main__":
+
+def parse_cmdline():
+    """
+    Parse command line options
+    """
     config_dir = None
     use_distfiles = False
     try:
@@ -381,12 +387,16 @@ if __name__ == "__main__":
         print str(err)
         usage()
         sys.exit(1)
-    for o, a in opts:
-        if o == "--config-dir":
-            config_dir = a
-        if o == "--use-distfiles":
+    for opt, arg in opts:
+        if opt == "--config-dir":
+            config_dir = arg
+        if opt == "--use-distfiles":
             use_distfiles = True
     if config_dir == None:
         usage()
         sys.exit(1)
-    main(config_dir, use_distfiles)
+    return (config_dir, use_distfiles)
+
+
+if __name__ == "__main__":
+    main()
