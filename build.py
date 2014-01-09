@@ -28,6 +28,7 @@ class RpmError(Exception):
 def exists(path):
     return os.access(path, os.F_OK)
 
+
 def doexec(args, inputtext=None):
     """Execute a subprocess, then return its return code, stdout and stderr"""
     print "Executing: %s" % " ".join(args)
@@ -43,7 +44,7 @@ def doexec(args, inputtext=None):
 
 def run_srpmutil(specfile, srpm):
     for x in ['i686', 'i386', 'noarch']:
-        (rc, stdout, stderr) = doexec(["srpmutil", specfile, srpm, x])
+        (rc, stdout, _) = doexec(["srpmutil", specfile, srpm, x])
         if rc == 0:
             return (stdout, x)
     raise RpmError
@@ -52,7 +53,8 @@ def run_srpmutil(specfile, srpm):
 def get_srpm_info_native(srpm):
     for x in glob.glob(SPECS_GLOB):
         os.unlink(x)
-    (rc, stdout, stderr) = doexec(["rpm", "-i", srpm])
+    (rc, _, _) = doexec(["rpm", "-i", srpm])
+    assert rc == 0
     myspecfile = glob.glob(SPECS_GLOB)[0]
     spec = rpm.ts().parseSpec(myspecfile)
     info = {}
@@ -64,6 +66,7 @@ def get_srpm_info_native(srpm):
     info['spec'] = content_file.read()
     content_file.close()
     return info
+
 
 def get_srpm_info_srpmutil(srpm):
     """ Returns a dictionary of interesting info about an SRPM:
@@ -98,12 +101,14 @@ def get_srpm_info_srpmutil(srpm):
     """
     for x in glob.glob(SPECS_GLOB):
         os.unlink(x)
-    (rc, stdout, stderr) = doexec(["rpm", "-i", srpm])
+    (rc, _, _) = doexec(["rpm", "-i", srpm])
+    assert rc == 0
     myspecfile = glob.glob(SPECS_GLOB)[0]
     try:
         (specfile, arch) = run_srpmutil(myspecfile, srpm)
         j = demjson.decode(specfile)
-        (rc, stdout, stderr) = doexec(["rpm", "-qp", srpm, "-R"])
+        (rc, stdout, _) = doexec(["rpm", "-qp", srpm, "-R"])
+        assert rc == 0
         lines = stdout.split('\n')
         alldeps = map(lambda x: x.split(' ')[0], lines)
         realdeps = filter(
@@ -119,11 +124,13 @@ def get_srpm_info_srpmutil(srpm):
         print "Got a broken package: %s" % srpm
         return {'broken': True, 'srcrpm': srpm}
 
+
 def get_srpm_info(srpm):
     try:
         return get_srpm_info_native(srpm)
     except:
         return get_srpm_info_srpmutil(srpm)
+
 
 def extract_target(srpm_infos, srpm_filename):
     """
@@ -187,10 +194,12 @@ def write_rpmmacros():
     f.write('%%_rpmdir %s\n' % TMP_RPM_PATH)
     f.close()
 
+
 def find_pkg(srpm_infos, srpm):
     for srpm_info in srpm_infos:
         if srpm_info["srcrpm"] == srpm:
             return srpm_info
+
 
 def get_pkg_ddeps(deps, srpm):
     if srpm in deps:
@@ -203,6 +212,7 @@ def get_pkg_ddeps(deps, srpm):
     else:
         return []
 
+
 def get_srpm_hash(srpm_infos, external, deps, srpm):
     allpkgs = get_pkg_ddeps(deps, srpm)
     allpkgs.append(srpm)
@@ -214,6 +224,7 @@ def get_srpm_hash(srpm_infos, external, deps, srpm):
     m.update(external)
     return m.hexdigest()
 
+
 def get_cache_dir(srpm_infos, external, deps, srpm):
     if not os.path.exists(CACHE_DIR):
         return None
@@ -221,11 +232,13 @@ def get_cache_dir(srpm_infos, external, deps, srpm):
     dst_dir = os.path.join(CACHE_DIR, myhash)
     return dst_dir
 
+
 def need_to_build(srpm_infos, external, deps, srpm):
     dst_dir = get_cache_dir(srpm_infos, external, deps, srpm)
     if not dst_dir:
         return True
     return (not os.path.exists(dst_dir))
+
 
 def get_new_number(srpm,cache_dir):
     if cache_dir==None:
@@ -250,14 +263,16 @@ def get_new_number(srpm,cache_dir):
     f.close()
     return build_number
 
+
 def createrepo():
-    (rc, stdout, stderr) = doexec(["createrepo", "--update", RPMS_DIR])
+    (rc, _, stderr) = doexec(["createrepo", "--update", RPMS_DIR])
     if rc != 0:
         print "Error running createrepo:"
         print stderr
         sys.exit(1)
 
-if __name__ == "__main__":
+
+def main():
     use_mock = False
     xs_build_sys = False
     try:
@@ -363,3 +378,5 @@ if __name__ == "__main__":
             createrepo()
 
 
+if __name__ == '__main__':
+    main()
