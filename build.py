@@ -17,9 +17,11 @@ import md5
 from planex_globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
                             SPECS_GLOB)
 
+
 TMP_RPM_PATH = "/tmp/RPMS"
 RPM_TOP_DIR = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
 CACHE_DIR = "rpmcache"
+
 
 class RpmError(Exception):
     pass
@@ -217,7 +219,7 @@ def get_srpm_hash(srpm_infos, external, deps, srpm):
     allpkgs = get_pkg_ddeps(deps, srpm)
     allpkgs.append(srpm)
     allpkgs.sort()
-    m=md5.new()
+    m = md5.new()
     for mypkg in allpkgs:
         srpm_info = find_pkg(srpm_infos, mypkg)
         m.update(srpm_info['spec'])
@@ -240,8 +242,8 @@ def need_to_build(srpm_infos, external, deps, srpm):
     return (not os.path.exists(dst_dir))
 
 
-def get_new_number(srpm,cache_dir):
-    if cache_dir==None:
+def get_new_number(srpm, cache_dir):
+    if cache_dir == None:
         return 1
     latest_path = os.path.join(CACHE_DIR, srpm, "latest")
     if os.path.exists(latest_path):
@@ -255,8 +257,8 @@ def get_new_number(srpm,cache_dir):
             pass
         build_number = 1
 
-    os.symlink("%d" % build_number,latest_path)
-    num_file=os.path.join(CACHE_DIR, srpm, "%d" % build_number)
+    os.symlink("%d" % build_number, latest_path)
+    num_file = os.path.join(CACHE_DIR, srpm, "%d" % build_number)
     print "Creating: %s" % num_file
     f = open(num_file, 'w')
     f.write(cache_dir)
@@ -276,7 +278,7 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
     target = extract_target(srpm_infos, srpm)
     cache_dir = get_cache_dir(srpm_infos, external, deps, srpm)
     if(need_to_build(srpm_infos, external, deps, srpm)):
-        build_number = get_new_number(srpm,cache_dir)
+        build_number = get_new_number(srpm, cache_dir)
         print "Building %s - build number: %d" % (srpm, build_number)
         if use_mock:
             cmd = ["mock", "--configdir=mock", "-r", "xenserver",
@@ -373,13 +375,14 @@ def main():
             print "Cleaning out directory: %s" % path
             shutil.rmtree(path)
         os.makedirs(path)
-        os.chmod(path,0777)
+        os.chmod(path, 0777)
 
     createrepo()
 
     for batch in order:
         for srpm in batch:
             build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys)
+
 
 if __name__ == '__main__':
     main()
