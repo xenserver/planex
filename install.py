@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+"""
+Installs packages built from the specs in <component-specs-dir>.
+"""
+
+
 import sys
 import os
 import glob
@@ -17,9 +22,9 @@ def parse_config(config_path):
     conjunction with rpm query to find the relevant .rpm files that need
     installing.
     """
-    f = open(config_path, "r")
-    json = f.read()
-    f.close()
+    config_file = open(config_path, "r")
+    json = config_file.read()
+    config_file.close()
     pkgs = demjson.decode(json)
     return [pkg['package-name'] for pkg in pkgs]
 
@@ -35,7 +40,9 @@ def build_map(rpms_dir):
     return result
 
 
-if __name__ == '__main__':
+def main():
+    """Main entry point.   Installs packages from <component-dir>
+    to <destination-dir>"""
     if len(sys.argv[1:]) != 2:
         print "Usage: %s <component-dir> <destination-dir>" % __file__
         sys.exit(1)
@@ -62,3 +69,7 @@ if __name__ == '__main__':
         rpm_path = pkg_to_rpm[pkg_name]
         print "Copying:  %s -> %s" % (rpm_path, dest_dir)
         shutil.copy(rpm_path, dest_dir)
+
+
+if __name__ == '__main__':
+    main()
