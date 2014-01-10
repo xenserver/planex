@@ -8,10 +8,7 @@ CONFIG_DIR=$(shell ./get_config_dir.py)
 .PHONY: build buildrpms
 build: $(MY_SOURCES)/MANIFEST
 
-srpmutil:
-	make -C ../srpmutil
-
-buildrpms: srpmutil
+buildrpms:
 	echo "Installing latest planex"
 	@cd .. && python setup.py install
 	echo confdir $(CONFIG_DIR)
