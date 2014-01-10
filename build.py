@@ -9,9 +9,7 @@ import glob
 import subprocess
 import shutil
 import rpm
-
-# Nb. This is deprecated since 2.5
-import md5
+import hashlib
 
 from planex_globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
                             SPECS_GLOB)
@@ -142,7 +140,7 @@ def get_srpm_hash(srpm_infos, external, deps, srpm):
     allpkgs = get_pkg_ddeps(deps, srpm)
     allpkgs.append(srpm)
     allpkgs.sort()
-    srpm_hash = md5.new()
+    srpm_hash = hashlib.md5()
     for mypkg in allpkgs:
         srpm_info = find_pkg(srpm_infos, mypkg)
         srpm_hash.update(srpm_info['spec'])
