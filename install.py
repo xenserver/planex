@@ -11,7 +11,7 @@ import glob
 import subprocess
 import shutil
 
-import demjson
+import json
 from planex_globals import RPMS_DIR
 
 CONFIG = "install.json"
@@ -23,9 +23,8 @@ def parse_config(config_path):
     installing.
     """
     config_file = open(config_path, "r")
-    json = config_file.read()
+    pkgs = json.load(config_file)
     config_file.close()
-    pkgs = demjson.decode(json)
     return [pkg['package-name'] for pkg in pkgs]
 
 
