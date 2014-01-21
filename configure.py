@@ -16,8 +16,8 @@ import shutil
 from planex_globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
                             SPECS_GLOB)
 
-GITHUB_MIRROR="~/github_mirror"
-MYREPOS="~/devel2"
+GITHUB_MIRROR = "~/github_mirror"
+MYREPOS = "~/devel2"
 
 # HACK: Monkey-patch urlparse to understand git:// URLs
 # This is not needed for more modern Pythons
@@ -100,15 +100,15 @@ def locate_repo(path):
     Returns the location of the repository
     """
     if path.endswith(".git"):
-        path=path[:-4]
+        path = path[:-4]
 
-    if len(path)==0:
+    if len(path) == 0:
         print "Zero length path!"
         exit(1)
 
     basename = path.split("/")[-1]
 
-    trials=[
+    trials = [
         os.path.expanduser("%s/%s" % (MYREPOS, basename)),
         os.path.expanduser("%s/%s.git" % (MYREPOS, basename)),
         "/repos/%s" % basename,
@@ -126,25 +126,25 @@ def latest_git_tag(url):
     """
     # We expect path to be a full git url pointing at a path on the local host
     # We only need the path
-    (scheme, host, path, committish, _) = parse_extended_git_url(url)
+    (scheme, _, path, committish, _) = parse_extended_git_url(url)
     assert scheme == "git"
-    
-    repo_location=locate_repo(path)
+
+    repo_location = locate_repo(path)
 
     print "Located git repo at: %s" % repo_location
 
     if(os.path.exists("%s/.git" % repo_location)):
-        dotgitdir="%s/.git" % repo_location
+        dotgitdir = "%s/.git" % repo_location
     else:
-        dotgitdir=repo_location
-    
+        dotgitdir = repo_location
+
     # Hack hack. if the repo name starts with /repos then it's an XS build
     # system one. In that case, the committish isn't going to work (we
     # explicitly only ever build from master, which is synced from a
-    # possibly different github branch). 
+    # possibly different github branch).
     if dotgitdir.startswith("/repos"):
-	committish = None
-    
+        committish = None
+
     cmd = ["git", "--git-dir=%s" % dotgitdir,
          "describe", "--tags"]
     if committish:
@@ -175,9 +175,9 @@ def fetch_git_source(url):
     repo_location = locate_repo(path)
 
     if(os.path.exists("%s/.git" % repo_location)):
-        dotgitdir="%s/.git" % repo_location
+        dotgitdir = "%s/.git" % repo_location
     else:
-        dotgitdir=repo_location
+        dotgitdir = repo_location
 
     for sourcefile in os.listdir(SOURCES_DIR):
         if re.search(r'^(%s\.tar)(\.gz)?$' % basename, sourcefile):
@@ -222,16 +222,18 @@ def sources_from_spec(spec_path):
     Returns a list of source URLs with RPM macros expanded.
     """
     sources = []
-    p1 = subprocess.Popen(
-        ['perl', '-pe', 's/^\\s*Version\\s*:\\s*\\@VERSION\\@.*/Version: 123.planex789\\n/i', spec_path],
+    perl = subprocess.Popen(
+        ['perl', '-pe',
+         's/^\\s*Version\\s*:\\s*\\@VERSION\\@.*/Version: 123.planex789\\n/i',
+          spec_path],
          stdout=subprocess.PIPE)
-    p2 = subprocess.Popen(
+    spectool = subprocess.Popen(
         ["spectool", "--list-files", "--sources", '<&STDIN'],
-         stdout=subprocess.PIPE,stdin=p1.stdout)
-    p1.stdout.close()
-    lines = p2.communicate()[0].strip().split("\n")
-    p1.wait()
-    if p2.returncode != 0 or p1.returncode != 0:
+         stdout=subprocess.PIPE,stdin=perl.stdout)
+    perl.stdout.close()
+    lines = spectool.communicate()[0].strip().split("\n")
+    perl.wait()
+    if spectool.returncode != 0 or perl.returncode != 0:
         sys.stderr.write("error parsing spec file '%s'\n" % spec_path)
         sys.exit(1)
     for line in lines:
@@ -315,7 +317,7 @@ def build_srpm(spec_path):
     Assumes that all source files have already been downloaded to
     the rpmbuild sources directory, and are correctly named.
     """
-    call(["rpmbuild", "-bs", spec_path, 
+    call(["rpmbuild", "-bs", spec_path,
           "--nodeps", "--define", "_topdir %s" % BUILD_ROOT_DIR])
 
 
@@ -364,6 +366,9 @@ def main(config_dir, use_distfiles):
     print "number of packages fetched: %d" % number_fetched
 
 def usage():
+    """
+    Print usage string
+    """
     print "%s --config-dir=<config-dir>" % __file__
 
 if __name__ == "__main__":
