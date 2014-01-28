@@ -282,7 +282,7 @@ def main():
 
     packages = glob.glob(os.path.join(SRPMS_DIR, '*.src.rpm'))
     write_rpmmacros()
-    srpm_infos = map(get_srpm_info, packages)
+    srpm_infos = [get_srpm_info(pkg) for pkg in packages]
     deps = get_deps(srpm_infos)
     order = toposort2(deps)
     external = "external dependencies hash"
