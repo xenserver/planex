@@ -170,7 +170,7 @@ def get_new_number(srpm, cache_dir):
     else:
         try:
             os.makedirs(os.path.join(CACHE_DIR, srpm))
-        except:
+        except os.error:
             pass
         build_number = 1
 
