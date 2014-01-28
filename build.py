@@ -217,48 +217,38 @@ def do_build(srpm, target, build_number, use_mock, xs_build_sys):
         print "\nstderr\n======\n%s" % stderr
         sys.exit(1)
 
-    return glob.glob(os.path.join(TMP_RPM_PATH, "*"))
+    return glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
 
 
 def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
     cache_dir = get_cache_dir(srpm_infos, external, deps, srpm)
+
     if(need_to_build(srpm_infos, external, deps, srpm)):
         target = extract_target(srpm_infos, srpm)
         build_number = get_new_number(srpm, cache_dir)
-        pkgs = do_build(srpm, build_number, use_mock, xs_build_sys)
+        pkgs = do_build(srpm, target, build_number, use_mock, xs_build_sys)
         if cache_dir:
             os.makedirs(cache_dir)
             for pkg in pkgs:
                 print "Copying output file %s to %s\n" % (pkg, cache_dir)
                 shutil.copy(pkg, cache_dir)
 
-        if not use_mock:
-            pkgs = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
-            (ret, stdout, stderr) = doexec(["rpm", "-U", "--force",
-                                           "--nodeps"] + pkgs)
-            if ret != 0:
-                print "Ignoring failure installing rpm batch: %s" % pkgs
-                print stderr
-
-
-        pkgs = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
-        for pkg in pkgs:
-            print "Copying output RPM %s to %s\n" % (pkg, RPMS_DIR)
-            shutil.copy(pkg, RPMS_DIR)
-            os.unlink(pkg)
-
     else:
         print "Not building %s - getting from cache" % srpm
         pkgs = glob.glob(os.path.join(cache_dir, "*.rpm"))
         for pkg in pkgs:
-            print "Copying cached rpm %s to %s" % (pkg, RPMS_DIR)
-            shutil.copy(pkg, RPMS_DIR)
-        if not use_mock:
-            (ret, stdout, stderr) = doexec(["rpm", "-U", "--force",
-                                           "--nodeps"] + pkgs)
-            if ret != 0:
-                print "Ignoring failure installing rpm batch: %s" % pkgs
-                print stderr
+            print "Copying cached rpm %s to %s" % (pkg, TMP_RPM_PATH)
+            shutil.copy(pkg, TMP_RPM_PATH)
+
+    if not use_mock:
+        (ret, _, stderr) = doexec(["rpm", "-U", "--force", "--nodeps"] + pkgs)
+        if ret != 0:
+            print "Ignoring failure installing rpm batch: %s" % pkgs
+            print stderr
+
+    for pkg in pkgs:
+        print "Moving output RPM %s to %s\n" % (pkg, RPMS_DIR)
+        shutil.move(pkg, RPMS_DIR)
 
     print "Success"
     createrepo()
