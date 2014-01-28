@@ -20,10 +20,6 @@ RPM_TOP_DIR = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
 CACHE_DIR = "rpmcache"
 
 
-def exists(path):
-    return os.access(path, os.F_OK)
-
-
 def doexec(args, inputtext=None):
     """Execute a subprocess, then return its return code, stdout and stderr"""
     print "Executing: %s" % " ".join(args)
