@@ -191,37 +191,41 @@ def createrepo():
         sys.exit(1)
 
 
+def do_build(srpm, target, build_number, use_mock, xs_build_sys):
+    print "Building %s - build number: %d" % (srpm, build_number)
+    if use_mock:
+        cmd = ["mock", "--configdir=mock", "-r", "xenserver",
+               "--resultdir=%s" % TMP_RPM_PATH, "--rebuild",
+               "--target", target,
+               "--enable-plugin=tmpfs",
+               "--define", "extrarelease .%d" % build_number,
+               "-v", srpm]
+        if not xs_build_sys:
+            cmd = ["sudo"] + cmd + ["--disable-plugin=package_state"]
+    else:
+        cmd = ["rpmbuild", "--rebuild", "-v", "%s" % srpm,
+               "--target", target, "--define",
+               "_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm"]
+
+    (ret, stdout, stderr) = doexec(cmd)
+
+    if ret == 0:
+        print "Success"
+    else:
+        print "Failed to build rpm from srpm: %s" % srpm
+        print "\nstdout\n======\n%s" % stdout
+        print "\nstderr\n======\n%s" % stderr
+        sys.exit(1)
+
+    return glob.glob(os.path.join(TMP_RPM_PATH, "*"))
+
+
 def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
-    target = extract_target(srpm_infos, srpm)
     cache_dir = get_cache_dir(srpm_infos, external, deps, srpm)
     if(need_to_build(srpm_infos, external, deps, srpm)):
+        target = extract_target(srpm_infos, srpm)
         build_number = get_new_number(srpm, cache_dir)
-        print "Building %s - build number: %d" % (srpm, build_number)
-        if use_mock:
-            cmd = ["mock", "--configdir=mock", "-r", "xenserver",
-                   "--resultdir=%s" % TMP_RPM_PATH, "--rebuild",
-                   "--target", target,
-                   "--enable-plugin=tmpfs",
-                   "--define", "extrarelease .%d" % build_number,
-                   "-v", srpm]
-            if not xs_build_sys:
-                cmd = ["sudo"] + cmd + ["--disable-plugin=package_state"]
-        else:
-            cmd = ["rpmbuild", "--rebuild", "-v", "%s" % srpm,
-                   "--target", target, "--define",
-                   "_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm"]
-
-        (ret, stdout, stderr) = doexec(cmd)
-
-        if ret == 0:
-            print "Success"
-        else:
-            print "Failed to build rpm from srpm: %s" % srpm
-            print "\nstdout\n======\n%s" % stdout
-            print "\nstderr\n======\n%s" % stderr
-            sys.exit(1)
-
-        pkgs = glob.glob(os.path.join(TMP_RPM_PATH, "*"))
+        pkgs = do_build(srpm, build_number, use_mock, xs_build_sys)
         if cache_dir:
             os.makedirs(cache_dir)
             for pkg in pkgs:
