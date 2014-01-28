@@ -20,10 +20,6 @@ RPM_TOP_DIR = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
 CACHE_DIR = "rpmcache"
 
 
-def exists(path):
-    return os.access(path, os.F_OK)
-
-
 def doexec(args, inputtext=None):
     """Execute a subprocess, then return its return code, stdout and stderr"""
     print "Executing: %s" % " ".join(args)
@@ -174,7 +170,7 @@ def get_new_number(srpm, cache_dir):
     else:
         try:
             os.makedirs(os.path.join(CACHE_DIR, srpm))
-        except:
+        except os.error:
             pass
         build_number = 1
 
@@ -286,7 +282,7 @@ def main():
 
     packages = glob.glob(os.path.join(SRPMS_DIR, '*.src.rpm'))
     write_rpmmacros()
-    srpm_infos = map(get_srpm_info, packages)
+    srpm_infos = [get_srpm_info(pkg) for pkg in packages]
     deps = get_deps(srpm_infos)
     order = toposort2(deps)
     external = "external dependencies hash"

@@ -19,12 +19,6 @@ from planex_globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
 GITHUB_MIRROR = "~/github_mirror"
 MYREPOS = "~/devel2"
 
-# HACK: Monkey-patch urlparse to understand git:// URLs
-# This is not needed for more modern Pythons
-#    http://bugs.python.org/issue7904
-urlparse.uses_netloc.append('git')
-
-
 def rewrite_to_distfiles(url):
     """
     Rewrites url to refer to the local distfiles cache.
