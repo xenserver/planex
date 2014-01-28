@@ -9,10 +9,7 @@ import glob
 import subprocess
 import shutil
 import rpm
-import demjson
-
-# Nb. This is deprecated since 2.5
-import md5
+import hashlib
 
 from planex_globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
                             SPECS_GLOB)
@@ -21,10 +18,6 @@ from planex_globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
 TMP_RPM_PATH = "/tmp/RPMS"
 RPM_TOP_DIR = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
 CACHE_DIR = "rpmcache"
-
-
-class RpmError(Exception):
-    pass
 
 
 def exists(path):
@@ -44,15 +37,7 @@ def doexec(args, inputtext=None):
     return (ret, stdout, stderr)
 
 
-def run_srpmutil(specfile, srpm):
-    for arch in ['i686', 'i386', 'noarch']:
-        (ret, stdout, _) = doexec(["srpmutil", specfile, srpm, arch])
-        if ret == 0:
-            return (stdout, arch)
-    raise RpmError
-
-
-def get_srpm_info_native(srpm):
+def get_srpm_info(srpm):
     for spec_path in glob.glob(SPECS_GLOB):
         os.unlink(spec_path)
     (ret, _, _) = doexec(["rpm", "-i", srpm])
@@ -68,70 +53,6 @@ def get_srpm_info_native(srpm):
     info['spec'] = content_file.read()
     content_file.close()
     return info
-
-
-def get_srpm_info_srpmutil(srpm):
-    """ Returns a dictionary of interesting info about an SRPM:
-
-    {
-    "arch": "i686",
-    "deps": [
-      "ocaml",
-      "ocaml-findlib",
-      "ocaml-fd-send-recv-devel",
-      "ocaml-uuidm-devel"
-    ],
-    "packages": [
-      {
-        "arch": "i686",
-        "name": "ocaml-stdext-devel",
-        "noarch": "0",
-        "release": "1",
-        "version": "0.9.0"
-      },
-      {
-        "arch": "i686",
-        "name": "ocaml-stdext-debuginfo",
-        "noarch": "0",
-        "release": "1",
-        "version": "0.9.0"
-      }
-    ],
-    "srcrpm": "SRPMS/ocaml-stdext-0.9.0-1.src.rpm"
-    }
-
-    """
-    for spec_path in glob.glob(SPECS_GLOB):
-        os.unlink(spec_path)
-    (ret, _, _) = doexec(["rpm", "-i", srpm])
-    assert ret == 0
-    myspecfile = glob.glob(SPECS_GLOB)[0]
-    try:
-        (specfile, arch) = run_srpmutil(myspecfile, srpm)
-        j = demjson.decode(specfile)
-        (ret, stdout, _) = doexec(["rpm", "-qp", srpm, "-R"])
-        assert ret == 0
-        lines = stdout.split('\n')
-        alldeps = map(lambda x: x.split(' ')[0], lines)
-        realdeps = filter(
-            lambda x: len(x) and x != "rpmlib(CompressedFileNames)",
-            alldeps)
-        j['deps'] = realdeps
-        j['arch'] = arch
-        content_file = open(myspecfile,'r')
-        j['spec'] = content_file.read()
-        content_file.close()
-        return j
-    except:
-        print "Got a broken package: %s" % srpm
-        return {'broken': True, 'srcrpm': srpm}
-
-
-def get_srpm_info(srpm):
-    try:
-        return get_srpm_info_native(srpm)
-    except:
-        return get_srpm_info_srpmutil(srpm)
 
 
 def extract_target(srpm_infos, srpm_filename):
@@ -219,7 +140,7 @@ def get_srpm_hash(srpm_infos, external, deps, srpm):
     allpkgs = get_pkg_ddeps(deps, srpm)
     allpkgs.append(srpm)
     allpkgs.sort()
-    srpm_hash = md5.new()
+    srpm_hash = hashlib.md5()
     for mypkg in allpkgs:
         srpm_info = find_pkg(srpm_infos, mypkg)
         srpm_hash.update(srpm_info['spec'])
