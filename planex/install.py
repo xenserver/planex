@@ -12,7 +12,7 @@ import subprocess
 import shutil
 
 import json
-from planex_globals import RPMS_DIR
+from planex.globals import RPMS_DIR
 
 CONFIG = "install.json"
 
