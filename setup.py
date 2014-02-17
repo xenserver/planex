@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(name='planex',
       version='0.0.0',
-      py_modules=['planex_globals'],
+      packages=['planex'],
       entry_points={
           'console_scripts': [
               'planex-configure = planex.configure:main',
