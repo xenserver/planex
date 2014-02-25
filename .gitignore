@@ -7,3 +7,4 @@ planex-build-root
 srpmutil/srpmutil
 *.swp
 tags
+.coverage
