@@ -7,6 +7,7 @@ import glob
 import os
 import sys
 import unittest
+from mock import patch
 
 import configure
 
@@ -14,6 +15,43 @@ class BasicTests(unittest.TestCase):
     def test_rewrite_to_distfiles(self):
         res = configure.rewrite_to_distfiles("http://github.com/xenserver/planex") 
 	assert res == "file:///distfiles/ocaml2/planex"
+
+    # Decorators are applied bottom up
+    @patch('os.path.exists') 
+    @patch('configure.call') # We are patching subprocess.call, but because it is imported into configure we must call patch with configure.call
+    def test_fetch_url(self, mock_subprocess_call, mock_os_path_exists):
+        url = "https://github.com/mirage/ocaml-cohttp/archive/ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz"
+	mock_os_path_exists.return_value = False
+	mock_subprocess_call.return_value = 0
+        configure.fetch_url(url)
+	assert mock_os_path_exists.called
+        mock_subprocess_call.assert_called_with(["curl", "-k", "-L", "-o", "planex-build-root/SOURCES/ocaml-cohttp-0.9.8.tar.gz", url])
+        
+    # Decorators are applied bottom up
+    @patch('os.path.exists') 
+    @patch('configure.call') 
+    def test_fetch_url_existing_file(self, mock_subprocess_call, mock_os_path_exists):
+        url = "https://github.com/mirage/ocaml-cohttp/archive/ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz"
+	mock_os_path_exists.return_value = True
+	mock_subprocess_call.return_value = 0
+        configure.fetch_url(url)
+        mock_os_path_exists.assert_called_with("planex-build-root/SOURCES/ocaml-cohttp-0.9.8.tar.gz")
+	assert not mock_subprocess_call.called
+        
+    # Decorators are applied bottom up
+    @patch('os.path.exists') 
+    @patch('configure.call') 
+    def test_fetch_url_with_rewrite(self, mock_subprocess_call, mock_os_path_exists):
+        def rewrite(url):
+            return "http://rewritten.com/file.tar.gz"
+
+        url = "https://github.com/mirage/ocaml-cohttp/archive/ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz"
+	mock_os_path_exists.return_value = False
+	mock_subprocess_call.return_value = 0
+        configure.fetch_url(url, rewrite=rewrite)
+        mock_os_path_exists.assert_called_with("planex-build-root/SOURCES/file.tar.gz")
+        mock_subprocess_call.assert_called_with(["curl", "-k", "-L", "-o", "planex-build-root/SOURCES/file.tar.gz", "http://rewritten.com/file.tar.gz"])
+        
 
     def test_make_extended_git_url(self):
 	base_url = "https://github.com/xenserver/planex"
