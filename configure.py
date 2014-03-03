@@ -15,6 +15,7 @@ import glob
 import shutil
 from planex_globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
                             SPECS_GLOB)
+import planex.spec
 
 GITHUB_MIRROR = "~/github_mirror"
 MYREPOS = "~/devel2"
@@ -215,26 +216,8 @@ def sources_from_spec(spec_path):
 
     Returns a list of source URLs with RPM macros expanded.
     """
-    sources = []
-    perl = subprocess.Popen(
-        ['perl', '-pe',
-         's/^\\s*Version\\s*:\\s*\\@VERSION\\@.*/Version: 123.planex789\\n/i',
-          spec_path],
-         stdout=subprocess.PIPE)
-    spectool = subprocess.Popen(
-        ["spectool", "--list-files", "--sources", '<&STDIN'],
-         stdout=subprocess.PIPE,stdin=perl.stdout)
-    perl.stdout.close()
-    lines = spectool.communicate()[0].strip().split("\n")
-    perl.wait()
-    if spectool.returncode != 0 or perl.returncode != 0:
-        sys.stderr.write("error parsing spec file '%s'\n" % spec_path)
-        sys.exit(1)
-    for line in lines:
-        match = re.match(r"^([Ss]ource\d*):\s+(\S+)$", line)
-        if match:
-            sources.append(match.group(2))
-    return sources
+    spec = planex.spec.Spec(spec_path)
+    return spec.source_urls()
 
 
 def preprocess_spec(spec_in_path, spec_out_path, version, tarball_name):
