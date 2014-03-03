@@ -10,33 +10,33 @@ import configure
 class BasicTests(unittest.TestCase):
     def setUp(self):
         # 'setUp' breaks Pylint's naming rules
-        # pylint: disable=C0103 
+        # pylint: disable=C0103
         self.cohttp_url = "https://github.com/mirage/ocaml-cohttp" \
             "/archive/ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz"
 
 
     def test_rewrite_to_distfiles(self):
         url = "http://github.com/xenserver/planex"
-        res = configure.rewrite_to_distfiles(url) 
+        res = configure.rewrite_to_distfiles(url)
         self.assertEqual(res,  "file:///distfiles/ocaml2/planex")
 
 
     # Decorators are applied bottom up
-    @patch('os.path.exists') 
+    @patch('os.path.exists')
     @patch('configure.call') # configure adds subprocess.call to its namespace
     def test_fetch_url(self, mock_subprocess_call, mock_os_path_exists):
         mock_os_path_exists.return_value = False
         mock_subprocess_call.return_value = 0
         configure.fetch_url(self.cohttp_url)
         assert mock_os_path_exists.called
-        mock_subprocess_call.assert_called_with(["curl", "-k", "-L", "-o", 
-            "planex-build-root/SOURCES/ocaml-cohttp-0.9.8.tar.gz", 
+        mock_subprocess_call.assert_called_with(["curl", "-k", "-L", "-o",
+            "planex-build-root/SOURCES/ocaml-cohttp-0.9.8.tar.gz",
             self.cohttp_url])
-        
 
-    @patch('os.path.exists') 
-    @patch('configure.call') 
-    def test_fetch_url_existing_file(self, mock_subprocess_call, 
+
+    @patch('os.path.exists')
+    @patch('configure.call')
+    def test_fetch_url_existing_file(self, mock_subprocess_call,
                                      mock_os_path_exists):
         mock_os_path_exists.return_value = True
         mock_subprocess_call.return_value = 0
@@ -44,11 +44,11 @@ class BasicTests(unittest.TestCase):
         mock_os_path_exists.assert_called_with(
             "planex-build-root/SOURCES/ocaml-cohttp-0.9.8.tar.gz")
         assert not mock_subprocess_call.called
-        
 
-    @patch('os.path.exists') 
-    @patch('configure.call') 
-    def test_fetch_url_with_rewrite(self, mock_subprocess_call, 
+
+    @patch('os.path.exists')
+    @patch('configure.call')
+    def test_fetch_url_with_rewrite(self, mock_subprocess_call,
                                     mock_os_path_exists):
         def rewrite(_url):
             return "http://rewritten.com/file.tar.gz"
@@ -58,10 +58,10 @@ class BasicTests(unittest.TestCase):
         configure.fetch_url(self.cohttp_url, rewrite=rewrite)
         mock_os_path_exists.assert_called_with(
             "planex-build-root/SOURCES/file.tar.gz")
-        mock_subprocess_call.assert_called_with(["curl", "-k", "-L", "-o", 
-            "planex-build-root/SOURCES/file.tar.gz", 
+        mock_subprocess_call.assert_called_with(["curl", "-k", "-L", "-o",
+            "planex-build-root/SOURCES/file.tar.gz",
             "http://rewritten.com/file.tar.gz"])
- 
+
 
     def test_make_extended_git_url(self):
         base_url = "https://github.com/xenserver/planex"
@@ -80,7 +80,7 @@ class BasicTests(unittest.TestCase):
         expected = ("git", "github.com", "/xenserver/planex", "1.0.0",
                     "%{name}-%{version}.tar.gz")
         self.assertEqual(res, expected)
-    
+
 
     def test_roundtrip_extended_git_url(self):
         base_url = "git://github.com/xenserver/planex"
@@ -89,7 +89,7 @@ class BasicTests(unittest.TestCase):
         expected = ("git", "github.com", "/xenserver/planex", "1.0.0",
                     "%{name}-%{version}.tar.gz")
         self.assertEqual(res, expected)
-    
+
 
     def test_name_from_spec(self):
         res = configure.name_from_spec("tests/data/ocaml-cohttp.spec")
