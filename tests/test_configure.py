@@ -9,6 +9,8 @@ import configure
 
 class BasicTests(unittest.TestCase):
     def setUp(self):
+        # 'setUp' breaks Pylint's naming rules
+        # pylint: disable=C0103 
         self.cohttp_url = "https://github.com/mirage/ocaml-cohttp" \
             "/archive/ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz"
 
@@ -16,7 +18,7 @@ class BasicTests(unittest.TestCase):
     def test_rewrite_to_distfiles(self):
         url = "http://github.com/xenserver/planex"
         res = configure.rewrite_to_distfiles(url) 
-        assert res == "file:///distfiles/ocaml2/planex"
+        self.assertEqual(res,  "file:///distfiles/ocaml2/planex")
 
 
     # Decorators are applied bottom up
@@ -48,7 +50,7 @@ class BasicTests(unittest.TestCase):
     @patch('configure.call') 
     def test_fetch_url_with_rewrite(self, mock_subprocess_call, 
                                     mock_os_path_exists):
-        def rewrite(url):
+        def rewrite(_url):
             return "http://rewritten.com/file.tar.gz"
 
         mock_os_path_exists.return_value = False
@@ -66,7 +68,7 @@ class BasicTests(unittest.TestCase):
         extended_url = "https://github.com/xenserver/planex#1.0.0/" \
                        "%{name}-%{version}.tar.gz"
         res = configure.make_extended_git_url(base_url, "1.0.0")
-        assert res == extended_url
+        self.assertEqual(res, extended_url)
 
 
     # We don't handle 'v1.0.0'
@@ -75,21 +77,23 @@ class BasicTests(unittest.TestCase):
         url = "git://github.com/xenserver/planex#1.0.0/" \
               "%{name}-%{version}.tar.gz"
         res = configure.parse_extended_git_url(url)
-        assert res == ("git", "github.com", "/xenserver/planex", "1.0.0", 
-                       "%{name}-%{version}.tar.gz")
+        expected = ("git", "github.com", "/xenserver/planex", "1.0.0",
+                    "%{name}-%{version}.tar.gz")
+        self.assertEqual(res, expected)
     
 
-    def test_make_and_parse_extended_git_url(self):
+    def test_roundtrip_extended_git_url(self):
         base_url = "git://github.com/xenserver/planex"
         url = configure.make_extended_git_url(base_url, "1.0.0")
         res = configure.parse_extended_git_url(url)
-        assert res == ("git", "github.com", "/xenserver/planex", "1.0.0",
-                       "%{name}-%{version}.tar.gz")
+        expected = ("git", "github.com", "/xenserver/planex", "1.0.0",
+                    "%{name}-%{version}.tar.gz")
+        self.assertEqual(res, expected)
     
 
     def test_name_from_spec(self):
         res = configure.name_from_spec("tests/data/ocaml-cohttp.spec")
-        assert res == "ocaml-cohttp"
+        self.assertEqual(res, "ocaml-cohttp")
 
 
     def test_check_spec_name(self):
@@ -110,5 +114,5 @@ class BasicTests(unittest.TestCase):
 
     def test_sources_from_spec(self):
         res = configure.sources_from_spec("tests/data/ocaml-cohttp.spec")
-        assert sorted(res) == sorted([self.cohttp_url])
+        self.assertEqual(res, [self.cohttp_url])
 
