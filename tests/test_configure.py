@@ -114,5 +114,8 @@ class BasicTests(unittest.TestCase):
 
     def test_sources_from_spec(self):
         res = configure.sources_from_spec("tests/data/ocaml-cohttp.spec")
-        self.assertEqual(res, [self.cohttp_url])
+        self.assertEqual(res, 
+            ["ocaml-cohttp-init",
+             "file:///code/ocaml-cohttp-extra#ocaml-cohttp-extra-0.9.8.tar.gz",
+             self.cohttp_url])
 
