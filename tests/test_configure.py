@@ -2,10 +2,6 @@
 #   install the 'python-nose' package (Fedora/CentOS or Ubuntu)
 #   run 'nosetests' in the root of the repository
 
-from cStringIO import StringIO
-import glob
-import os
-import sys
 import unittest
 from mock import patch
 
