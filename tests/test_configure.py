@@ -3,9 +3,17 @@
 #   run 'nosetests' in the root of the repository
 
 import unittest
+import os
 from mock import patch
 
-import configure
+from planex import configure
+
+DATADIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+
+
+def path_to(fname):
+    return os.path.join(DATADIR, fname)
+
 
 class BasicTests(unittest.TestCase):
     def setUp(self):
@@ -23,7 +31,7 @@ class BasicTests(unittest.TestCase):
 
     # Decorators are applied bottom up
     @patch('os.path.exists')
-    @patch('configure.call') # configure adds subprocess.call to its namespace
+    @patch('planex.configure.call') # configure adds subprocess.call to its namespace
     def test_fetch_url(self, mock_subprocess_call, mock_os_path_exists):
         mock_os_path_exists.return_value = False
         mock_subprocess_call.return_value = 0
@@ -35,7 +43,7 @@ class BasicTests(unittest.TestCase):
 
 
     @patch('os.path.exists')
-    @patch('configure.call')
+    @patch('planex.configure.call')
     def test_fetch_url_existing_file(self, mock_subprocess_call,
                                      mock_os_path_exists):
         mock_os_path_exists.return_value = True
@@ -47,7 +55,7 @@ class BasicTests(unittest.TestCase):
 
 
     @patch('os.path.exists')
-    @patch('configure.call')
+    @patch('planex.configure.call')
     def test_fetch_url_with_rewrite(self, mock_subprocess_call,
                                     mock_os_path_exists):
         def rewrite(_url):
@@ -113,9 +121,8 @@ class BasicTests(unittest.TestCase):
 
 
     def test_sources_from_spec(self):
-        res = configure.sources_from_spec("tests/data/ocaml-cohttp.spec")
+        res = configure.sources_from_spec(path_to("ocaml-cohttp.spec"))
         self.assertEqual(res, 
             [self.cohttp_url,
              "file:///code/ocaml-cohttp-extra#ocaml-cohttp-extra-0.9.8.tar.gz",
              "ocaml-cohttp-init"])
-
