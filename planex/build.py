@@ -11,7 +11,7 @@ import shutil
 import rpm
 import hashlib
 
-from planex_globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
+from planex.globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
                             SPECS_GLOB)
 
 
