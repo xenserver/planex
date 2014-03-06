@@ -18,7 +18,7 @@ from planex_globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
 TMP_RPM_PATH = "/tmp/RPMS"
 RPM_TOP_DIR = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
 CACHE_DIR = "rpmcache"
-
+DEFAULT_ARCH = "x86_64"
 
 def doexec(args, inputtext=None):
     """Execute a subprocess, then return its return code, stdout and stderr"""
@@ -42,7 +42,7 @@ def get_srpm_info(srpm):
     spec = rpm.ts().parseSpec(myspecfile)
     info = {}
     info['deps'] = spec.sourceHeader["requires"]
-    info['arch'] = "i686"
+    info['arch'] = DEFAULT_ARCH
     info['packages'] = [{'name':p.header['name']} for p in spec.packages]
     info['srcrpm'] = srpm
     content_file = open(myspecfile,'r')
@@ -197,7 +197,7 @@ def do_build(srpm, target, build_number, use_mock, xs_build_sys):
         cmd = ["mock", "--configdir=mock", "-r", "xenserver",
                "--resultdir=%s" % TMP_RPM_PATH, "--rebuild",
                "--target", target,
-               "--enable-plugin=tmpfs",
+#               "--enable-plugin=tmpfs",
                "--define", "extrarelease .%d" % build_number,
                "-v", srpm]
         if not xs_build_sys:
@@ -239,6 +239,7 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
         for pkg in pkgs:
             print "Copying cached rpm %s to %s" % (pkg, TMP_RPM_PATH)
             shutil.copy(pkg, TMP_RPM_PATH)
+        pkgs = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
 
     if not use_mock:
         (ret, _, stderr) = doexec(["rpm", "-U", "--force", "--nodeps"] + pkgs)
@@ -258,7 +259,7 @@ def main():
     use_mock = False
     xs_build_sys = False
     try:
-        longopts = ["use-mock", "xs-build-sys"]
+        longopts = ["use-mock", "xs-build-sys", "i686"]
         opts, _ = getopt.getopt(sys.argv[1:], "", longopts)
     except getopt.GetoptError, err:
         print str(err)
@@ -268,6 +269,8 @@ def main():
             use_mock = True
         if opt == "--xs-build-sys":
             xs_build_sys = True
+        if opt == "--i686":
+            DEFAULT_ARCH="i686"    
 
     if not os.path.isdir(SRPMS_DIR) or not os.listdir(SRPMS_DIR):
         print ("Error: No srpms found in %s; First run configure.py." %
