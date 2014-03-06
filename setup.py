@@ -8,5 +8,5 @@ setup(name='planex',
               'planex-configure = planex.configure:main',
               'planex-build = planex.build:main',
               'planex-install = planex.install:main',
-          }
+          ]
       })
