@@ -124,7 +124,7 @@ class Spec(object):
 
     def source_urls(self):
         """Return the URLs from which the sources can be downloaded"""
-        return [source for (source, _, _) in self.spec.sources]
+        return [source for (source, _, _) in reversed(self.spec.sources)]
 
 
     def source_paths(self):
