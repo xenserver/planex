@@ -11,10 +11,60 @@ import glob
 import subprocess
 import shutil
 
+from collections import namedtuple
+
 import json
 from planex.globals import RPMS_DIR
 
 CONFIG = "install.json"
+
+
+ValidationResult = namedtuple('ValidationResult', 'failed, message')
+
+
+class SpecsDir(object):
+    def __init__(self, filesystem, path):
+        self.filesystem = filesystem
+        self.path = path
+
+    @property
+    def has_config(self):
+        return self.filesystem.file_exists(self.config_path)
+
+    @property
+    def config_path(self):
+        return self.filesystem.join(self.path, CONFIG)
+
+    @property
+    def config_is_json(self):
+        contents = self.filesystem.contents_of(self.config_path)
+        try:
+            json.loads(contents)
+            return True
+        except ValueError:
+            return False
+
+    def validate(self):
+        if not self.filesystem.directory_exists(self.path):
+            return ValidationResult(
+                failed=True,
+                message='Invalid specs dir: [{0}] is not an existing directory'.format(
+                    self.path))
+        if self.has_config:
+            if not self.config_is_json:
+                return ValidationResult(
+                    failed=True,
+                    message='Invalid specs dir: [{0}] is not a json file'.format(
+                        self.config_path))
+        return ValidationResult(
+            failed=False,
+            message=None)
+
+    def get_packages(self):
+        pkgs = json.loads(self.filesystem.contents_of(self.config_path))
+        return [pkg['package-name'] for pkg in pkgs]
+
+
 
 
 def parse_config(config_path):
