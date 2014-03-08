@@ -97,3 +97,17 @@ class TestGetPackages(SpecsDirMixIn, unittest.TestCase):
         }
 
         self.assertEquals(['a', 'b'], self.specs_dir.get_packages())
+
+
+class TestArgParsing(unittest.TestCase):
+    def test_correct_call(self):
+        args = install.parse_args_or_exit(['cdir', 'ddir'])
+
+        self.assertEquals('cdir', args.component_dir)
+        self.assertEquals('ddir', args.dest_dir)
+
+    def test_incorrect_call(self):
+        with self.assertRaises(SystemExit) as ctx:
+            args = install.parse_args_or_exit(['cdir'])
+
+        self.assertEquals(2, ctx.exception.code)

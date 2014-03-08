@@ -10,6 +10,7 @@ import os
 import glob
 import subprocess
 import shutil
+import argparse
 
 from collections import namedtuple
 
@@ -87,6 +88,13 @@ def build_map(rpms_dir):
             stdout=subprocess.PIPE).communicate()[0].strip()
         result[pkg_name] = rpm_file
     return result
+
+
+def parse_args_or_exit(argv=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('component_dir', help='Specs directory')
+    parser.add_argument('dest_dir', help='Destination directory')
+    return parser.parse_args(argv)
 
 
 def main():
