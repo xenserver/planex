@@ -111,3 +111,18 @@ class TestArgParsing(unittest.TestCase):
             args = install.parse_args_or_exit(['cdir'])
 
         self.assertEquals(2, ctx.exception.code)
+
+
+class TestLocalFileSystemImplementsMethods(unittest.TestCase):
+    def test_methods_exist(self):
+        fake = filesystem.Fake()
+        real = filesystem.LocalFileSystem()
+
+        for field in dir(filesystem.Fake):
+            if not field.startswith('_'):
+                attr = getattr(fake, field)
+                if callable(attr):
+                    self.assertTrue(
+                        hasattr(real, field),
+                        msg="LocalFilesystem does not implement {0}".format(
+                            field))

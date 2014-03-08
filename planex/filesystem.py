@@ -15,3 +15,20 @@ class Fake(object):
     def contents_of(self, *path_elements):
         assert self.file_exists(*path_elements)
         return self.contents[self.join(*path_elements)].read()
+
+
+class LocalFileSystem(object):
+    def __init__(self):
+        import os
+        self.os = os
+        self.join = os.path.join
+
+    def contents_of(self, *path_elements):
+        with open(self.join(*path_elements), 'rb') as fhandle:
+            return fhandle.read()
+
+    def directory_exists(self, path):
+        return os.path.exists(path) and os.path.isdir(path)
+
+    def file_exists(self, *path_elements):
+        return os.path.exists(self.join(*path_elements))
