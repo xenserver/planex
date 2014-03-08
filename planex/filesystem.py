@@ -28,7 +28,7 @@ class LocalFileSystem(object):
             return fhandle.read()
 
     def directory_exists(self, path):
-        return os.path.exists(path) and os.path.isdir(path)
+        return self.os.path.exists(path) and self.os.path.isdir(path)
 
     def file_exists(self, *path_elements):
-        return os.path.exists(self.join(*path_elements))
+        return self.os.path.exists(self.join(*path_elements))
