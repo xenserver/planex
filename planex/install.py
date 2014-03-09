@@ -24,21 +24,20 @@ ValidationResult = namedtuple('ValidationResult', 'failed, message')
 
 
 class SpecsDir(object):
-    def __init__(self, filesystem, path):
-        self.filesystem = filesystem
-        self.path = path
+    def __init__(self, root):
+        self.root = root
 
     @property
     def has_config(self):
-        return self.filesystem.file_exists(self.config_path)
+        return self.root.isfile(self.config_path)
 
     @property
     def config_path(self):
-        return self.filesystem.join(self.path, CONFIG)
+        return CONFIG
 
     @property
     def config_is_json(self):
-        contents = self.filesystem.contents_of(self.config_path)
+        contents = self.root.getcontents(self.config_path)
         try:
             json.loads(contents)
             return True
@@ -46,11 +45,6 @@ class SpecsDir(object):
             return False
 
     def validate(self):
-        if not self.filesystem.directory_exists(self.path):
-            return ValidationResult(
-                failed=True,
-                message='Invalid specs dir: [{0}] is not an existing directory'.format(
-                    self.path))
         if self.has_config:
             if not self.config_is_json:
                 return ValidationResult(
@@ -62,7 +56,7 @@ class SpecsDir(object):
             message=None)
 
     def get_packages(self):
-        pkgs = json.loads(self.filesystem.contents_of(self.config_path))
+        pkgs = json.loads(self.root.getcontents(self.config_path))
         return [pkg['package-name'] for pkg in pkgs]
 
 
