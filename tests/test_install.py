@@ -38,12 +38,12 @@ class TestSpecsDirValidation(SpecsDirMixIn, unittest.TestCase):
 
 class TestSpecsDirHasConfig(SpecsDirMixIn, unittest.TestCase):
     def test_config_file_missing(self):
-        self.assertFalse(self.specs_dir.has_config)
+        self.assertFalse(self.specs_dir.has_install_config)
 
     def test_config_file_exists(self):
         self.specs_dir.root.setcontents('install.json', '')
 
-        self.assertTrue(self.specs_dir.has_config)
+        self.assertTrue(self.specs_dir.has_install_config)
 
 
 class TestGetPackages(SpecsDirMixIn, unittest.TestCase):

@@ -29,7 +29,7 @@ class SpecsDir(object):
         self.root = root
 
     @property
-    def has_config(self):
+    def has_install_config(self):
         return self.root.isfile(self.install_config_path)
 
     @property
@@ -46,7 +46,7 @@ class SpecsDir(object):
             return False
 
     def validate(self):
-        if self.has_config:
+        if self.has_install_config:
             if not self.install_config_is_json:
                 return ValidationResult(
                     failed=True,
