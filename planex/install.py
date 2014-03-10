@@ -79,8 +79,11 @@ class RPMPackage(object):
     @property
     def name(self):
         result = self.rpmsdir.executor.run(
-            ['rpm', '-qp', self.rpmsdir.root.getsyspath(self.path), '--qf', '%{name}'])
+            ['rpm', '-qp', self.get_syspath(), '--qf', '%{name}'])
         return result.stdout.strip()
+
+    def get_syspath(self):
+        return self.rpmsdir.root.getsyspath(self.path)
 
 
 class RPMSDir(object):

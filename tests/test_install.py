@@ -91,12 +91,22 @@ class TestRPM(unittest.TestCase):
             stdout='  somename  \n',
             stderr='ignored')
 
+        with mock.patch.object(package, 'get_syspath') as get_syspath:
+            get_syspath.return_value = '/some/filepath'
+            self.assertEquals('somename', package.name)
+
+    def test_syspath(self):
+        executor = install.FakeExecutor()
+        filesystem = fsopendir('ram:///')
+        rpmsdir = install.RPMSDir(filesystem, executor)
+        package = install.RPMPackage(rpmsdir, 'filepath')
+
         # As in-memory filesystem does not implement getsyspath,
         # it needs to be replaced with a stub
         with mock.patch.object(filesystem, 'getsyspath') as getsyspath:
             getsyspath.return_value = '/some/filepath'
-            self.assertEquals('somename', package.name)
-            getsyspath.assert_called_once_with('filepath')
+            self.assertEquals('/some/filepath', package.get_syspath())
+
 
 
 class TestRPMSDir(unittest.TestCase):
