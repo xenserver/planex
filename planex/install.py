@@ -56,7 +56,7 @@ class SpecsDir(object):
             failed=False,
             message=None)
 
-    def get_package_names(self):
+    def get_package_names_to_install(self):
         pkgs = json.loads(self.root.getcontents(self.config_path))
         return [pkg['package-name'] for pkg in pkgs]
 
