@@ -30,15 +30,15 @@ class SpecsDir(object):
 
     @property
     def has_config(self):
-        return self.root.isfile(self.config_path)
+        return self.root.isfile(self.install_config_path)
 
     @property
-    def config_path(self):
+    def install_config_path(self):
         return CONFIG
 
     @property
     def config_is_json(self):
-        contents = self.root.getcontents(self.config_path)
+        contents = self.root.getcontents(self.install_config_path)
         try:
             json.loads(contents)
             return True
@@ -51,13 +51,13 @@ class SpecsDir(object):
                 return ValidationResult(
                     failed=True,
                     message='Invalid specs dir: [{0}] is not a json file'.format(
-                        self.config_path))
+                        self.install_config_path))
         return ValidationResult(
             failed=False,
             message=None)
 
     def get_package_names_to_install(self):
-        pkgs = json.loads(self.root.getcontents(self.config_path))
+        pkgs = json.loads(self.root.getcontents(self.install_config_path))
         return [pkg['package-name'] for pkg in pkgs]
 
 
