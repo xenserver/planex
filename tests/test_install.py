@@ -74,3 +74,18 @@ class TestArgParsing(unittest.TestCase):
             args = install.parse_args_or_exit(['cdir'])
 
         self.assertEquals(2, ctx.exception.code)
+
+
+class TestRPM(unittest.TestCase):
+    def test_get_name(self):
+        executor = install.FakeExecutor()
+        package = install.RPMPackage('filepath', executor=executor)
+        executor.results[(
+            'rpm', '-qp', 'filepath', '--qf', '%{name}'
+        )] = install.ExecutionResult(
+            return_code=0,
+            stdout='  somename  \n',
+            stderr='ignored')
+
+        self.assertEquals('somename', package.name)
+

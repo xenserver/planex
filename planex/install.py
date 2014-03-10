@@ -21,6 +21,7 @@ CONFIG = "install.json"
 
 
 ValidationResult = namedtuple('ValidationResult', 'failed, message')
+ExecutionResult = namedtuple('ExecutionResult', 'return_code, stdout, stderr')
 
 
 class SpecsDir(object):
@@ -60,6 +61,26 @@ class SpecsDir(object):
         return [pkg['package-name'] for pkg in pkgs]
 
 
+
+class FakeExecutor(object):
+    def __init__(self):
+        self.results = {}
+
+    def run(self, args):
+        assert tuple(args) in self.results, "Unexpected call %s" % args
+        return self.results[tuple(args)]
+
+
+class RPMPackage(object):
+    def __init__(self, path, executor):
+        self.path = path
+        self.executor = executor
+
+    @property
+    def name(self):
+        result = self.executor.run(
+            ['rpm', '-qp', self.path, '--qf', '%{name}'])
+        return result.stdout.strip()
 
 
 def parse_config(config_path):
