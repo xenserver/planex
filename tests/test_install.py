@@ -122,3 +122,33 @@ class TestRPMSDir(unittest.TestCase):
 
         self.assertEquals(rpmsdir, rpm.rpmsdir)
         self.assertEquals('fname1.rpm', rpm.path)
+
+
+class TestValidateExistingDirectory(unittest.TestCase):
+    @mock.patch('planex.install.os.path')
+    def test_valid_existing_directory(self, path):
+        path.exists.return_value = True
+        path.isdir.return_value = True
+
+        result = install.validate_as_existing_directory('existing_path')
+
+        self.assertFalse(result.failed)
+
+    @mock.patch('planex.install.os.path')
+    def test_does_not_exist(self, path):
+        path.exists.return_value = False
+
+        result = install.validate_as_existing_directory('missing_path')
+
+        self.assertTrue(result.failed)
+        self.assertEquals('[missing_path] does not exist', result.message)
+
+    @mock.patch('planex.install.os.path')
+    def test_valid_existing_directory(self, path):
+        path.exists.return_value = True
+        path.isdir.return_value = False
+
+        result = install.validate_as_existing_directory('non-directory')
+
+        self.assertTrue(result.failed)
+        self.assertEquals('[non-directory] is not a directory', result.message)

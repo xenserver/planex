@@ -125,13 +125,23 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
+def validate_as_existing_directory(path):
+    if not os.path.exists(path):
+        return ValidationResult(
+            failed=True, message='[{0}] does not exist'.format(path))
+    if not os.path.isdir(path):
+        return ValidationResult(
+            failed=True, message='[{0}] is not a directory'.format(path))
+    return ValidationResult(failed=False, message=None)
+
+
 def main():
     """Main entry point.   Installs packages from <component-dir>
     to <destination-dir>"""
 
     args = parse_args_or_exit()
 
-    if not os.path.exists(args.component_dir):
+    if validate_as_existing_directory(args.component_dir).failed:
         print "Error: directory %s does not exist." % args.component_dir
         sys.exit(1)
 
