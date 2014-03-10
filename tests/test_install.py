@@ -118,3 +118,4 @@ class TestRPMSDir(unittest.TestCase):
         rpm, = rpmsdir.rpms
 
         self.assertEquals(rpmsdir, rpm.rpmsdir)
+        self.assertEquals('fname1.rpm', rpm.path)
