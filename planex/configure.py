@@ -301,12 +301,12 @@ def build_srpm(spec_path):
           "--nodeps", "--define", "_topdir %s" % BUILD_ROOT_DIR])
 
 
-def main():
+def main(argv):
     """
     Main function.  Process all the specfiles in the directory
     given by config_dir.
     """
-    config_dir, use_distfiles = parse_cmdline()
+    config_dir, use_distfiles = parse_cmdline(argv)
 
     for path in [SRPMS_DIR, SPECS_DIR]:
         if os.path.exists(path):
@@ -347,14 +347,14 @@ def main():
     print "number of packages fetched: %d" % number_fetched
 
 
-def usage():
+def usage(name):
     """
     Print usage string
     """
-    print "%s --config-dir=<config-dir>" % __file__
+    print "%s --config-dir=<config-dir>" % name
 
 
-def parse_cmdline():
+def parse_cmdline(argv):
     """
     Parse command line options
     """
@@ -362,10 +362,10 @@ def parse_cmdline():
     use_distfiles = False
     try:
         longopts = ["config-dir=", "use-distfiles"]
-        opts, _ = getopt.getopt(sys.argv[1:], "", longopts)
+        opts, _ = getopt.getopt(argv[1:], "", longopts)
     except getopt.GetoptError, err:
         print str(err)
-        usage()
+        usage(argv[0])
         sys.exit(1)
     for opt, arg in opts:
         if opt == "--config-dir":
@@ -373,10 +373,15 @@ def parse_cmdline():
         if opt == "--use-distfiles":
             use_distfiles = True
     if config_dir == None:
-        usage()
+        usage(argv[0])
         sys.exit(1)
     return (config_dir, use_distfiles)
 
 
+def _main():
+    """Entry point for setuptools CLI wrapper"""
+    main(sys.argv)
+
+
 if __name__ == "__main__":
-    main()
+    _main()
