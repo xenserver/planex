@@ -37,7 +37,7 @@ class SpecsDir(object):
         return CONFIG
 
     @property
-    def config_is_json(self):
+    def install_config_is_json(self):
         contents = self.root.getcontents(self.install_config_path)
         try:
             json.loads(contents)
@@ -47,7 +47,7 @@ class SpecsDir(object):
 
     def validate(self):
         if self.has_config:
-            if not self.config_is_json:
+            if not self.install_config_is_json:
                 return ValidationResult(
                     failed=True,
                     message='Invalid specs dir: [{0}] is not a json file'.format(
