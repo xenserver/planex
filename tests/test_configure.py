@@ -5,6 +5,9 @@
 import unittest
 import os
 from mock import patch
+import subprocess
+import tempfile
+import shutil
 
 from planex import configure
 
@@ -126,3 +129,39 @@ class BasicTests(unittest.TestCase):
             [self.cohttp_url,
              "file:///code/ocaml-cohttp-extra#ocaml-cohttp-extra-0.9.8.tar.gz",
              "ocaml-cohttp-init"])
+
+class GitTests(unittest.TestCase):
+    def setUp(self):
+        # 'setUp' breaks Pylint's naming rules
+        # pylint: disable=C0103
+        self.working_dir = tempfile.mkdtemp()
+        self.sources_dir = os.path.join(self.working_dir, "SOURCES")
+	os.mkdir(self.sources_dir)
+        subprocess.call(["tar", "zxf", "tests/data/test-git.tar.gz", 
+                         "-C", self.working_dir])
+
+
+    def tearDown(self):
+        # 'tearDown' breaks Pylint's naming rules
+        # pylint: disable=C0103
+        shutil.rmtree(self.working_dir)
+	
+
+    def test_locate_repo(self):
+        res = configure.locate_repo("test.git", myrepos=self.working_dir)
+        self.assertEqual(res, os.path.join(self.working_dir, "test.git"))
+
+
+    def test_latest_git_tag(self):
+        res = configure.latest_git_tag("git://host.com/test.git", 
+                                       myrepos=self.working_dir)
+        self.assertEqual(res, "1.1.0")
+
+
+    def test_fetch_git_source(self):
+        configure.fetch_git_source("git://host.com/test.git#"
+                                       "1.1.0/test-1.1.0.tar.gz", 
+                                   myrepos=self.working_dir,
+                                   sources_dir=self.sources_dir)
+        expected_tarball = os.path.join(self.sources_dir, "test-1.1.0.tar.gz")
+        self.assertTrue(os.path.exists(expected_tarball))
