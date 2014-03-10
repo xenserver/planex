@@ -48,7 +48,7 @@ class TestSpecsDirHasConfig(SpecsDirMixIn, unittest.TestCase):
 class TestGetPackages(SpecsDirMixIn, unittest.TestCase):
     def test_no_packages(self):
         self.specs_dir.root.setcontents('install.json', '[]')
-        self.assertEquals([], self.specs_dir.get_packages())
+        self.assertEquals([], self.specs_dir.get_package_names())
 
     def test_packages_specified(self):
         self.specs_dir.root.setcontents(
@@ -59,7 +59,7 @@ class TestGetPackages(SpecsDirMixIn, unittest.TestCase):
             ]
             """))
 
-        self.assertEquals(['a', 'b'], self.specs_dir.get_packages())
+        self.assertEquals(['a', 'b'], self.specs_dir.get_package_names())
 
 
 class TestArgParsing(unittest.TestCase):
