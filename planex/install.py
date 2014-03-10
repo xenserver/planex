@@ -72,15 +72,28 @@ class FakeExecutor(object):
 
 
 class RPMPackage(object):
-    def __init__(self, path, executor):
+    def __init__(self, rpmsdir, path):
         self.path = path
-        self.executor = executor
+        self.rpmsdir = rpmsdir
 
     @property
     def name(self):
-        result = self.executor.run(
-            ['rpm', '-qp', self.path, '--qf', '%{name}'])
+        result = self.rpmsdir.executor.run(
+            ['rpm', '-qp', self.rpmsdir.root.getsyspath(self.path), '--qf', '%{name}'])
         return result.stdout.strip()
+
+
+class RPMSDir(object):
+    def __init__(self, root, executor):
+        self.root = root
+        self.executor = executor
+
+    @property
+    def rpms(self):
+        rpms = []
+        for rpm_path in self.root.listdir(wildcard='*.rpm'):
+            rpms.append(RPMPackage(self, rpm_path))
+        return rpms
 
 
 def parse_config(config_path):

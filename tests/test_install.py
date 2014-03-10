@@ -1,4 +1,5 @@
 import unittest
+import mock
 import StringIO
 from fs.opener import fsopendir
 
@@ -80,12 +81,40 @@ class TestArgParsing(unittest.TestCase):
 class TestRPM(unittest.TestCase):
     def test_get_name(self):
         executor = install.FakeExecutor()
-        package = install.RPMPackage('filepath', executor=executor)
+        filesystem = fsopendir('ram:///')
+        rpmsdir = install.RPMSDir(filesystem, executor)
+        package = install.RPMPackage(rpmsdir, 'somefile')
         executor.results[(
-            'rpm', '-qp', 'filepath', '--qf', '%{name}'
+            'rpm', '-qp', '/some/filepath', '--qf', '%{name}'
         )] = install.ExecutionResult(
             return_code=0,
             stdout='  somename  \n',
             stderr='ignored')
 
-        self.assertEquals('somename', package.name)
+        with mock.patch.object(filesystem, 'getsyspath') as getsyspath:
+            getsyspath.return_value = '/some/filepath'
+            self.assertEquals('somename', package.name)
+
+
+class TestRPMSDir(unittest.TestCase):
+    def test_init(self):
+        rpmsdir = install.RPMSDir('root', 'executor')
+
+        self.assertEquals('root', rpmsdir.root)
+        self.assertEquals('executor', rpmsdir.executor)
+
+    def test_get_rpms(self):
+        fs = fsopendir('ram:///')
+        rpmsdir = install.RPMSDir(fs, None)
+        fs.createfile('fname1.rpm')
+
+        self.assertEquals(1, len(rpmsdir.rpms))
+
+    def test_rpms_are_objects_with_names(self):
+        fs = fsopendir('ram:///')
+        rpmsdir = install.RPMSDir(fs, 'executor')
+        fs.createfile('fname1.rpm')
+
+        rpm, = rpmsdir.rpms
+
+        self.assertEquals(rpmsdir, rpm.rpmsdir)
