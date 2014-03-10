@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import shutil
 
+import planex
 from planex import configure
 
 DATADIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
@@ -146,7 +147,7 @@ class BasicTests(unittest.TestCase):
         mock_sources.assert_called_with(path_to("ocaml-cohttp.spec"))
         mock_fetch.assert_called_with(urls[0], None)
     
-        self.assertEqual(res, (1,0))
+        self.assertEqual(res, (1, 0))
         
 
     @patch('planex.configure.fetch_git_source')
@@ -166,7 +167,16 @@ class BasicTests(unittest.TestCase):
         self.assertFalse(mock_fetch.called)
         mock_fetch_git.assert_called_with(urls[0])
     
-        self.assertEqual(res, (1,0))
+        self.assertEqual(res, (1, 0))
+
+
+    def test_preprocess_spec(self):
+        working_dir = tempfile.mkdtemp()
+        configure.preprocess_spec(path_to("ocaml-cohttp.spec.in"),
+                                  working_dir, "1.2.3", "foo.tar.gz")
+        spec = planex.spec.Spec(os.path.join(working_dir, "ocaml-cohttp.spec"))
+        self.assertEqual(spec.version(), "1.2.3")
+        self.assertEqual(spec.source_urls(), ["foo.tar.gz"])
 
 
 class GitTests(unittest.TestCase):
@@ -175,7 +185,7 @@ class GitTests(unittest.TestCase):
         # pylint: disable=C0103
         self.working_dir = tempfile.mkdtemp()
         self.sources_dir = os.path.join(self.working_dir, "SOURCES")
-	os.mkdir(self.sources_dir)
+        os.mkdir(self.sources_dir)
         subprocess.call(["tar", "zxf", "tests/data/test-git.tar.gz", 
                          "-C", self.working_dir])
 
