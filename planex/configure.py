@@ -90,7 +90,7 @@ def parse_extended_git_url(url):
     return(scheme, host, path, version, archive)
 
 
-def locate_repo(path):
+def locate_repo(path, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     """
     Returns the location of the repository
     """
@@ -104,18 +104,19 @@ def locate_repo(path):
     basename = path.split("/")[-1]
 
     trials = [
-        os.path.expanduser("%s/%s" % (MYREPOS, basename)),
-        os.path.expanduser("%s/%s.git" % (MYREPOS, basename)),
+        os.path.expanduser("%s/%s" % (myrepos, basename)),
+        os.path.expanduser("%s/%s.git" % (myrepos, basename)),
         "/repos/%s" % basename,
-        os.path.expanduser("%s/%s.git" % (GITHUB_MIRROR, path))]
+        os.path.expanduser("%s/%s.git" % (github_mirror, path))]
 
     for trial in trials:
+	print "trying " + trial
         if os.path.exists(trial):
             return trial
 
     return None
 
-def latest_git_tag(url):
+def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     """
     Returns numeric version tag closest to HEAD in the repository.
     """
@@ -124,7 +125,7 @@ def latest_git_tag(url):
     (scheme, _, path, committish, _) = parse_extended_git_url(url)
     assert scheme == "git"
 
-    repo_location = locate_repo(path)
+    repo_location = locate_repo(path, myrepos, github_mirror)
 
     print "Located git repo at: %s" % repo_location
 
@@ -152,7 +153,8 @@ def latest_git_tag(url):
     return description[matchlen:].replace('-', '+')
 
 
-def fetch_git_source(url):
+def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR, 
+                     sources_dir=SOURCES_DIR):
     """
     Fetches an archive of HEAD of the git repository at path.
     Produces a tarball called 'archive_name' in SOURCES_DIR,
@@ -167,19 +169,19 @@ def fetch_git_source(url):
     (_, _, path, version, archive_name) = parse_extended_git_url(url)
     basename = path.split("/")[-1]
 
-    repo_location = locate_repo(path)
+    repo_location = locate_repo(path, myrepos, github_mirror)
 
     if(os.path.exists("%s/.git" % repo_location)):
         dotgitdir = "%s/.git" % repo_location
     else:
         dotgitdir = repo_location
 
-    for sourcefile in os.listdir(SOURCES_DIR):
+    for sourcefile in os.listdir(sources_dir):
         if re.search(r'^(%s\.tar)(\.gz)?$' % basename, sourcefile):
             os.remove(sourcefile)
     call(["git", "--git-dir=%s" % dotgitdir, "archive",
           "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
-          "%s/%s" % (SOURCES_DIR, archive_name)])
+          "%s/%s" % (sources_dir, archive_name)])
 
 
 def name_from_spec(spec_path):

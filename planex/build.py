@@ -256,6 +256,8 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
 
 
 def main():
+    global DEFAULT_ARCH
+
     use_mock = False
     xs_build_sys = False
     try:
@@ -270,7 +272,7 @@ def main():
         if opt == "--xs-build-sys":
             xs_build_sys = True
         if opt == "--i686":
-            DEFAULT_ARCH="i686"    
+            DEFAULT_ARCH = "i686"
 
     if not os.path.isdir(SRPMS_DIR) or not os.listdir(SRPMS_DIR):
         print ("Error: No srpms found in %s; First run configure.py." %
