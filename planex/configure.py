@@ -285,6 +285,7 @@ def prepare_srpm(spec_path, use_distfiles):
 
         if scheme in ['git']:
             fetch_git_source(source)
+            number_fetched += 1
 
     return number_fetched, number_skipped
 

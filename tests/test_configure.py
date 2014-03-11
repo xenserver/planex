@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import shutil
 
+import planex
 from planex import configure
 
 DATADIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
@@ -130,13 +131,61 @@ class BasicTests(unittest.TestCase):
              "file:///code/ocaml-cohttp-extra#ocaml-cohttp-extra-0.9.8.tar.gz",
              "ocaml-cohttp-init"])
 
+
+    @patch('planex.configure.fetch_url')
+    @patch('planex.configure.sources_from_spec')
+    def test_prepare_srpm_http(self, mock_sources, mock_fetch):
+        """Test downloading a single 'normal' source URL"""
+        urls = ["http://test.com/foo#1.0.0/foo-1.0.0.tar.gz"]
+
+        mock_sources.return_value = urls
+        mock_fetch.return_value = 1
+
+        res = configure.prepare_srpm(path_to("ocaml-cohttp.spec"), 
+                                     use_distfiles=False)
+
+        mock_sources.assert_called_with(path_to("ocaml-cohttp.spec"))
+        mock_fetch.assert_called_with(urls[0], None)
+    
+        self.assertEqual(res, (1, 0))
+        
+
+    @patch('planex.configure.fetch_git_source')
+    @patch('planex.configure.fetch_url')
+    @patch('planex.configure.sources_from_spec')
+    def test_prepare_srpm_git(self, mock_sources, mock_fetch, mock_fetch_git):
+        """Test downloading a single GitHub-like git source URL"""
+        urls = ["git://test.com/foo#1.0.0/foo-1.0.0.tar.gz"]
+
+        mock_sources.return_value = urls
+        mock_fetch.return_value = 1
+
+        res = configure.prepare_srpm(path_to("ocaml-cohttp.spec"), 
+                                     use_distfiles=False)
+
+        mock_sources.assert_called_with(path_to("ocaml-cohttp.spec"))
+        self.assertFalse(mock_fetch.called)
+        mock_fetch_git.assert_called_with(urls[0])
+    
+        self.assertEqual(res, (1, 0))
+
+
+    def test_preprocess_spec(self):
+        working_dir = tempfile.mkdtemp()
+        configure.preprocess_spec(path_to("ocaml-cohttp.spec.in"),
+                                  working_dir, "1.2.3", "foo.tar.gz")
+        spec = planex.spec.Spec(os.path.join(working_dir, "ocaml-cohttp.spec"))
+        self.assertEqual(spec.version(), "1.2.3")
+        self.assertEqual(spec.source_urls(), ["foo.tar.gz"])
+
+
 class GitTests(unittest.TestCase):
     def setUp(self):
         # 'setUp' breaks Pylint's naming rules
         # pylint: disable=C0103
         self.working_dir = tempfile.mkdtemp()
         self.sources_dir = os.path.join(self.working_dir, "SOURCES")
-	os.mkdir(self.sources_dir)
+        os.mkdir(self.sources_dir)
         subprocess.call(["tar", "zxf", "tests/data/test-git.tar.gz", 
                          "-C", self.working_dir])
 
