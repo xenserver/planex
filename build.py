@@ -10,6 +10,7 @@ import subprocess
 import shutil
 import rpm
 import hashlib
+import platform
 
 from planex_globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
                             SPECS_GLOB)
@@ -42,13 +43,20 @@ def get_srpm_info(srpm):
     spec = rpm.ts().parseSpec(myspecfile)
     info = {}
     info['deps'] = spec.sourceHeader["requires"]
-    info['arch'] = "i686"
+    info['arch'] = return_arch_type()
     info['packages'] = [{'name':p.header['name']} for p in spec.packages]
     info['srcrpm'] = srpm
     content_file = open(myspecfile,'r')
     info['spec'] = content_file.read()
     content_file.close()
     return info
+
+def return_arch_type():
+	arch = platform.machine()
+	if arch == 'x86_64':
+		return 'x86_64'
+	else:
+		return 'i686'
 
 
 def extract_target(srpm_infos, srpm_filename):
