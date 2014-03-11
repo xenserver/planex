@@ -110,7 +110,6 @@ def locate_repo(path, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
         os.path.expanduser("%s/%s.git" % (github_mirror, path))]
 
     for trial in trials:
-	print "trying " + trial
         if os.path.exists(trial):
             return trial
 
@@ -254,7 +253,7 @@ def preprocess_spec(spec_in_path, spec_out_path, version, tarball_name):
 def prepare_srpm(spec_path, use_distfiles):
     """
     Downloads sources needed to build an SRPM from the spec file
-    at spec_path.   Pre-processes the spec file, if needed.
+    at spec_path.
     """
     # check the .spec file exists, or .spec.in if we're processing the spec
     if not(os.path.exists(spec_path)):
@@ -301,13 +300,8 @@ def build_srpm(spec_path):
           "--nodeps", "--define", "_topdir %s" % BUILD_ROOT_DIR])
 
 
-def main(argv):
-    """
-    Main function.  Process all the specfiles in the directory
-    given by config_dir.
-    """
-    config_dir, use_distfiles = parse_cmdline(argv)
-
+def prepare_buildroot():
+    """Create a clean rpmbuild directory structure"""
     for path in [SRPMS_DIR, SPECS_DIR]:
         if os.path.exists(path):
             shutil.rmtree(path)
@@ -316,12 +310,16 @@ def main(argv):
     if not os.path.exists(SOURCES_DIR):
         os.makedirs(SOURCES_DIR)
 
-    # Pull in any required patches
+
+def copy_patches_to_buildroot(config_dir):
+    """Copy patches into the build root"""
     patches_dir = os.path.join(config_dir, 'SOURCES')
     for patch in glob.glob(os.path.join(patches_dir, '*')):
         shutil.copy(patch, SOURCES_DIR)
 
-    # Pull in spec files, preprocessing if necessary
+
+def copy_specs_to_buildroot(config_dir):
+    """Pull in spec files, preprocessing if necessary"""
     for spec_path in glob.glob(os.path.join(config_dir, "*.spec*")):
         check_spec_name(spec_path)
         if spec_path.endswith('.in'):
@@ -333,15 +331,31 @@ def main(argv):
         else:
             shutil.copy(spec_path, SPECS_DIR)
 
+
+def build_srpms(use_distfiles):
+    """Build SRPMs for all SPECs"""
     number_fetched = 0
     number_skipped = 0
 
-    # Build SRPMs
     for spec_path in glob.glob(SPECS_GLOB):
         fetched, skipped = prepare_srpm(spec_path, use_distfiles)
         number_fetched += fetched
         number_skipped += skipped
         build_srpm(spec_path)
+
+    return (number_fetched, number_skipped)
+
+
+def main(argv):
+    """
+    Main function.  Process all the specfiles in the directory
+    given by config_dir.
+    """
+    config_dir, use_distfiles = parse_cmdline(argv)
+    prepare_buildroot()
+    copy_patches_to_buildroot(config_dir)
+    copy_specs_to_buildroot(config_dir)
+    number_fetched, number_skipped = build_srpms(use_distfiles)
 
     print "number of packages skipped: %d" % number_skipped
     print "number of packages fetched: %d" % number_fetched
