@@ -150,7 +150,7 @@ def main():
 
     package_names = specs_dir.get_package_names_to_install()
 
-    pkg_to_rpm = build_map(RPMS_DIR)
+    pkg_to_rpm = rpms_dir.build_map()
 
     for pkg_name in package_names:
         rpm_path = pkg_to_rpm[pkg_name].syspath
