@@ -52,9 +52,7 @@ class SpecsDir(object):
                     failed=True,
                     message='Invalid specs dir: [{0}] is not a json file'.format(
                         self.install_config_path))
-        return ValidationResult(
-            failed=False,
-            message=None)
+        return ValidationResult(failed=False, message=None)
 
     def get_package_names_to_install(self):
         pkgs = json.loads(self.root.getcontents(self.install_config_path))
