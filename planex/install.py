@@ -107,17 +107,6 @@ class RPMSDir(object):
         return rpms
 
 
-def parse_config(config_path):
-    """Returns list of package names to install. These can be used in
-    conjunction with rpm query to find the relevant .rpm files that need
-    installing.
-    """
-    config_file = open(config_path, "r")
-    pkgs = json.load(config_file)
-    config_file.close()
-    return [pkg['package-name'] for pkg in pkgs]
-
-
 def build_map(rpms_dir):
     """Returns a map from package name to rpm package"""
     result = {}
