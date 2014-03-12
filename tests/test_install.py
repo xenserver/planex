@@ -13,7 +13,12 @@ class SpecsDirMixIn(object):
 
 
 def make_ramfs():
-    return fsopendir('ram:///')
+    def getsyspath(fname):
+        return 'SYSPATH:' + fname
+
+    fs = fsopendir('ram:///')
+    fs.getsyspath = mock.Mock(side_effect=getsyspath)
+    return fs
 
 
 class TestSpecsDirValidation(SpecsDirMixIn, unittest.TestCase):
@@ -88,11 +93,9 @@ class TestRPM(unittest.TestCase):
         filesystem = make_ramfs()
         rpmsdir = install.RPMSDir(filesystem, executor)
         package = install.RPMPackage(rpmsdir, 'filepath')
-        executor.map_rpmname_query('/some/filepath', '  somename  \n')
+        executor.map_rpmname_query('SYSPATH:filepath', '  somename  \n')
 
-        with mock.patch.object(package, 'get_syspath') as get_syspath:
-            get_syspath.return_value = '/some/filepath'
-            self.assertEquals('somename', package.get_name())
+        self.assertEquals('somename', package.get_name())
 
     def test_syspath(self):
         executor = install.FakeExecutor()
@@ -100,11 +103,7 @@ class TestRPM(unittest.TestCase):
         rpmsdir = install.RPMSDir(filesystem, executor)
         package = install.RPMPackage(rpmsdir, 'filepath')
 
-        # As in-memory filesystem does not implement getsyspath,
-        # it needs to be replaced with a stub
-        with mock.patch.object(filesystem, 'getsyspath') as getsyspath:
-            getsyspath.return_value = '/some/filepath'
-            self.assertEquals('/some/filepath', package.get_syspath())
+        self.assertEquals('SYSPATH:filepath', package.get_syspath())
 
 
 class TestRPMSDir(unittest.TestCase):
@@ -172,10 +171,8 @@ class TestBuildMap(unittest.TestCase):
         fs = make_ramfs()
         executor = install.FakeExecutor()
         rpms_dir = install.RPMSDir(fs, executor)
-        fs.getsyspath = mock.Mock()
-        fs.getsyspath.return_value = '/some/real/path/somepackage.rpm'
         executor.map_rpmname_query(
-            '/some/real/path/somepackage.rpm', 'package-name')
+            'SYSPATH:somepackage.rpm', 'package-name')
         fs.createfile('/somepackage.rpm')
 
         package_map = install.build_map(rpms_dir)
@@ -183,4 +180,4 @@ class TestBuildMap(unittest.TestCase):
         rpm_package = package_map['package-name']
 
         self.assertEquals(
-            '/some/real/path/somepackage.rpm', rpm_package.get_syspath())
+            'SYSPATH:somepackage.rpm', rpm_package.get_syspath())
