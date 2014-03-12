@@ -108,7 +108,6 @@ class TestRPM(unittest.TestCase):
             self.assertEquals('/some/filepath', package.get_syspath())
 
 
-
 class TestRPMSDir(unittest.TestCase):
     def test_init(self):
         rpmsdir = install.RPMSDir('root', 'executor')
@@ -176,11 +175,16 @@ class TestBuildMap(unittest.TestCase):
         rpms_dir = install.RPMSDir(fs, executor)
         fs.getsyspath = mock.Mock()
         fs.getsyspath.return_value = '/some/real/path/somepackage.rpm'
-        executor.results[('rpm', '-qp', '/some/real/path/somepackage.rpm',
-                          '--qf', '%{name}')] = install.ExecutionResult(
-                            return_code=0,
-                            stdout='package-name',
-                            stderr='ignored')
+        executor.results[
+            (
+                'rpm', '-qp', '/some/real/path/somepackage.rpm',
+                '--qf', '%{name}'
+            )
+        ] = install.ExecutionResult(
+            return_code=0,
+            stdout='package-name',
+            stderr='ignored')
+
         fs.createfile('/somepackage.rpm')
 
         package_map = install.build_map(rpms_dir)
