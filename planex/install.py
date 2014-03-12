@@ -7,7 +7,6 @@ Installs packages built from the specs in <component-specs-dir>.
 
 import sys
 import os
-import glob
 import subprocess
 import shutil
 import argparse
