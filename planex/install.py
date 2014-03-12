@@ -98,10 +98,11 @@ class RPMPackage(object):
 
     def get_name(self):
         result = self.rpmsdir.executor.run(
-            ['rpm', '-qp', self.get_syspath(), '--qf', '%{name}'])
+            ['rpm', '-qp', self.syspath, '--qf', '%{name}'])
         return result.stdout.strip()
 
-    def get_syspath(self):
+    @property
+    def syspath(self):
         return self.rpmsdir.root.getsyspath(self.path)
 
 
@@ -164,6 +165,6 @@ def main():
     pkg_to_rpm = build_map(RPMS_DIR)
 
     for pkg_name in package_names:
-        rpm_path = pkg_to_rpm[pkg_name].get_syspath()
+        rpm_path = pkg_to_rpm[pkg_name].syspath
         print "Copying:  %s -> %s" % (rpm_path, args.dest_dir)
         shutil.copy(rpm_path, args.dest_dir)

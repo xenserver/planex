@@ -103,7 +103,7 @@ class TestRPM(unittest.TestCase):
         rpmsdir = install.RPMSDir(filesystem, executor)
         package = install.RPMPackage(rpmsdir, 'filepath')
 
-        self.assertEquals('SYSPATH:filepath', package.get_syspath())
+        self.assertEquals('SYSPATH:filepath', package.syspath)
 
 
 class TestRPMSDir(unittest.TestCase):
@@ -180,4 +180,4 @@ class TestBuildMap(unittest.TestCase):
         rpm_package = package_map['package-name']
 
         self.assertEquals(
-            'SYSPATH:somepackage.rpm', rpm_package.get_syspath())
+            'SYSPATH:somepackage.rpm', rpm_package.syspath)
