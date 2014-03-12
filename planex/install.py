@@ -37,6 +37,10 @@ class SpecsDir(object):
         return CONFIG
 
     @property
+    def install_config_syspath(self):
+        return self.root.getsyspath(self.install_config_path)
+
+    @property
     def install_config_is_json(self):
         contents = self.root.getcontents(self.install_config_path)
         try:
@@ -69,6 +73,13 @@ class FakeExecutor(object):
         return self.results[tuple(args)]
 
 
+class RealExecutor(object):
+    def run(self, args):
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+        out, err = proc.communicate()
+        return out.strip()
+
+
 class RPMPackage(object):
     def __init__(self, rpmsdir, path):
         self.path = path
@@ -76,6 +87,7 @@ class RPMPackage(object):
 
     @property
     def name(self):
+        # TODO: this should be a function instead of a property
         result = self.rpmsdir.executor.run(
             ['rpm', '-qp', self.get_syspath(), '--qf', '%{name}'])
         return result.stdout.strip()
@@ -109,13 +121,11 @@ def parse_config(config_path):
 
 
 def build_map(rpms_dir):
-    """Returns a map from package name to rpm file"""
+    """Returns a map from package name to rpm package"""
     result = {}
-    for rpm_file in glob.glob(os.path.join(rpms_dir, '*.rpm')):
-        pkg_name = subprocess.Popen(
-            ["rpm", "-qp", rpm_file, "--qf", "%{name}"],
-            stdout=subprocess.PIPE).communicate()[0].strip()
-        result[pkg_name] = rpm_file
+    for rpm in rpms_dir.rpms:
+        pkg_name = rpm.name
+        result[pkg_name] = rpm
     return result
 
 
@@ -146,21 +156,23 @@ def main():
         print "Error: directory %s does not exist." % args.component_dir
         sys.exit(1)
 
-    config_path = os.path.join(args.component_dir, CONFIG)
-    if not os.path.exists(config_path):
-        print ("Config file %s not found, assuming no RPMs need packaging." %
-               config_path)
+    specs_dir = SpecsDir(args.component_dir)
+    if not specs_dir.has_install_config:
+        print ("Config file %s not found, assuming no RPMs need installation." %
+               specs_dir.install_config_syspath)
         sys.exit(0)
 
-    if not os.path.exists(args.dest_dir):
+    if validate_as_existing_directory(args.dest_dir).failed:
         os.makedirs(args.dest_dir)
 
-    config = parse_config(config_path)
+    rpms_dir = RPMSDir(RPMS_DIR, RealExecutor())
+
+    package_names = specs_dir.get_package_names_to_install()
 
     pkg_to_rpm = build_map(RPMS_DIR)
 
-    for pkg_name in config:
-        rpm_path = pkg_to_rpm[pkg_name]
+    for pkg_name in package_names:
+        rpm_path = pkg_to_rpm[pkg_name].get_syspath()
         print "Copying:  %s -> %s" % (rpm_path, args.dest_dir)
         shutil.copy(rpm_path, args.dest_dir)
 
