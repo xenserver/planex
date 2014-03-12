@@ -160,3 +160,32 @@ class TestValidateExistingDirectory(unittest.TestCase):
         result = install.directory_exists('non-directory')
 
         self.assertFalse(result)
+
+
+class TestBuildMap(unittest.TestCase):
+    def test_empty_rpmsdir(self):
+        fs = fsopendir('ram:///')
+        executor = install.FakeExecutor()
+        rpms_dir = install.RPMSDir(fs, executor)
+
+        self.assertEquals({}, install.build_map(rpms_dir))
+
+    def test_non_empty_rpmsdir(self):
+        fs = fsopendir('ram:///')
+        executor = install.FakeExecutor()
+        rpms_dir = install.RPMSDir(fs, executor)
+        fs.getsyspath = mock.Mock()
+        fs.getsyspath.return_value = '/some/real/path/somepackage.rpm'
+        executor.results[('rpm', '-qp', '/some/real/path/somepackage.rpm',
+                          '--qf', '%{name}')] = install.ExecutionResult(
+                            return_code=0,
+                            stdout='package-name',
+                            stderr='ignored')
+        fs.createfile('/somepackage.rpm')
+
+        package_map = install.build_map(rpms_dir)
+        self.assertTrue('package-name' in package_map)
+        rpm_package = package_map['package-name']
+
+        self.assertEquals(
+            '/some/real/path/somepackage.rpm', rpm_package.get_syspath())

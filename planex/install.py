@@ -77,7 +77,10 @@ class RealExecutor(object):
     def run(self, args):
         proc = subprocess.Popen(args, stdout=subprocess.PIPE)
         out, err = proc.communicate()
-        return out
+        return ExecutionResult(
+            return_code=proc.returncode,
+            stdout=out,
+            stderr=err)
 
 
 class RPMPackage(object):
