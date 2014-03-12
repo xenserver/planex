@@ -58,7 +58,8 @@ def make_extended_git_url(base_url, version):
     from a GitHub archive URL.
     """
     base_url = base_url.split('#')[0]
-    return "%s#%s/%%{name}-%%{version}.tar.gz" % (base_url, version)
+    name = os.path.split(base_url)[-1]
+    return "%s#%s/%s-%s.tar.gz" % (base_url, version, name, version)
 
 
 def parse_extended_git_url(url):
@@ -221,7 +222,7 @@ def sources_from_spec(spec_path):
     return spec.source_urls()
 
 
-def preprocess_spec(spec_in_path, spec_out_path, version, tarball_name):
+def preprocess_spec(spec_in_path, spec_out_path, version, source_mapping):
     """
     Preprocesses a spec file containing placeholders.
     Writes the result to the same filename, with the '.in' extension
@@ -237,9 +238,9 @@ def preprocess_spec(spec_in_path, spec_out_path, version, tarball_name):
     spec_out = open(os.path.join(spec_out_path, output_filename), "w")
 
     for line in spec_contents:
-        match = re.match(r'^([Ss]ource0:\s+)(.+)\n', line)
-        if match:
-            line = match.group(1) + tarball_name + "\n"
+        match = re.match(r'^([Ss]ource\d*:\s+)(.+)\n', line)
+        if match and match.group(2) in source_mapping:
+                line = match.group(1) + source_mapping[match.group(2)] + "\n"
 
         match = re.match(r'^([Vv]ersion:\s+)(.+)\n', line)
         if match:
@@ -324,10 +325,11 @@ def copy_specs_to_buildroot(config_dir):
         check_spec_name(spec_path)
         if spec_path.endswith('.in'):
             print "Configuring package with spec file: %s" % spec_path
-            sources = sources_from_spec(spec_path)
-            version = latest_git_tag(sources[0])
-            repo_url = make_extended_git_url(sources[0], version)
-            preprocess_spec(spec_path, SPECS_DIR, version, repo_url)
+            sources = [source for source in sources_from_spec(spec_path) if source.startswith("git://")]
+            versions = [latest_git_tag(source) for source in sources]
+            repo_urls = [make_extended_git_url(source, version) for (source, version) in zip(sources, versions)]
+	    mapping = dict(zip(sources, repo_urls))
+            preprocess_spec(spec_path, SPECS_DIR, version, mapping)
         else:
             shutil.copy(spec_path, SPECS_DIR)
 
