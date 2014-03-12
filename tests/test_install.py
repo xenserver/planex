@@ -9,7 +9,11 @@ from planex import install
 class SpecsDirMixIn(object):
     def setUp(self):
         self.specs_dir = install.SpecsDir(
-            root=fsopendir('ram:///'))
+            root=make_ramfs())
+
+
+def make_ramfs():
+    return fsopendir('ram:///')
 
 
 class TestSpecsDirValidation(SpecsDirMixIn, unittest.TestCase):
@@ -81,7 +85,7 @@ class TestArgParsing(unittest.TestCase):
 class TestRPM(unittest.TestCase):
     def test_get_name(self):
         executor = install.FakeExecutor()
-        filesystem = fsopendir('ram:///')
+        filesystem = make_ramfs()
         rpmsdir = install.RPMSDir(filesystem, executor)
         package = install.RPMPackage(rpmsdir, 'filepath')
         executor.map_rpmname_query('/some/filepath', '  somename  \n')
@@ -92,7 +96,7 @@ class TestRPM(unittest.TestCase):
 
     def test_syspath(self):
         executor = install.FakeExecutor()
-        filesystem = fsopendir('ram:///')
+        filesystem = make_ramfs()
         rpmsdir = install.RPMSDir(filesystem, executor)
         package = install.RPMPackage(rpmsdir, 'filepath')
 
@@ -111,14 +115,14 @@ class TestRPMSDir(unittest.TestCase):
         self.assertEquals('executor', rpmsdir.executor)
 
     def test_get_rpms(self):
-        fs = fsopendir('ram:///')
+        fs = make_ramfs()
         rpmsdir = install.RPMSDir(fs, None)
         fs.createfile('fname1.rpm')
 
         self.assertEquals(1, len(rpmsdir.rpms))
 
     def test_rpms_are_objects_with_names(self):
-        fs = fsopendir('ram:///')
+        fs = make_ramfs()
         rpmsdir = install.RPMSDir(fs, 'executor')
         fs.createfile('fname1.rpm')
 
@@ -158,14 +162,14 @@ class TestValidateExistingDirectory(unittest.TestCase):
 
 class TestBuildMap(unittest.TestCase):
     def test_empty_rpmsdir(self):
-        fs = fsopendir('ram:///')
+        fs = make_ramfs()
         executor = install.FakeExecutor()
         rpms_dir = install.RPMSDir(fs, executor)
 
         self.assertEquals({}, install.build_map(rpms_dir))
 
     def test_non_empty_rpmsdir(self):
-        fs = fsopendir('ram:///')
+        fs = make_ramfs()
         executor = install.FakeExecutor()
         rpms_dir = install.RPMSDir(fs, executor)
         fs.getsyspath = mock.Mock()
