@@ -38,15 +38,6 @@ class SpecsDir(object):
     def install_config_syspath(self):
         return self.root.getsyspath(self.install_config_path)
 
-    @property
-    def install_config_is_json(self):
-        contents = self.root.getcontents(self.install_config_path)
-        try:
-            json.loads(contents)
-            return True
-        except ValueError:
-            return False
-
     def get_package_names_to_install(self):
         pkgs = json.loads(self.root.getcontents(self.install_config_path))
         return [pkg['package-name'] for pkg in pkgs]
