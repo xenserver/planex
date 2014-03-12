@@ -28,18 +28,14 @@ class SpecsDir(object):
 
     @property
     def has_install_config(self):
-        return self.root.isfile(self.install_config_path)
-
-    @property
-    def install_config_path(self):
-        return CONFIG
+        return self.root.isfile(CONFIG)
 
     @property
     def install_config_syspath(self):
-        return self.root.getsyspath(self.install_config_path)
+        return self.root.getsyspath(CONFIG)
 
     def get_package_names_to_install(self):
-        pkgs = json.loads(self.root.getcontents(self.install_config_path))
+        pkgs = json.loads(self.root.getcontents(CONFIG))
         return [pkg['package-name'] for pkg in pkgs]
 
 
