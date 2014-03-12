@@ -159,7 +159,3 @@ def main():
         rpm_path = pkg_to_rpm[pkg_name].get_syspath()
         print "Copying:  %s -> %s" % (rpm_path, args.dest_dir)
         shutil.copy(rpm_path, args.dest_dir)
-
-
-if __name__ == '__main__':
-    main()
