@@ -21,30 +21,6 @@ def make_ramfs():
     return fs
 
 
-class TestSpecsDirValidation(SpecsDirMixIn, unittest.TestCase):
-    def test_no_config_file(self):
-        result = self.specs_dir.validate()
-
-        self.assertFalse(result.failed, msg=result.message)
-
-    def test_file_found(self):
-        self.specs_dir.root.setcontents('install.json', '[]')
-
-        result = self.specs_dir.validate()
-
-        self.assertFalse(result.failed)
-
-    def test_invalid_format(self):
-        self.specs_dir.root.setcontents('install.json', 'invalid_json')
-
-        result = self.specs_dir.validate()
-
-        self.assertTrue(result.failed)
-        self.assertEquals(
-            'Invalid specs dir: [install.json] is not a json file',
-            result.message)
-
-
 class TestSpecsDirHasConfig(SpecsDirMixIn, unittest.TestCase):
     def test_config_file_missing(self):
         self.assertFalse(self.specs_dir.has_install_config)

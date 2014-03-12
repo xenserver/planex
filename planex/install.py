@@ -20,7 +20,6 @@ from planex.globals import RPMS_DIR
 CONFIG = "install.json"
 
 
-ValidationResult = namedtuple('ValidationResult', 'failed, message')
 ExecutionResult = namedtuple('ExecutionResult', 'return_code, stdout, stderr')
 
 
@@ -49,19 +48,9 @@ class SpecsDir(object):
         except ValueError:
             return False
 
-    def validate(self):
-        if self.has_install_config:
-            if not self.install_config_is_json:
-                return ValidationResult(
-                    failed=True,
-                    message='Invalid specs dir: [{0}] is not a json file'.format(
-                        self.install_config_path))
-        return ValidationResult(failed=False, message=None)
-
     def get_package_names_to_install(self):
         pkgs = json.loads(self.root.getcontents(self.install_config_path))
         return [pkg['package-name'] for pkg in pkgs]
-
 
 
 class FakeExecutor(object):
