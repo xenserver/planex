@@ -93,7 +93,7 @@ class TestRPM(unittest.TestCase):
 
         with mock.patch.object(package, 'get_syspath') as get_syspath:
             get_syspath.return_value = '/some/filepath'
-            self.assertEquals('somename', package.name)
+            self.assertEquals('somename', package.get_name())
 
     def test_syspath(self):
         executor = install.FakeExecutor()

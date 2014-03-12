@@ -77,7 +77,7 @@ class RealExecutor(object):
     def run(self, args):
         proc = subprocess.Popen(args, stdout=subprocess.PIPE)
         out, err = proc.communicate()
-        return out.strip()
+        return out
 
 
 class RPMPackage(object):
@@ -85,9 +85,7 @@ class RPMPackage(object):
         self.path = path
         self.rpmsdir = rpmsdir
 
-    @property
-    def name(self):
-        # TODO: this should be a function instead of a property
+    def get_name(self):
         result = self.rpmsdir.executor.run(
             ['rpm', '-qp', self.get_syspath(), '--qf', '%{name}'])
         return result.stdout.strip()
@@ -124,7 +122,7 @@ def build_map(rpms_dir):
     """Returns a map from package name to rpm package"""
     result = {}
     for rpm in rpms_dir.rpms:
-        pkg_name = rpm.name
+        pkg_name = rpm.get_name()
         result[pkg_name] = rpm
     return result
 
