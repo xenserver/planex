@@ -140,25 +140,23 @@ class TestValidateExistingDirectory(unittest.TestCase):
         path.exists.return_value = True
         path.isdir.return_value = True
 
-        result = install.validate_as_existing_directory('existing_path')
+        result = install.directory_exists('existing_path')
 
-        self.assertFalse(result.failed)
+        self.assertTrue(result)
 
     @mock.patch('planex.install.os.path')
     def test_does_not_exist(self, path):
         path.exists.return_value = False
 
-        result = install.validate_as_existing_directory('missing_path')
+        result = install.directory_exists('missing_path')
 
-        self.assertTrue(result.failed)
-        self.assertEquals('[missing_path] does not exist', result.message)
+        self.assertFalse(result)
 
     @mock.patch('planex.install.os.path')
     def test_valid_existing_directory(self, path):
         path.exists.return_value = True
         path.isdir.return_value = False
 
-        result = install.validate_as_existing_directory('non-directory')
+        result = install.directory_exists('non-directory')
 
-        self.assertTrue(result.failed)
-        self.assertEquals('[non-directory] is not a directory', result.message)
+        self.assertFalse(result)

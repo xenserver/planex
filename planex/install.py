@@ -123,14 +123,8 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
-def validate_as_existing_directory(path):
-    if not os.path.exists(path):
-        return ValidationResult(
-            failed=True, message='[{0}] does not exist'.format(path))
-    if not os.path.isdir(path):
-        return ValidationResult(
-            failed=True, message='[{0}] is not a directory'.format(path))
-    return ValidationResult(failed=False, message=None)
+def directory_exists(path):
+    return os.path.exists(path) and os.path.isdir(path)
 
 
 def main():
@@ -139,7 +133,7 @@ def main():
 
     args = parse_args_or_exit()
 
-    if validate_as_existing_directory(args.component_dir).failed:
+    if not directory_exists(args.component_dir):
         print "Error: directory %s does not exist." % args.component_dir
         sys.exit(1)
 
@@ -149,7 +143,7 @@ def main():
                specs_dir.install_config_syspath)
         sys.exit(0)
 
-    if validate_as_existing_directory(args.dest_dir).failed:
+    if not directory_exists(args.dest_dir):
         os.makedirs(args.dest_dir)
 
     rpms_dir = RPMSDir(RPMS_DIR, RealExecutor())
