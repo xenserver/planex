@@ -118,14 +118,13 @@ class RPMSDir(object):
             rpms.append(RPMPackage(self, rpm_path))
         return rpms
 
-
-def build_map(rpms_dir):
-    """Returns a map from package name to rpm package"""
-    result = {}
-    for rpm in rpms_dir.rpms:
-        pkg_name = rpm.get_name()
-        result[pkg_name] = rpm
-    return result
+    def build_map(self):
+        """Returns a map from package name to rpm package"""
+        result = {}
+        for rpm in self.rpms:
+            pkg_name = rpm.get_name()
+            result[pkg_name] = rpm
+        return result
 
 
 def parse_args_or_exit(argv=None):

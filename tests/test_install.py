@@ -165,7 +165,7 @@ class TestBuildMap(unittest.TestCase):
         executor = install.FakeExecutor()
         rpms_dir = install.RPMSDir(fs, executor)
 
-        self.assertEquals({}, install.build_map(rpms_dir))
+        self.assertEquals({}, rpms_dir.build_map())
 
     def test_non_empty_rpmsdir(self):
         fs = make_ramfs()
@@ -175,7 +175,7 @@ class TestBuildMap(unittest.TestCase):
             'SYSPATH:somepackage.rpm', 'package-name')
         fs.createfile('/somepackage.rpm')
 
-        package_map = install.build_map(rpms_dir)
+        package_map = rpms_dir.build_map()
         self.assertTrue('package-name' in package_map)
         rpm_package = package_map['package-name']
 
