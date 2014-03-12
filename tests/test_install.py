@@ -84,12 +84,7 @@ class TestRPM(unittest.TestCase):
         filesystem = fsopendir('ram:///')
         rpmsdir = install.RPMSDir(filesystem, executor)
         package = install.RPMPackage(rpmsdir, 'filepath')
-        executor.results[(
-            'rpm', '-qp', '/some/filepath', '--qf', '%{name}'
-        )] = install.ExecutionResult(
-            return_code=0,
-            stdout='  somename  \n',
-            stderr='ignored')
+        executor.map_rpmname_query('/some/filepath', '  somename  \n')
 
         with mock.patch.object(package, 'get_syspath') as get_syspath:
             get_syspath.return_value = '/some/filepath'
@@ -175,16 +170,8 @@ class TestBuildMap(unittest.TestCase):
         rpms_dir = install.RPMSDir(fs, executor)
         fs.getsyspath = mock.Mock()
         fs.getsyspath.return_value = '/some/real/path/somepackage.rpm'
-        executor.results[
-            (
-                'rpm', '-qp', '/some/real/path/somepackage.rpm',
-                '--qf', '%{name}'
-            )
-        ] = install.ExecutionResult(
-            return_code=0,
-            stdout='package-name',
-            stderr='ignored')
-
+        executor.map_rpmname_query(
+            '/some/real/path/somepackage.rpm', 'package-name')
         fs.createfile('/somepackage.rpm')
 
         package_map = install.build_map(rpms_dir)

@@ -72,6 +72,14 @@ class FakeExecutor(object):
         assert tuple(args) in self.results, "Unexpected call %s" % args
         return self.results[tuple(args)]
 
+    def map_rpmname_query(self, rpm_syspath, name):
+        self.results[(
+            'rpm', '-qp', rpm_syspath, '--qf', '%{name}'
+        )] = ExecutionResult(
+            return_code=0,
+            stdout=name,
+            stderr='ignored')
+
 
 class RealExecutor(object):
     def run(self, args):
