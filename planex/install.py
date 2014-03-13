@@ -7,9 +7,11 @@ Installs packages built from the specs in <component-specs-dir>.
 
 import sys
 import os
-import glob
 import subprocess
 import shutil
+import argparse
+
+from collections import namedtuple
 
 import json
 from planex.globals import RPMS_DIR
@@ -17,58 +19,126 @@ from planex.globals import RPMS_DIR
 CONFIG = "install.json"
 
 
-def parse_config(config_path):
-    """Returns list of package names to install. These can be used in
-    conjunction with rpm query to find the relevant .rpm files that need
-    installing.
-    """
-    config_file = open(config_path, "r")
-    pkgs = json.load(config_file)
-    config_file.close()
-    return [pkg['package-name'] for pkg in pkgs]
+ExecutionResult = namedtuple('ExecutionResult', 'return_code, stdout, stderr')
 
 
-def build_map(rpms_dir):
-    """Returns a map from package name to rpm file"""
-    result = {}
-    for rpm_file in glob.glob(os.path.join(rpms_dir, '*.rpm')):
-        pkg_name = subprocess.Popen(
-            ["rpm", "-qp", rpm_file, "--qf", "%{name}"],
-            stdout=subprocess.PIPE).communicate()[0].strip()
-        result[pkg_name] = rpm_file
-    return result
+class SpecsDir(object):
+    def __init__(self, root):
+        self.root = root
+
+    @property
+    def has_install_config(self):
+        return self.root.isfile(CONFIG)
+
+    @property
+    def install_config_syspath(self):
+        return self.root.getsyspath(CONFIG)
+
+    def get_package_names_to_install(self):
+        pkgs = json.loads(self.root.getcontents(CONFIG))
+        return [pkg['package-name'] for pkg in pkgs]
+
+
+class FakeExecutor(object):
+    def __init__(self):
+        self.results = {}
+
+    def run(self, args):
+        assert tuple(args) in self.results, "Unexpected call %s" % args
+        return self.results[tuple(args)]
+
+    def map_rpmname_query(self, rpm_syspath, name):
+        self.results[(
+            'rpm', '-qp', rpm_syspath, '--qf', '%{name}'
+        )] = ExecutionResult(
+            return_code=0,
+            stdout=name,
+            stderr='ignored')
+
+
+class RealExecutor(object):
+    def run(self, args):
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+        out, err = proc.communicate()
+        return ExecutionResult(
+            return_code=proc.returncode,
+            stdout=out,
+            stderr=err)
+
+
+class RPMPackage(object):
+    def __init__(self, rpmsdir, path):
+        self.path = path
+        self.rpmsdir = rpmsdir
+
+    def get_name(self):
+        result = self.rpmsdir.executor.run(
+            ['rpm', '-qp', self.syspath, '--qf', '%{name}'])
+        return result.stdout.strip()
+
+    @property
+    def syspath(self):
+        return self.rpmsdir.root.getsyspath(self.path)
+
+
+class RPMSDir(object):
+    def __init__(self, root, executor):
+        self.root = root
+        self.executor = executor
+
+    @property
+    def rpms(self):
+        rpms = []
+        for rpm_path in self.root.listdir(wildcard='*.rpm'):
+            rpms.append(RPMPackage(self, rpm_path))
+        return rpms
+
+    def build_map(self):
+        """Returns a map from package name to rpm package"""
+        result = {}
+        for rpm in self.rpms:
+            pkg_name = rpm.get_name()
+            result[pkg_name] = rpm
+        return result
+
+
+def parse_args_or_exit(argv=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('component_dir', help='Specs directory')
+    parser.add_argument('dest_dir', help='Destination directory')
+    return parser.parse_args(argv)
+
+
+def directory_exists(path):
+    return os.path.exists(path) and os.path.isdir(path)
 
 
 def main():
     """Main entry point.   Installs packages from <component-dir>
     to <destination-dir>"""
-    if len(sys.argv[1:]) != 2:
-        print "Usage: %s <component-dir> <destination-dir>" % __file__
-        sys.exit(1)
-    (component_dir, dest_dir) = sys.argv[1:]
 
-    if not os.path.exists(component_dir):
-        print "Error: directory %s does not exist." % component_dir
+    args = parse_args_or_exit()
+
+    if not directory_exists(args.component_dir):
+        print "Error: directory %s does not exist." % args.component_dir
         sys.exit(1)
 
-    config_path = os.path.join(component_dir, CONFIG)
-    if not os.path.exists(config_path):
-        print ("Config file %s not found, assuming no RPMs need packaging." %
-               config_path)
+    specs_dir = SpecsDir(args.component_dir)
+    if not specs_dir.has_install_config:
+        print ("Config file %s not found, assuming no RPMs need installation." %
+               specs_dir.install_config_syspath)
         sys.exit(0)
 
-    if not os.path.exists(dest_dir):
-        os.makedirs(dest_dir)
+    if not directory_exists(args.dest_dir):
+        os.makedirs(args.dest_dir)
 
-    config = parse_config(config_path)
+    rpms_dir = RPMSDir(RPMS_DIR, RealExecutor())
 
-    pkg_to_rpm = build_map(RPMS_DIR)
+    package_names = specs_dir.get_package_names_to_install()
 
-    for pkg_name in config:
-        rpm_path = pkg_to_rpm[pkg_name]
-        print "Copying:  %s -> %s" % (rpm_path, dest_dir)
-        shutil.copy(rpm_path, dest_dir)
+    pkg_to_rpm = rpms_dir.build_map()
 
-
-if __name__ == '__main__':
-    main()
+    for pkg_name in package_names:
+        rpm_path = pkg_to_rpm[pkg_name].syspath
+        print "Copying:  %s -> %s" % (rpm_path, args.dest_dir)
+        shutil.copy(rpm_path, args.dest_dir)
