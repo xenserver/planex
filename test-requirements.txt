@@ -2,3 +2,5 @@ pylint
 coverage
 nose
 mock
+argparse
+fs
