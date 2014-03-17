@@ -181,10 +181,18 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
     for sourcefile in os.listdir(sources_dir):
         if re.search(r'^(%s\.tar)(\.gz)?$' % basename, sourcefile):
             os.remove(sourcefile)
-    call(["git", "--git-dir=%s" % dotgitdir, "archive",
-          "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
-          "%s/%s" % (sources_dir, archive_name)])
+    if archive_name.endswith(".gz"):
+        tarball_name = archive_name[:-3]
+    cmd = ["git", "--git-dir=%s" % dotgitdir, "archive",
+           "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
+           "%s/%s" % (sources_dir, tarball_name)]
+    print " ".join(cmd)
+    call(cmd)
 
+    if archive_name.endswith(".gz"):
+        cmd = ["gzip", "-f", "%s/%s" % (sources_dir, tarball_name)]
+    print " ".join(cmd)
+    call(cmd)
 
 def name_from_spec(spec_path):
     """
@@ -242,7 +250,7 @@ def preprocess_spec(spec_in_path, spec_out_path, version, source_mapping):
     for line in spec_contents:
         match = re.match(r'^([Ss]ource\d*:\s+)(.+)\n', line)
         if match and match.group(2) in source_mapping:
-                line = match.group(1) + source_mapping[match.group(2)] + "\n"
+            line = match.group(1) + source_mapping[match.group(2)] + "\n"
 
         match = re.match(r'^([Vv]ersion:\s+)(.+)\n', line)
         if match:
@@ -327,10 +335,12 @@ def copy_specs_to_buildroot(config_dir):
         check_spec_name(spec_path)
         if spec_path.endswith('.in'):
             print "Configuring package with spec file: %s" % spec_path
-            sources = [source for source in sources_from_spec(spec_path) if source.startswith("git://")]
+            sources = [source for source in sources_from_spec(spec_path) 
+                       if source.startswith("git://")]
             versions = [latest_git_tag(source) for source in sources]
-            repo_urls = [make_extended_git_url(source, version) for (source, version) in zip(sources, versions)]
-	    mapping = dict(zip(sources, repo_urls))
+            repo_urls = [make_extended_git_url(source, version) 
+                         for (source, version) in zip(sources, versions)]
+            mapping = dict(zip(sources, repo_urls))
             preprocess_spec(spec_path, SPECS_DIR, version, mapping)
         else:
             shutil.copy(spec_path, SPECS_DIR)
