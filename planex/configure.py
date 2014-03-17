@@ -108,7 +108,9 @@ def locate_repo(path, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
         os.path.expanduser("%s/%s" % (myrepos, basename)),
         os.path.expanduser("%s/%s.git" % (myrepos, basename)),
         "/repos/%s" % basename,
-        os.path.expanduser("%s/%s.git" % (github_mirror, path))]
+        os.path.expanduser("%s/%s.git" % (github_mirror, path)),
+        path,
+        os.path.join(os.getcwd(), basename)]
 
     for trial in trials:
         if os.path.exists(trial):
