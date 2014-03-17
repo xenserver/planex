@@ -113,6 +113,7 @@ def locate_repo(path, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
         os.path.join(os.getcwd(), basename)]
 
     for trial in trials:
+        print "trying %s" % trial
         if os.path.exists(trial):
             return trial
 
@@ -148,6 +149,8 @@ def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     if committish:
         cmd.append(committish)
 
+    print "cmd = %s"
+
     description = subprocess.Popen(cmd,
         stdout=subprocess.PIPE).communicate()[0].strip()
     match = re.search("[^0-9]*", description)
@@ -169,9 +172,11 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
     # the local host.   We only need the path, version and archive_name
     print "url=%s" % url
     (_, _, path, version, archive_name) = parse_extended_git_url(url)
+    assert archive_name
     basename = path.split("/")[-1]
 
     repo_location = locate_repo(path, myrepos, github_mirror)
+    print "fetch_git_source: repo_location = %s" % repo_location
 
     if(os.path.exists("%s/.git" % repo_location)):
         dotgitdir = "%s/.git" % repo_location
@@ -180,7 +185,7 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
 
     for sourcefile in os.listdir(sources_dir):
         if re.search(r'^(%s\.tar)(\.gz)?$' % basename, sourcefile):
-            os.remove(sourcefile)
+            os.remove(os.path.join(sources_dir, sourcefile))
     if archive_name.endswith(".gz"):
         tarball_name = archive_name[:-3]
     cmd = ["git", "--git-dir=%s" % dotgitdir, "archive",
@@ -251,6 +256,8 @@ def preprocess_spec(spec_in_path, spec_out_path, version, source_mapping):
         match = re.match(r'^([Ss]ource\d*:\s+)(.+)\n', line)
         if match and match.group(2) in source_mapping:
             line = match.group(1) + source_mapping[match.group(2)] + "\n"
+            print "mapping %s to %s" % (match.group(2), 
+                                        source_mapping[match.group(2)])
 
         match = re.match(r'^([Vv]ersion:\s+)(.+)\n', line)
         if match:
