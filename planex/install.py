@@ -7,19 +7,17 @@ Installs packages built from the specs in <component-specs-dir>.
 
 import sys
 import os
-import subprocess
 import shutil
 import argparse
 
-from collections import namedtuple
 
 import json
 from planex.globals import RPMS_DIR
+from planex import executors
 
 CONFIG = "install.json"
 
 
-ExecutionResult = namedtuple('ExecutionResult', 'return_code, stdout, stderr')
 
 
 class SpecsDir(object):
@@ -50,20 +48,10 @@ class FakeExecutor(object):
     def map_rpmname_query(self, rpm_syspath, name):
         self.results[(
             'rpm', '-qp', rpm_syspath, '--qf', '%{name}'
-        )] = ExecutionResult(
+        )] = executors.ExecutionResult(
             return_code=0,
             stdout=name,
             stderr='ignored')
-
-
-class RealExecutor(object):
-    def run(self, args):
-        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
-        out, err = proc.communicate()
-        return ExecutionResult(
-            return_code=proc.returncode,
-            stdout=out,
-            stderr=err)
 
 
 class RPMPackage(object):
@@ -132,7 +120,7 @@ def main():
     if not directory_exists(args.dest_dir):
         os.makedirs(args.dest_dir)
 
-    rpms_dir = RPMSDir(RPMS_DIR, RealExecutor())
+    rpms_dir = RPMSDir(RPMS_DIR, executors.RealExecutor())
 
     package_names = specs_dir.get_package_names_to_install()
 
