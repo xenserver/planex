@@ -78,7 +78,7 @@ class BasicTests(unittest.TestCase):
     def test_make_extended_git_url(self):
         base_url = "https://github.com/xenserver/planex"
         extended_url = "https://github.com/xenserver/planex#1.0.0/" \
-                       "%{name}-%{version}.tar.gz"
+                       "planex-1.0.0.tar.gz"
         res = configure.make_extended_git_url(base_url, "1.0.0")
         self.assertEqual(res, extended_url)
 
@@ -99,7 +99,7 @@ class BasicTests(unittest.TestCase):
         url = configure.make_extended_git_url(base_url, "1.0.0")
         res = configure.parse_extended_git_url(url)
         expected = ("git", "github.com", "/xenserver/planex", "1.0.0",
-                    "%{name}-%{version}.tar.gz")
+                    "planex-1.0.0.tar.gz")
         self.assertEqual(res, expected)
 
 
@@ -172,8 +172,10 @@ class BasicTests(unittest.TestCase):
 
     def test_preprocess_spec(self):
         working_dir = tempfile.mkdtemp()
+        mapping = {"https://github.com/mirage/%{name}/archive/"
+                   "%{name}-%{version}/%{name}-%{version}.tar.gz": "foo.tar.gz"}
         configure.preprocess_spec(path_to("ocaml-cohttp.spec.in"),
-                                  working_dir, "1.2.3", "foo.tar.gz")
+                                  working_dir, ["1.2.3"], mapping)
         spec = planex.spec.Spec(os.path.join(working_dir, "ocaml-cohttp.spec"))
         self.assertEqual(spec.version(), "1.2.3")
         self.assertEqual(spec.source_urls(), ["foo.tar.gz"])
