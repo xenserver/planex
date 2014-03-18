@@ -58,7 +58,8 @@ def make_extended_git_url(base_url, version):
     from a GitHub archive URL.
     """
     base_url = base_url.split('#')[0]
-    return "%s#%s/%%{name}-%%{version}.tar.gz" % (base_url, version)
+    name = os.path.split(base_url)[-1]
+    return "%s#%s/%s-%s.tar.gz" % (base_url, version, name, version)
 
 
 def parse_extended_git_url(url):
@@ -107,10 +108,12 @@ def locate_repo(path, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
         os.path.expanduser("%s/%s" % (myrepos, basename)),
         os.path.expanduser("%s/%s.git" % (myrepos, basename)),
         "/repos/%s" % basename,
-        os.path.expanduser("%s/%s.git" % (github_mirror, path))]
+        os.path.expanduser("%s/%s.git" % (github_mirror, path)),
+        path,
+        os.path.join(os.getcwd(), basename)]
 
     for trial in trials:
-	print "trying " + trial
+        print "trying %s" % trial
         if os.path.exists(trial):
             return trial
 
@@ -146,8 +149,20 @@ def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     if committish:
         cmd.append(committish)
 
+    print "cmd = %s"
+
     description = subprocess.Popen(cmd,
         stdout=subprocess.PIPE).communicate()[0].strip()
+
+    # if there are no tags, get the number of commits, which should 
+    # always increase 
+    if description == "":
+        cmd = ["git", "--git-dir=%s" % dotgitdir,
+               "log", "--oneline"]
+        description = subprocess.Popen(cmd,
+           stdout=subprocess.PIPE).communicate()[0].strip()
+        return len(description.splitlines())
+
     match = re.search("[^0-9]*", description)
     matchlen = len(match.group())
     return description[matchlen:].replace('-', '+')
@@ -167,9 +182,11 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
     # the local host.   We only need the path, version and archive_name
     print "url=%s" % url
     (_, _, path, version, archive_name) = parse_extended_git_url(url)
+    assert archive_name
     basename = path.split("/")[-1]
 
     repo_location = locate_repo(path, myrepos, github_mirror)
+    print "fetch_git_source: repo_location = %s" % repo_location
 
     if(os.path.exists("%s/.git" % repo_location)):
         dotgitdir = "%s/.git" % repo_location
@@ -178,11 +195,19 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
 
     for sourcefile in os.listdir(sources_dir):
         if re.search(r'^(%s\.tar)(\.gz)?$' % basename, sourcefile):
-            os.remove(sourcefile)
-    call(["git", "--git-dir=%s" % dotgitdir, "archive",
-          "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
-          "%s/%s" % (sources_dir, archive_name)])
+            os.remove(os.path.join(sources_dir, sourcefile))
+    if archive_name.endswith(".gz"):
+        tarball_name = archive_name[:-3]
+    cmd = ["git", "--git-dir=%s" % dotgitdir, "archive",
+           "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
+           "%s/%s" % (sources_dir, tarball_name)]
+    print " ".join(cmd)
+    call(cmd)
 
+    if archive_name.endswith(".gz"):
+        cmd = ["gzip", "-f", "%s/%s" % (sources_dir, tarball_name)]
+    print " ".join(cmd)
+    call(cmd)
 
 def name_from_spec(spec_path):
     """
@@ -222,7 +247,7 @@ def sources_from_spec(spec_path):
     return spec.source_urls()
 
 
-def preprocess_spec(spec_in_path, spec_out_path, version, tarball_name):
+def preprocess_spec(spec_in_path, spec_out_path, versions, source_mapping):
     """
     Preprocesses a spec file containing placeholders.
     Writes the result to the same filename, with the '.in' extension
@@ -238,13 +263,20 @@ def preprocess_spec(spec_in_path, spec_out_path, version, tarball_name):
     spec_out = open(os.path.join(spec_out_path, output_filename), "w")
 
     for line in spec_contents:
-        match = re.match(r'^([Ss]ource0:\s+)(.+)\n', line)
-        if match:
-            line = match.group(1) + tarball_name + "\n"
+        match = re.match(r'^([Ss]ource\d*:\s+)(.+)\n', line)
+        if match and match.group(2) in source_mapping:
+            line = match.group(1) + source_mapping[match.group(2)] + "\n"
+            print "mapping %s to %s" % (match.group(2), 
+                                        source_mapping[match.group(2)])
 
         match = re.match(r'^([Vv]ersion:\s+)(.+)\n', line)
         if match:
-            line = match.group(1) + version + "\n"
+            line = match.group(1) + versions[0] + "\n"
+
+        match = re.match(r'^([Rr]elease:\s+)(.+)\n', line)
+        if match:
+            line = "%s%s+%s\n" % (match.group(1), "+".join(versions[1:]), 
+                                  match.group(2))
 
         spec_out.write(line)
 
@@ -254,7 +286,7 @@ def preprocess_spec(spec_in_path, spec_out_path, version, tarball_name):
 def prepare_srpm(spec_path, use_distfiles):
     """
     Downloads sources needed to build an SRPM from the spec file
-    at spec_path.   Pre-processes the spec file, if needed.
+    at spec_path.
     """
     # check the .spec file exists, or .spec.in if we're processing the spec
     if not(os.path.exists(spec_path)):
@@ -301,13 +333,8 @@ def build_srpm(spec_path):
           "--nodeps", "--define", "_topdir %s" % BUILD_ROOT_DIR])
 
 
-def main():
-    """
-    Main function.  Process all the specfiles in the directory
-    given by config_dir.
-    """
-    config_dir, use_distfiles = parse_cmdline()
-
+def prepare_buildroot():
+    """Create a clean rpmbuild directory structure"""
     for path in [SRPMS_DIR, SPECS_DIR]:
         if os.path.exists(path):
             shutil.rmtree(path)
@@ -316,45 +343,68 @@ def main():
     if not os.path.exists(SOURCES_DIR):
         os.makedirs(SOURCES_DIR)
 
-    # Pull in any required patches
+
+def copy_patches_to_buildroot(config_dir):
+    """Copy patches into the build root"""
     patches_dir = os.path.join(config_dir, 'SOURCES')
     for patch in glob.glob(os.path.join(patches_dir, '*')):
         shutil.copy(patch, SOURCES_DIR)
 
-    # Pull in spec files, preprocessing if necessary
+
+def copy_specs_to_buildroot(config_dir):
+    """Pull in spec files, preprocessing if necessary"""
     for spec_path in glob.glob(os.path.join(config_dir, "*.spec*")):
         check_spec_name(spec_path)
         if spec_path.endswith('.in'):
             print "Configuring package with spec file: %s" % spec_path
-            sources = sources_from_spec(spec_path)
-            version = latest_git_tag(sources[0])
-            repo_url = make_extended_git_url(sources[0], version)
-            preprocess_spec(spec_path, SPECS_DIR, version, repo_url)
+            sources = [source for source in sources_from_spec(spec_path) 
+                       if source.startswith("git://")]
+            versions = [str(latest_git_tag(source)) for source in sources]
+            repo_urls = [make_extended_git_url(source, version) 
+                         for (source, version) in zip(sources, versions)]
+            mapping = dict(zip(sources, repo_urls))
+            preprocess_spec(spec_path, SPECS_DIR, versions, mapping)
         else:
             shutil.copy(spec_path, SPECS_DIR)
 
+
+def build_srpms(use_distfiles):
+    """Build SRPMs for all SPECs"""
     number_fetched = 0
     number_skipped = 0
 
-    # Build SRPMs
     for spec_path in glob.glob(SPECS_GLOB):
         fetched, skipped = prepare_srpm(spec_path, use_distfiles)
         number_fetched += fetched
         number_skipped += skipped
         build_srpm(spec_path)
 
+    return (number_fetched, number_skipped)
+
+
+def main(argv):
+    """
+    Main function.  Process all the specfiles in the directory
+    given by config_dir.
+    """
+    config_dir, use_distfiles = parse_cmdline(argv)
+    prepare_buildroot()
+    copy_patches_to_buildroot(config_dir)
+    copy_specs_to_buildroot(config_dir)
+    number_fetched, number_skipped = build_srpms(use_distfiles)
+
     print "number of packages skipped: %d" % number_skipped
     print "number of packages fetched: %d" % number_fetched
 
 
-def usage():
+def usage(name):
     """
     Print usage string
     """
-    print "%s --config-dir=<config-dir>" % __file__
+    print "%s --config-dir=<config-dir>" % name
 
 
-def parse_cmdline():
+def parse_cmdline(argv):
     """
     Parse command line options
     """
@@ -362,10 +412,10 @@ def parse_cmdline():
     use_distfiles = False
     try:
         longopts = ["config-dir=", "use-distfiles"]
-        opts, _ = getopt.getopt(sys.argv[1:], "", longopts)
+        opts, _ = getopt.getopt(argv[1:], "", longopts)
     except getopt.GetoptError, err:
         print str(err)
-        usage()
+        usage(argv[0])
         sys.exit(1)
     for opt, arg in opts:
         if opt == "--config-dir":
@@ -373,10 +423,15 @@ def parse_cmdline():
         if opt == "--use-distfiles":
             use_distfiles = True
     if config_dir == None:
-        usage()
+        usage(argv[0])
         sys.exit(1)
     return (config_dir, use_distfiles)
 
 
+def _main():
+    """Entry point for setuptools CLI wrapper"""
+    main(sys.argv)
+
+
 if __name__ == "__main__":
-    main()
+    _main()

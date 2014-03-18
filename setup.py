@@ -5,7 +5,7 @@ setup(name='planex',
       packages=['planex'],
       entry_points={
           'console_scripts': [
-              'planex-configure = planex.configure:main',
+              'planex-configure = planex.configure:_main',
               'planex-build = planex.build:main',
               'planex-install = planex.install:main',
           ]
