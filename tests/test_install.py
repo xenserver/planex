@@ -57,10 +57,8 @@ class TestArgParsing(unittest.TestCase):
         self.assertEquals('ddir', args.dest_dir)
 
     def test_incorrect_call(self):
-        with self.assertRaises(SystemExit) as ctx:
-            args = install.parse_args_or_exit(['cdir'])
-
-        self.assertEquals(2, ctx.exception.code)
+        self.assertRaises(
+            SystemExit, lambda: install.parse_args_or_exit(['cdir']))
 
 
 class TestRPM(unittest.TestCase):
