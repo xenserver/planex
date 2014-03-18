@@ -153,6 +153,16 @@ def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
 
     description = subprocess.Popen(cmd,
         stdout=subprocess.PIPE).communicate()[0].strip()
+
+    # if there are no tags, get the number of commits, which should 
+    # always increase 
+    if description == "":
+        cmd = ["git", "--git-dir=%s" % dotgitdir,
+               "log", "--oneline"]
+        description = subprocess.Popen(cmd,
+           stdout=subprocess.PIPE).communicate()[0].strip()
+        return len(description.splitlines())
+
     match = re.search("[^0-9]*", description)
     matchlen = len(match.group())
     return description[matchlen:].replace('-', '+')
@@ -237,7 +247,7 @@ def sources_from_spec(spec_path):
     return spec.source_urls()
 
 
-def preprocess_spec(spec_in_path, spec_out_path, version, source_mapping):
+def preprocess_spec(spec_in_path, spec_out_path, versions, source_mapping):
     """
     Preprocesses a spec file containing placeholders.
     Writes the result to the same filename, with the '.in' extension
@@ -261,7 +271,12 @@ def preprocess_spec(spec_in_path, spec_out_path, version, source_mapping):
 
         match = re.match(r'^([Vv]ersion:\s+)(.+)\n', line)
         if match:
-            line = match.group(1) + version + "\n"
+            line = match.group(1) + versions[0] + "\n"
+
+        match = re.match(r'^([Rr]elease:\s+)(.+)\n', line)
+        if match:
+            line = "%s%s+%s\n" % (match.group(1), "+".join(versions[1:]), 
+                                  match.group(2))
 
         spec_out.write(line)
 
@@ -344,11 +359,11 @@ def copy_specs_to_buildroot(config_dir):
             print "Configuring package with spec file: %s" % spec_path
             sources = [source for source in sources_from_spec(spec_path) 
                        if source.startswith("git://")]
-            versions = [latest_git_tag(source) for source in sources]
+            versions = [str(latest_git_tag(source)) for source in sources]
             repo_urls = [make_extended_git_url(source, version) 
                          for (source, version) in zip(sources, versions)]
             mapping = dict(zip(sources, repo_urls))
-            preprocess_spec(spec_path, SPECS_DIR, version, mapping)
+            preprocess_spec(spec_path, SPECS_DIR, versions, mapping)
         else:
             shutil.copy(spec_path, SPECS_DIR)
 
