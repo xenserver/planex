@@ -258,17 +258,17 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
 def main():
     global DEFAULT_ARCH
 
-    use_mock = False
+    use_mock = True
     xs_build_sys = False
     try:
-        longopts = ["use-mock", "xs-build-sys", "i686"]
+        longopts = ["no-mock", "xs-build-sys", "i686"]
         opts, _ = getopt.getopt(sys.argv[1:], "", longopts)
     except getopt.GetoptError, err:
         print str(err)
         sys.exit(1)
     for opt, _ in opts:
-        if opt == "--use-mock":
-            use_mock = True
+        if opt == "--no-mock":
+            use_mock = False
         if opt == "--xs-build-sys":
             xs_build_sys = True
         if opt == "--i686":
