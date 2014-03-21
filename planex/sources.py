@@ -18,7 +18,6 @@ class GitSource(object):
         if not match:
             raise exceptions.InvalidURL(url)
         self.repo_url = match.group('repo_url')
-        self.branch = match.group('branch') or 'master'
         self.remote_path = match.group('remote_path')
         self.server = match.group('server')
 
@@ -31,7 +30,5 @@ class GitSource(object):
             'git',
             'clone',
             self.repo_url,
-            '--branch',
-            self.branch,
             filesystem.getsyspath(self.path)
         ]

@@ -33,22 +33,6 @@ class TestGitSource(unittest.TestCase):
             'git://github.com/xapi-project/xcp-networkd',
             source.repo_url)
 
-    def test_branch(self):
-        source = sources.GitSource(
-            'git://github.com/xapi-project/xcp-networkd')
-
-        self.assertEquals(
-            'master',
-            source.branch)
-
-    def test_branch_if_branch_is_specified(self):
-        source = sources.GitSource(
-            'git://github.com/xapi-project/xcp-networkd#somebranch')
-
-        self.assertEquals(
-            'somebranch',
-            source.branch)
-
     def test_construction_fails_with_bad_protocol(self):
         self.assertRaises(exceptions.InvalidURL, sources.GitSource, 'll')
 
@@ -78,8 +62,6 @@ class TestGitSource(unittest.TestCase):
                 'git',
                 'clone',
                 'git://github.com/xapi-project/xcp-networkd',
-                '--branch',
-                'somebranch',
                 'SYSPATH:xapi-project/xcp-networkd.git',
             ],
             source.clone_commands(filesystem)
