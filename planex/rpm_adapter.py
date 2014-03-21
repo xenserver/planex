@@ -11,11 +11,6 @@ SOURCE_RE = re.compile(r'''
 
 
 class SimpleRPM(object):
-    def get_name(self, path, filesystem):
-        for line in filesystem.getcontents(path).split('\n'):
-            if line.startswith('Name:'):
-                return line.split(':')[1].strip()
-
     def get_sources(self, path, filesystem):
         results = []
         for line in filesystem.getcontents(path).split('\n'):

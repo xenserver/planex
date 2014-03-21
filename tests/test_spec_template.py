@@ -53,17 +53,6 @@ rm -rf %{buildroot}
 """)
 
 
-class TestSpecTemplate(unittest.TestCase):
-    def test_name(self):
-        fs = fsopendir('ram:///')
-
-        fs.setcontents('xenops-cli.spec.in', XENOPS_CLI_CONTENTS)
-        template = spec_template.SpecTemplate(
-            'xenops-cli.spec.in', fs, rpm_adapter.SimpleRPM())
-
-        self.assertEquals('xenops-cli', template.name)
-
-
 class TestFromFile(unittest.TestCase):
     def test_file_does_not_exist(self):
         fs = fsopendir('ram:///')

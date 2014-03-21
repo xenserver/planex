@@ -8,10 +8,6 @@ class SpecTemplate(object):
         self.path = path
 
     @property
-    def name(self):
-        return self.rpm_adapter.get_name(self.path, self.filesystem)
-
-    @property
     def sources(self):
         return self.rpm_adapter.get_sources(self.path, self.filesystem)
 
