@@ -12,10 +12,6 @@ class SpecTemplate(object):
         return self.rpm_adapter.get_name(self.path, self.filesystem)
 
     @property
-    def main_source(self):
-        return self.rpm_adapter.get_main_source(self.path, self.filesystem)
-
-    @property
     def sources(self):
         return self.rpm_adapter.get_sources(self.path, self.filesystem)
 

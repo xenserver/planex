@@ -39,9 +39,17 @@ def main():
         fsopendir(args.config_dir),
         rpm_lib)
 
+    source_urls = set()
+
+    for template in templates:
+        for source_url in template.sources:
+            source_urls.add(source_url)
+
+    source_urls = sorted(source_urls)
+
     if args.print_only:
-        for template in templates:
-            print template.main_source
+        for source_url in source_urls:
+            print source_url
         sys.exit(0)
 
     target_dir = fsopendir(args.target_dir)
@@ -51,8 +59,8 @@ def main():
     else:
         executor = executors.RealExecutor()
 
-    for template in templates:
-        source = sources.GitSource(template.main_source)
+    for source_url in source_urls:
+        source = sources.GitSource(source_url)
         commands = source.clone_commands(target_dir)
         log.info(commands)
         result = executor.run(commands)

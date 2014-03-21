@@ -63,17 +63,6 @@ class TestSpecTemplate(unittest.TestCase):
 
         self.assertEquals('xenops-cli', template.name)
 
-    def test_main_source(self):
-        fs = fsopendir('ram:///')
-
-        fs.setcontents('xenops-cli.spec.in', XENOPS_CLI_CONTENTS)
-        template = spec_template.SpecTemplate(
-            'xenops-cli.spec.in', fs, rpm_adapter.SimpleRPM())
-
-        self.assertEquals(
-            'git://github.com/xapi-project/xenops-cli',
-            template.main_source)
-
 
 class TestFromFile(unittest.TestCase):
     def test_file_does_not_exist(self):
