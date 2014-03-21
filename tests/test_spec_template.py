@@ -88,7 +88,7 @@ class TestTemplatesFromDir(unittest.TestCase):
         fs = fsopendir('ram:///')
 
         templates = spec_template.templates_from_dir(
-            fs, rpm_adapter.SimpleRPM())
+            fs, rpm_adapter.SimpleRPM(), '*')
         self.assertEquals([], templates)
 
     def test_one_entry(self):
@@ -98,16 +98,8 @@ class TestTemplatesFromDir(unittest.TestCase):
             'xenops-cli.spec.in', fs, rpm_adapter.SimpleRPM())
 
         templates = spec_template.templates_from_dir(
-            fs, rpm_adapter.SimpleRPM())
+            fs, rpm_adapter.SimpleRPM(), '*.spec.in')
         self.assertEquals(1, len(templates))
-
-    def test_non_spec_ins_are_excluded(self):
-        fs = fsopendir('ram:///')
-        fs.createfile('somefile')
-
-        templates = spec_template.templates_from_dir(
-            fs, rpm_adapter.SimpleRPM())
-        self.assertEquals([], templates)
 
     def test_non_recursive(self):
         fs = fsopendir('ram:///')
@@ -115,7 +107,7 @@ class TestTemplatesFromDir(unittest.TestCase):
         fs.createfile('somedir/somefile.spec.in')
 
         templates = spec_template.templates_from_dir(
-            fs, rpm_adapter.SimpleRPM())
+            fs, rpm_adapter.SimpleRPM(), '*')
         self.assertEquals([], templates)
 
 

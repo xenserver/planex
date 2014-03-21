@@ -38,7 +38,8 @@ def main():
 
     templates = spec_template.templates_from_dir(
         fsopendir(args.config_dir),
-        rpm_lib)
+        rpm_lib,
+        '*.spec.in')
 
     srcs = []
 

@@ -23,8 +23,8 @@ def template_from_file(path, filesystem, rpm_adapter):
     return SpecTemplate(path, filesystem, rpm_adapter)
 
 
-def templates_from_dir(filesystem, rpm_adapter):
+def templates_from_dir(filesystem, rpm_adapter, fpattern):
     templates = []
-    for fname in filesystem.listdir(wildcard="*.spec.in"):
+    for fname in filesystem.listdir(wildcard=fpattern, files_only=True):
         templates.append(template_from_file(fname, filesystem, rpm_adapter))
     return templates
