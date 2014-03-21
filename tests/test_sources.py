@@ -44,6 +44,14 @@ class TestGitSource(unittest.TestCase):
             'a/b/c/d/e/f/g.git',
             source.path)
 
+    def test_path_with_git_postfix(self):
+        source = sources.GitSource(
+            'git://server/repo.git')
+
+        self.assertEquals(
+            'repo.git',
+            source.path)
+
     def test_path_with_github_url(self):
         source = sources.GitSource(
             'git://github.com/xapi-project/xcp-networkd#somebranch')

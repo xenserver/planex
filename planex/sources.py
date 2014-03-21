@@ -23,7 +23,9 @@ class GitSource(object):
 
     @property
     def path(self):
-        return self.remote_path + '.git'
+        if not self.remote_path.endswith('.git'):
+            return self.remote_path + '.git'
+        return self.remote_path
 
     def clone_commands(self, filesystem):
         return [
