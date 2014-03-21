@@ -7,6 +7,7 @@ from planex import spec_template
 from planex import rpm_adapter
 from planex import sources
 from planex import executors
+from planex import exceptions
 
 
 log = logging.getLogger(__name__)
@@ -39,17 +40,19 @@ def main():
         fsopendir(args.config_dir),
         rpm_lib)
 
-    source_urls = set()
+    srcs = []
 
     for template in templates:
         for source_url in template.sources:
-            source_urls.add(source_url)
-
-    source_urls = sorted(source_urls)
+            try:
+                source = sources.GitSource(source_url)
+                srcs.append(source)
+            except exceptions.InvalidURL:
+                log.info('%s not recognised', source_url)
 
     if args.print_only:
-        for source_url in source_urls:
-            print source_url
+        for source in srcs:
+            print source.repo_url
         sys.exit(0)
 
     target_dir = fsopendir(args.target_dir)
@@ -59,8 +62,7 @@ def main():
     else:
         executor = executors.RealExecutor()
 
-    for source_url in source_urls:
-        source = sources.GitSource(source_url)
+    for source in srcs:
         commands = source.clone_commands(target_dir)
         log.info(commands)
         result = executor.run(commands)
