@@ -16,6 +16,7 @@ License:        LGPL
 Group:          Development/Other
 URL:            https://github.com/xapi-project/xenops-cli/archive/xenops-cli-%{version}.tar.gz
 Source0:        git://github.com/xapi-project/xenops-cli
+Source1:        git://someserver.com/adir/bdir/linux-3.x.pq.git#%{version}/linux-%{version}.pq.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}
 BuildRequires:  ocaml ocaml-findlib ocaml-camlp4-devel
 BuildRequires:  ocaml-obuild ocaml-xcp-idl-devel cmdliner-devel ocaml-uuidm-devel
@@ -127,3 +128,40 @@ class TestTemplatesFromDir(unittest.TestCase):
         templates = spec_template.templates_from_dir(
             fs, rpm_adapter.SimpleRPM())
         self.assertEquals([], templates)
+
+
+class TestSources(unittest.TestCase):
+    def test_length(self):
+        fs = fsopendir('ram:///')
+        fs.setcontents('xenops-cli.spec.in', XENOPS_CLI_CONTENTS)
+
+        template = spec_template.template_from_file(
+            'xenops-cli.spec.in', fs, rpm_adapter.SimpleRPM())
+
+        self.assertEquals(2, len(template.sources))
+
+    def test_sources(self):
+        fs = fsopendir('ram:///')
+        fs.setcontents('xenops-cli.spec.in', XENOPS_CLI_CONTENTS)
+
+        template = spec_template.template_from_file(
+            'xenops-cli.spec.in', fs, rpm_adapter.SimpleRPM())
+
+        self.assertEquals([
+            'git://github.com/xapi-project/xenops-cli',
+            'git://someserver.com/adir/bdir/linux-3.x.pq.git#%{version}/linux-%{version}.pq.tar.gz'
+        ], template.sources)
+
+    def test_source_ordering(self):
+        fs = fsopendir('ram:///')
+        contents = 'Source04: somesource\n' + XENOPS_CLI_CONTENTS
+        fs.setcontents('xenops-cli.spec.in', contents)
+
+        template = spec_template.template_from_file(
+            'xenops-cli.spec.in', fs, rpm_adapter.SimpleRPM())
+
+        self.assertEquals([
+            'git://github.com/xapi-project/xenops-cli',
+            'git://someserver.com/adir/bdir/linux-3.x.pq.git#%{version}/linux-%{version}.pq.tar.gz',
+            'somesource'
+        ], template.sources)

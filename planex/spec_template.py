@@ -15,6 +15,10 @@ class SpecTemplate(object):
     def main_source(self):
         return self.rpm_adapter.get_main_source(self.path, self.filesystem)
 
+    @property
+    def sources(self):
+        return self.rpm_adapter.get_sources(self.path, self.filesystem)
+
 
 def template_from_file(path, filesystem, rpm_adapter):
     if not filesystem.isfile(path):
