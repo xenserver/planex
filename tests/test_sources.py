@@ -16,9 +16,9 @@ def make_ramfs():
     return fs
 
 
-class TestGitHubSource(unittest.TestCase):
+class TestGitSource(unittest.TestCase):
     def test_single_url(self):
-        source = sources.GitHubSource(
+        source = sources.GitSource(
             'git://github.com/xapi-project/xcp-networkd')
 
         self.assertEquals(
@@ -26,7 +26,7 @@ class TestGitHubSource(unittest.TestCase):
             source.repo_url)
 
     def test_repo_url_with_branch(self):
-        source = sources.GitHubSource(
+        source = sources.GitSource(
             'git://github.com/xapi-project/xcp-networkd#somebranch')
 
         self.assertEquals(
@@ -34,7 +34,7 @@ class TestGitHubSource(unittest.TestCase):
             source.repo_url)
 
     def test_branch(self):
-        source = sources.GitHubSource(
+        source = sources.GitSource(
             'git://github.com/xapi-project/xcp-networkd')
 
         self.assertEquals(
@@ -42,7 +42,7 @@ class TestGitHubSource(unittest.TestCase):
             source.branch)
 
     def test_branch_if_branch_is_specified(self):
-        source = sources.GitHubSource(
+        source = sources.GitSource(
             'git://github.com/xapi-project/xcp-networkd#somebranch')
 
         self.assertEquals(
@@ -50,15 +50,15 @@ class TestGitHubSource(unittest.TestCase):
             source.branch)
 
     def test_construction_fails_with_bad_protocol(self):
-        self.assertRaises(exceptions.InvalidURL, sources.GitHubSource, 'll')
+        self.assertRaises(exceptions.InvalidURL, sources.GitSource, 'll')
 
     def test_construction_fails_if_path_is_too_ling(self):
         self.assertRaises(
             exceptions.InvalidURL,
-            sources.GitHubSource, 'git://github.com/a/b/c/d')
+            sources.GitSource, 'git://github.com/a/b/c/d')
 
     def test_path_with_github_url(self):
-        source = sources.GitHubSource(
+        source = sources.GitSource(
             'git://github.com/xapi-project/xcp-networkd#somebranch')
 
         self.assertEquals(
@@ -67,7 +67,7 @@ class TestGitHubSource(unittest.TestCase):
     def test_clone_command(self):
         filesystem = make_ramfs()
 
-        source = sources.GitHubSource(
+        source = sources.GitSource(
             'git://github.com/xapi-project/xcp-networkd#somebranch')
 
         self.assertEquals(

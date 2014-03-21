@@ -2,7 +2,7 @@ import re
 from planex import exceptions
 
 
-class GitHubSource(object):
+class GitSource(object):
     def __init__(self, url):
         match = re.match(
             r'''

@@ -52,7 +52,7 @@ def main():
         executor = executors.RealExecutor()
 
     for template in templates:
-        source = sources.GitHubSource(template.main_source)
+        source = sources.GitSource(template.main_source)
         commands = source.clone_commands(target_dir)
         log.info(commands)
         result = executor.run(commands)
