@@ -3,7 +3,7 @@ import re
 
 SOURCE_RE = re.compile(r'''
     ^
-    Source(?P<source_number>\d+)
+    Source(?P<source_number>\d*)
     :
     (?P<source>.*)
     $
@@ -28,7 +28,7 @@ class SimpleRPM(object):
             if match:
                 results.append(
                     (
-                        int(match.group('source_number')),
+                        int(match.group('source_number') or '0'),
                         match.group('source').strip()
                     )
                 )
