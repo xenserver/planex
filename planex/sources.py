@@ -8,9 +8,8 @@ class GitSource(object):
             r'''
             ^
             (?P<repo_url>
-                git://github.com/
-                (?P<username>[^#^/]+)/
-                (?P<reponame>[^#^/]+)
+                git://(?P<server>[^#^/]+)/
+                (?P<remote_path>[^#]+)
             )
             (\#(?P<branch>.+))?
             $
@@ -20,12 +19,12 @@ class GitSource(object):
             raise exceptions.InvalidURL(url)
         self.repo_url = match.group('repo_url')
         self.branch = match.group('branch') or 'master'
-        self.username = match.group('username')
-        self.reponame = match.group('reponame')
+        self.remote_path = match.group('remote_path')
+        self.server = match.group('server')
 
     @property
     def path(self):
-        return '/'.join([self.username, self.reponame + '.git'])
+        return self.remote_path + '.git'
 
     def clone_commands(self, filesystem):
         return [

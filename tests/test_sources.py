@@ -52,10 +52,13 @@ class TestGitSource(unittest.TestCase):
     def test_construction_fails_with_bad_protocol(self):
         self.assertRaises(exceptions.InvalidURL, sources.GitSource, 'll')
 
-    def test_construction_fails_if_path_is_too_ling(self):
-        self.assertRaises(
-            exceptions.InvalidURL,
-            sources.GitSource, 'git://github.com/a/b/c/d')
+    def test_long_remote_path(self):
+        source = sources.GitSource(
+            'git://github.com/a/b/c/d/e/f/g')
+
+        self.assertEquals(
+            'a/b/c/d/e/f/g.git',
+            source.path)
 
     def test_path_with_github_url(self):
         source = sources.GitSource(
