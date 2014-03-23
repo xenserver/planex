@@ -1,70 +1,15 @@
 import unittest
 import mock
 import textwrap
-from fs.opener import fsopendir
+
+from tests import common
 
 from planex import rpm_adapter
 
 
-XENOPS_CLI_CONTENTS = textwrap.dedent("""
-Name:           xenops-cli
-Version:        @VERSION@
-Release:        2
-Summary:        CLI for xenopsd, the xapi toolstack domain manager
-License:        LGPL
-Group:          Development/Other
-URL:            https://github.com/xapi-project/xenops-cli/archive/xenops-cli-%{version}.tar.gz
-Source0:        git://github.com/xapi-project/xenops-cli
-Source1:        git://someserver.com/adir/bdir/linux-3.x.pq.git#%{version}/linux-%{version}.pq.tar.gz
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}
-BuildRequires:  ocaml ocaml-findlib ocaml-camlp4-devel
-BuildRequires:  ocaml-obuild ocaml-xcp-idl-devel cmdliner-devel ocaml-uuidm-devel
-#Requires:       message-switch
-#SOME_COMMENT
-
-# XXX transitively required by message_switch
-BuildRequires:  ocaml-oclock-devel
-
-%description
-Command-line interface for xenopsd, the xapi toolstack domain manager.
-
-%prep
-%setup -q -n %{name}-%{version}
-
-%build
-make
-
-%install
-rm -rf %{buildroot}
-mkdir -p %{buildroot}/%{_sbindir}
-install main.native %{buildroot}/%{_sbindir}/xenops-cli
-
-%clean
-rm -rf %{buildroot}
-
-%files
-%defattr(-,root,root)
-%doc README.md LICENSE MAINTAINERS
-%{_sbindir}/xenops-cli
-
-%changelog
-* Thu May 30 2013 David Scott <dave.scott@eu.citrix.com>
-- Initial package
-""")
-
-
-def make_ramfs():
-    def getsyspath(fname):
-        return 'SYSPATH:' + fname
-
-    fs = fsopendir('ram:///')
-    fs.getsyspath = mock.Mock(side_effect=getsyspath)
-    return fs
-
-
 class TestSimpleRPM(unittest.TestCase):
     def test_get_sources(self):
-        ramfs = make_ramfs()
+        ramfs = common.make_ramfs()
         ramfs.setcontents('somefile', 'Source: somesource')
 
         rpm = rpm_adapter.SimpleRPM()
@@ -74,8 +19,8 @@ class TestSimpleRPM(unittest.TestCase):
 
 class TestRPMLibrary(unittest.TestCase):
     def test_get_sources(self):
-        ramfs = make_ramfs()
-        ramfs.setcontents('xenops-cli.spec.in', XENOPS_CLI_CONTENTS)
+        ramfs = common.make_ramfs()
+        ramfs.setcontents('xenops-cli.spec.in', common.XENOPS_CLI_CONTENTS)
 
         rpm = rpm_adapter.RPMLibraryAdapter()
         sources = rpm.get_sources('xenops-cli.spec.in', ramfs)
@@ -88,8 +33,8 @@ class TestRPMLibrary(unittest.TestCase):
         )
 
     def test_get_sources_with_buildrequires_pre(self):
-        ramfs = make_ramfs()
-        contents = XENOPS_CLI_CONTENTS.replace(
+        ramfs = common.make_ramfs()
+        contents = common.XENOPS_CLI_CONTENTS.replace(
             '#SOME_COMMENT','BuildRequires(pre): gcc')
         ramfs.setcontents('xenops-cli.spec.in', contents)
 
