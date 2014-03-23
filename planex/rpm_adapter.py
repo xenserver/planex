@@ -1,4 +1,7 @@
 import re
+import StringIO
+import tempfile
+from planex import spec
 
 
 SOURCE_RE = re.compile(r'''
@@ -23,3 +26,15 @@ class SimpleRPM(object):
                     )
                 )
         return [source for (_, source) in sorted(results)]
+
+
+class RPMLibraryAdapter(object):
+    def get_sources(self, path, filesystem):
+        contents = filesystem.getcontents(path)
+        with tempfile.NamedTemporaryFile() as temporary_specfile:
+            temporary_specfile.write(
+                contents.replace('@VERSION@', 'UNRELEASED'))
+            temporary_specfile.flush()
+            spec_ = spec.Spec(temporary_specfile.name, check_filename=False)
+
+        return spec_.source_urls()

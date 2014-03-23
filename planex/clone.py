@@ -34,7 +34,7 @@ def main():
 
     logging.basicConfig(level=logging.ERROR if args.quiet else logging.DEBUG)
 
-    rpm_lib = rpm_adapter.SimpleRPM()
+    rpm_lib = rpm_adapter.RPMLibraryAdapter()
 
     templates = spec_template.templates_from_dir(
         fsopendir(args.config_dir),
