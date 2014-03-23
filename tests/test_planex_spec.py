@@ -4,7 +4,22 @@
 
 import unittest
 
+import platform
+
 import planex.spec
+
+
+def get_rpm_machine():
+    if platform.machine() == 'x86_64':
+        return 'x86_64'
+    return 'i386'
+
+
+def get_deb_machine():
+    if platform.machine() == 'x86_64':
+        return 'amd64'
+    return 'i386'
+
 
 class RpmTests(unittest.TestCase):
     def setUp(self):
@@ -63,9 +78,17 @@ class RpmTests(unittest.TestCase):
             "./SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm")
 
     def test_binary_package_paths(self):
-        self.assertEqual(sorted(self.spec.binary_package_paths()),
-            sorted(["./RPMS/x86_64/ocaml-cohttp-0.9.8-1.el6.x86_64.rpm",
-             "./RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm"]))
+        machine = get_rpm_machine()
+
+        self.assertEqual(
+            sorted(self.spec.binary_package_paths()),
+            [
+                path.format(machine=machine) for path in
+                sorted([
+                    "./RPMS/{machine}/ocaml-cohttp-0.9.8-1.el6.{machine}.rpm",
+                    "./RPMS/{machine}/ocaml-cohttp-devel-0.9.8-1.el6.{machine}.rpm"])
+            ]
+        )
 
 
 class DebTests(unittest.TestCase):
@@ -132,7 +155,13 @@ class DebTests(unittest.TestCase):
             "./SRPMS/libcohttp-ocaml_0.9.8-1.dsc")
 
     def test_binary_package_paths(self):
+        machine = get_deb_machine()
+
         self.assertEqual(sorted(self.spec.binary_package_paths()),
-            sorted(["./RPMS/libcohttp-ocaml_0.9.8-1_amd64.deb",
-             "./RPMS/libcohttp-ocaml-dev_0.9.8-1_amd64.deb"]))
+            [
+                path.format(machine=machine) for path in
+                    sorted(["./RPMS/libcohttp-ocaml_0.9.8-1_{machine}.deb",
+                     "./RPMS/libcohttp-ocaml-dev_0.9.8-1_{machine}.deb"])
+            ]
+        )
 
