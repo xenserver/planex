@@ -1,4 +1,5 @@
 import unittest
+import mock
 import textwrap
 from fs.opener import fsopendir
 
@@ -19,6 +20,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}
 BuildRequires:  ocaml ocaml-findlib ocaml-camlp4-devel
 BuildRequires:  ocaml-obuild ocaml-xcp-idl-devel cmdliner-devel ocaml-uuidm-devel
 #Requires:       message-switch
+#SOME_COMMENT
 
 # XXX transitively required by message_switch
 BuildRequires:  ocaml-oclock-devel
@@ -51,9 +53,18 @@ rm -rf %{buildroot}
 """)
 
 
+def make_ramfs():
+    def getsyspath(fname):
+        return 'SYSPATH:' + fname
+
+    fs = fsopendir('ram:///')
+    fs.getsyspath = mock.Mock(side_effect=getsyspath)
+    return fs
+
+
 class TestSimpleRPM(unittest.TestCase):
     def test_get_sources(self):
-        ramfs = fsopendir('ram:///')
+        ramfs = make_ramfs()
         ramfs.setcontents('somefile', 'Source: somesource')
 
         rpm = rpm_adapter.SimpleRPM()
@@ -63,8 +74,24 @@ class TestSimpleRPM(unittest.TestCase):
 
 class TestRPMLibrary(unittest.TestCase):
     def test_get_sources(self):
-        ramfs = fsopendir('ram:///')
+        ramfs = make_ramfs()
         ramfs.setcontents('xenops-cli.spec.in', XENOPS_CLI_CONTENTS)
+
+        rpm = rpm_adapter.RPMLibraryAdapter()
+        sources = rpm.get_sources('xenops-cli.spec.in', ramfs)
+        self.assertEquals(
+            [
+                'git://github.com/xapi-project/xenops-cli',
+                'git://someserver.com/adir/bdir/linux-3.x.pq.git#UNRELEASED/linux-UNRELEASED.pq.tar.gz',
+            ],
+            sources
+        )
+
+    def test_get_sources_with_buildrequires_pre(self):
+        ramfs = make_ramfs()
+        contents = XENOPS_CLI_CONTENTS.replace(
+            '#SOME_COMMENT','BuildRequires(pre): gcc')
+        ramfs.setcontents('xenops-cli.spec.in', contents)
 
         rpm = rpm_adapter.RPMLibraryAdapter()
         sources = rpm.get_sources('xenops-cli.spec.in', ramfs)

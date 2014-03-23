@@ -1,7 +1,12 @@
 import re
 import StringIO
 import tempfile
+import logging
+
 from planex import spec
+
+
+log = logging.getLogger(__name__)
 
 
 SOURCE_RE = re.compile(r'''
@@ -31,9 +36,17 @@ class SimpleRPM(object):
 class RPMLibraryAdapter(object):
     def get_sources(self, path, filesystem):
         contents = filesystem.getcontents(path)
+        REPLACEMENTS = [
+            ('@VERSION@', 'UNRELEASED'),
+            ('BuildRequires(pre)', 'BuildRequires'),
+        ]
+
+        for src, tgt in REPLACEMENTS:
+            contents = contents.replace(src, tgt)
+
+        log.info('Getting sources for %s', filesystem.getsyspath(path))
         with tempfile.NamedTemporaryFile() as temporary_specfile:
-            temporary_specfile.write(
-                contents.replace('@VERSION@', 'UNRELEASED'))
+            temporary_specfile.write(contents)
             temporary_specfile.flush()
             spec_ = spec.Spec(temporary_specfile.name, check_filename=False)
 
