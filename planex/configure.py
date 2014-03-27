@@ -341,6 +341,15 @@ def preprocess_spec(spec_in_path, spec_out_path, versions, source_mapping):
     output_filename = os.path.basename(spec_in_path)[:-len(".in")]
     spec_out = open(os.path.join(spec_out_path, output_filename), "w")
 
+    subs = {}
+
+    for (index,value) in enumerate(versions):
+        subs['source%d_version' % index] = value
+
+    subs.update({
+	"version" : "+".join(versions),
+        "release" : "1%{?extrarelease}" })
+
     for line in spec_contents:
         match = re.match(r'^([Ss]ource\d*:\s+)(.+)\n', line)
         if match and match.group(2) in source_mapping:
@@ -349,13 +358,9 @@ def preprocess_spec(spec_in_path, spec_out_path, versions, source_mapping):
             print "mapping %s to %s" % (match.group(2), 
                                         source_mapping[match.group(2)])
 
-        match = re.match(r'^([Vv]ersion:\s+)(.+)\n', line)
+        match = re.match(r'^(%define planex_)([^\s]+)(.+)\n', line)
         if match:
-            line = match.group(1) + versions[0] + "\n"
-
-        match = re.match(r'^([Rr]elease:\s+)(.+)\n', line)
-        if match:
-            line = "%s%s\n" % (match.group(1), "+".join(versions[1:]+[match.group(2)]))
+            line = match.group(1) + match.group(2) + " " + subs[match.group(2)] + "\n"
 
         spec_out.write(line)
 
