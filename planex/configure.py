@@ -7,7 +7,7 @@ Builds SRPMs for the tarballs or Git repositories in <component-specs-dir>.
 import getopt
 import sys
 import os.path
-from subprocess import call
+from subprocess import call, Popen
 import urlparse
 import subprocess
 import re
@@ -48,9 +48,9 @@ def fetch_url(url, rewrite=None):
         return 1
 
 
-def make_extended_git_url(base_url, version):
+def make_extended_url(base_url, version):
     """
-    Generate a custom git repository URL of the form:
+    Generate a custom repository URL of the form:
        <base_url>#<version>/%{name}-%{version}.tar.gz
 
     Given such a URL, fetch_git_source() will generate a tarball
@@ -58,6 +58,8 @@ def make_extended_git_url(base_url, version):
     from a GitHub archive URL.
     """
     base_url = base_url.split('#')[0]
+    if base_url.endswith(".hg"):
+	base_url = base_url[:-3]
     name = os.path.split(base_url)[-1]
     return "%s#%s/%s-%s.tar.gz" % (base_url, version, name, version)
 
@@ -71,7 +73,7 @@ def parse_extended_git_url(url):
     """
     print "url=%s" % url
     (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
-    assert scheme == "git"
+    assert ((scheme == "git") or (scheme == "hg"))
 
     print "path=%s" % path
     version, archive = None, None
@@ -90,8 +92,7 @@ def parse_extended_git_url(url):
 
     return(scheme, host, path, version, archive)
 
-
-def locate_repo(path, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
+def locate_git_repo(path, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     """
     Returns the location of the repository
     """
@@ -119,6 +120,31 @@ def locate_repo(path, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
 
     return None
 
+def locate_hg_repo(path, myrepos=MYREPOS):
+    """
+    Returns the location of a mercurial repository
+    """
+    if len(path) == 0:
+        print "Zero length path!"
+        exit(1)
+
+    basename = path.split("/")[-1]
+    if not basename.endswith(".hg"):
+	basename = "%s.hg" % basename
+
+    trials = [
+        os.path.expanduser("%s/%s" % (myrepos, basename)),
+        "/repos/%s" % basename,
+        path,
+        os.path.join(os.getcwd(), basename)]
+
+    for trial in trials:
+        print "trying %s" % trial
+        if os.path.exists(trial):
+            return trial
+
+    return None
+
 def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     """
     Returns numeric version tag closest to HEAD in the repository.
@@ -128,7 +154,7 @@ def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     (scheme, _, path, committish, _) = parse_extended_git_url(url)
     assert scheme == "git"
 
-    repo_location = locate_repo(path, myrepos, github_mirror)
+    repo_location = locate_git_repo(path, myrepos, github_mirror)
 
     print "Located git repo at: %s" % repo_location
 
@@ -167,6 +193,32 @@ def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     matchlen = len(match.group())
     return description[matchlen:].replace('-', '+')
 
+def latest_hg_tag(url, myrepos=MYREPOS):
+    """
+    Returns a string representing a unique version for the mercirual repo
+    """
+    print "url=%s" % url
+    (_, _, path, version, archive_name) = parse_extended_git_url(url)
+    basename = path.split("/")[-1]
+
+    repo_location = locate_hg_repo(path, myrepos)
+    print "fetch_hg_source: repo_location = %s" % repo_location
+
+    cmd = ["hg", "-R", repo_location, "parents", "--template", "{rev}"]
+    print "%s" % cmd
+
+    description = subprocess.Popen(cmd,
+        stdout=subprocess.PIPE).communicate()[0].strip()
+
+    return description
+
+def latest_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
+    (schema, _, _, _, _) = parse_extended_git_url(url)
+    if schema == "git":
+        return latest_git_tag(url, myrepos, github_mirror)
+    if schema == "hg":
+        return latest_hg_tag(url, myrepos)
+
 
 def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR, 
                      sources_dir=SOURCES_DIR):
@@ -185,7 +237,7 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
     assert archive_name
     basename = path.split("/")[-1]
 
-    repo_location = locate_repo(path, myrepos, github_mirror)
+    repo_location = locate_git_repo(path, myrepos, github_mirror)
     print "fetch_git_source: repo_location = %s" % repo_location
 
     if(os.path.exists("%s/.git" % repo_location)):
@@ -198,6 +250,8 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
             os.remove(os.path.join(sources_dir, sourcefile))
     if archive_name.endswith(".gz"):
         tarball_name = archive_name[:-3]
+    else:
+	tarball_name = archive_name
     cmd = ["git", "--git-dir=%s" % dotgitdir, "archive",
            "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
            "%s/%s" % (sources_dir, tarball_name)]
@@ -208,6 +262,30 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
         cmd = ["gzip", "-f", "%s/%s" % (sources_dir, tarball_name)]
     print " ".join(cmd)
     call(cmd)
+
+def fetch_hg_source(url, myrepos=MYREPOS, sources_dir=SOURCES_DIR):
+    """
+    Fetches an archive of HEAD from a git repository at path.
+    Produces a tarball called 'archive_name' in SOURCES_DIR,
+    which when unpacked will produce a directory called 
+    "reponame-version".
+    """
+
+    print "fetch_hg_source: url=%s" % url
+    (_, _, path, version, archive_name) = parse_extended_git_url(url)
+    assert archive_name
+    basename = path.split("/")[-1]
+
+    repo_location = locate_hg_repo(path, myrepos)
+    print "fetch_hg_source: repo_location = %s" % repo_location
+
+    cmd = ["hg", "-R", repo_location, "archive", "-t", "tgz", "-p", 
+           "%s-%s/" % (basename, version), 
+           "%s/%s" % (sources_dir, archive_name)]
+    print "%s" % cmd
+
+    call(cmd)
+
 
 def name_from_spec(spec_path):
     """
@@ -255,6 +333,7 @@ def preprocess_spec(spec_in_path, spec_out_path, versions, source_mapping):
     """
     assert spec_in_path.endswith('.in')
 
+    print "preprocess_spec: mapping=%s" % source_mapping
     spec_in = open(spec_in_path)
     spec_contents = spec_in.readlines()
     spec_in.close()
@@ -265,6 +344,7 @@ def preprocess_spec(spec_in_path, spec_out_path, versions, source_mapping):
     for line in spec_contents:
         match = re.match(r'^([Ss]ource\d*:\s+)(.+)\n', line)
         if match and match.group(2) in source_mapping:
+            print "Got a source mapping"
             line = match.group(1) + source_mapping[match.group(2)] + "\n"
             print "mapping %s to %s" % (match.group(2), 
                                         source_mapping[match.group(2)])
@@ -275,8 +355,7 @@ def preprocess_spec(spec_in_path, spec_out_path, versions, source_mapping):
 
         match = re.match(r'^([Rr]elease:\s+)(.+)\n', line)
         if match:
-            line = "%s%s+%s\n" % (match.group(1), "+".join(versions[1:]), 
-                                  match.group(2))
+            line = "%s%s\n" % (match.group(1), "+".join(versions[1:]+[match.group(2)]))
 
         spec_out.write(line)
 
@@ -319,6 +398,10 @@ def prepare_srpm(spec_path, use_distfiles):
             fetch_git_source(source)
             number_fetched += 1
 
+        if scheme in ['hg']:
+            fetch_hg_source(source)
+            number_fetched += 1
+
     return number_fetched, number_skipped
 
 
@@ -350,6 +433,12 @@ def copy_patches_to_buildroot(config_dir):
     for patch in glob.glob(os.path.join(patches_dir, '*')):
         shutil.copy(patch, SOURCES_DIR)
 
+def is_scm(uri):
+   if uri.startswith("git://"):
+	return True
+   if uri.startswith("hg://"):
+	return True
+   return False
 
 def copy_specs_to_buildroot(config_dir):
     """Pull in spec files, preprocessing if necessary"""
@@ -358,9 +447,9 @@ def copy_specs_to_buildroot(config_dir):
         if spec_path.endswith('.in'):
             print "Configuring package with spec file: %s" % spec_path
             sources = [source for source in sources_from_spec(spec_path) 
-                       if source.startswith("git://")]
-            versions = [str(latest_git_tag(source)) for source in sources]
-            repo_urls = [make_extended_git_url(source, version) 
+                       if (is_scm(source))]
+            versions = [str(latest_tag(source)) for source in sources]
+            repo_urls = [make_extended_url(source, version) 
                          for (source, version) in zip(sources, versions)]
             mapping = dict(zip(sources, repo_urls))
             preprocess_spec(spec_path, SPECS_DIR, versions, mapping)
