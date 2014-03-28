@@ -75,11 +75,11 @@ class BasicTests(unittest.TestCase):
             "http://rewritten.com/file.tar.gz"])
 
 
-    def test_make_extended_git_url(self):
+    def test_make_extended_url(self):
         base_url = "https://github.com/xenserver/planex"
         extended_url = "https://github.com/xenserver/planex#1.0.0/" \
                        "planex-1.0.0.tar.gz"
-        res = configure.make_extended_git_url(base_url, "1.0.0")
+        res = configure.make_extended_url(base_url, "1.0.0")
         self.assertEqual(res, extended_url)
 
 
@@ -96,7 +96,7 @@ class BasicTests(unittest.TestCase):
 
     def test_roundtrip_extended_git_url(self):
         base_url = "git://github.com/xenserver/planex"
-        url = configure.make_extended_git_url(base_url, "1.0.0")
+        url = configure.make_extended_url(base_url, "1.0.0")
         res = configure.parse_extended_git_url(url)
         expected = ("git", "github.com", "/xenserver/planex", "1.0.0",
                     "planex-1.0.0.tar.gz")
@@ -199,7 +199,7 @@ class GitTests(unittest.TestCase):
 	
 
     def test_locate_repo(self):
-        res = configure.locate_repo("test.git", myrepos=self.working_dir)
+        res = configure.locate_git_repo("test.git", myrepos=self.working_dir)
         self.assertEqual(res, os.path.join(self.working_dir, "test.git"))
 
 
