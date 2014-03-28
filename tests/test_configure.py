@@ -45,6 +45,17 @@ class BasicTests(unittest.TestCase):
             "planex-build-root/SOURCES/ocaml-cohttp-0.9.8.tar.gz",
             self.cohttp_url])
 
+    @patch('os.path.exists')
+    @patch('planex.configure.call') # configure adds subprocess.call to its namespace
+    def test_fetch_url_failure(self, mock_subprocess_call, mock_os_path_exists):
+        mock_os_path_exists.return_value = False
+        mock_subprocess_call.return_value = 1
+        try:
+            configure.fetch_url(self.cohttp_url)
+            assert false
+        except Exception, e:
+            pass
+        assert mock_os_path_exists.called
 
     @patch('os.path.exists')
     @patch('planex.configure.call')
@@ -203,11 +214,15 @@ class GitTests(unittest.TestCase):
         self.assertEqual(res, os.path.join(self.working_dir, "test.git"))
 
 
-    def test_latest_git_tag(self):
-        res = configure.latest_git_tag("git://host.com/test.git", 
+    def test_latest_tag(self):
+        res = configure.latest_tag("git://host.com/test.git", 
                                        myrepos=self.working_dir)
         self.assertEqual(res, "1.1.0")
 
+    def test_devel_tag(self):
+        res = configure.latest_tag("git://host.com/test.git#devel",
+                                   myrepos=self.working_dir)
+        self.assertEqual(res, "1.1.0+1+g446243c")
 
     def test_fetch_git_source(self):
         configure.fetch_git_source("git://host.com/test.git#"
@@ -215,4 +230,33 @@ class GitTests(unittest.TestCase):
                                    myrepos=self.working_dir,
                                    sources_dir=self.sources_dir)
         expected_tarball = os.path.join(self.sources_dir, "test-1.1.0.tar.gz")
+        self.assertTrue(os.path.exists(expected_tarball))
+
+class HgTests(unittest.TestCase):
+    def setUp(self):
+        # pylint: disable=C0103
+        self.working_dir = tempfile.mkdtemp()
+        self.sources_dir = os.path.join(self.working_dir, "SOURCES")
+        os.mkdir(self.sources_dir)
+        subprocess.call(["tar", "zxf", "tests/data/test-hg.tar.gz",
+                         "-C", self.working_dir])
+
+    def tearDown(self):
+        # pylint: disable=C0103
+        shutil.rmtree(self.working_dir)
+
+    def test_locate_repo(self):
+        res = configure.locate_hg_repo("test.hg", myrepos=self.working_dir)
+        self.assertEqual(res, os.path.join(self.working_dir, "test.hg"))
+        
+    def test_latest_tag(self):
+        res = configure.latest_tag("hg://host.com/test.hg",
+                                   myrepos=self.working_dir)
+        self.assertEqual(res, "0")
+
+    def test_fetch_hg_source(self):
+        url = configure.make_extended_url("hg://host.com/test.hg#foo","0")
+        configure.fetch_hg_source(url, myrepos=self.working_dir, 
+                                  sources_dir=self.sources_dir)
+        expected_tarball = os.path.join(self.sources_dir, "test-0.tar.gz")
         self.assertTrue(os.path.exists(expected_tarball))

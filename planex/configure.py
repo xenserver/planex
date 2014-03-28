@@ -44,7 +44,7 @@ def fetch_url(url, rewrite=None):
     else:
         if call(["curl", "-k", "-L", "-o", final_path, url]) != 0:
             print "Error downloading '%s'" % url
-            sys.exit(1)
+            raise Exception
         return 1
 
 
