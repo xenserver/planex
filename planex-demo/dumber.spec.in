@@ -1,0 +1,39 @@
+%define planex_version 0.0.0
+%define planex_source0_version 0.0.0
+%define planex_release 1%{?extrarelease}
+
+
+Name:           dumber
+Version:        %{planex_version}
+Release:        %{planex_release}
+Summary:        Dumber example for planex
+License:        BSD3
+Group:          Development/Other
+URL:            http://github.com/jonludlam/dumber
+Source0:        git://github.com/jonludlam/dumber
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}
+BuildRequires:	dumb
+
+%description
+Dumb package for demonstrating planex
+
+%prep
+%setup -q
+
+%build
+make
+
+%install
+export DESTDIR=%{buildroot}/
+make install
+
+%clean
+rm -rf %{buildroot}
+
+%files
+/usr/share/dumber/dumber
+
+%changelog
+* Fri Mar 27 2014 Jon Ludlam <jonathan.ludlam@citrix.com>
+- Initial package
+
