@@ -391,7 +391,7 @@ def prepare_srpm(spec_path, use_distfiles):
     for source in sources:
         (scheme, _, _, _, _, _) = urlparse.urlparse(source)
 
-        if scheme in ['file', 'http', 'https']:
+        if scheme in ['file', 'http', 'https', 'ftp']:
             rewrite_fn = None
             if use_distfiles:
                 rewrite_fn = rewrite_to_distfiles
