@@ -2,15 +2,14 @@ import re
 from planex import exceptions
 
 
-class GitHubSource(object):
+class GitSource(object):
     def __init__(self, url):
         match = re.match(
             r'''
             ^
             (?P<repo_url>
-                git://github.com/
-                (?P<username>[^#^/]+)/
-                (?P<reponame>[^#^/]+)
+                git://(?P<server>[^#^/]+)/
+                (?P<remote_path>[^#]+)
             )
             (\#(?P<branch>.+))?
             $
@@ -19,20 +18,19 @@ class GitHubSource(object):
         if not match:
             raise exceptions.InvalidURL(url)
         self.repo_url = match.group('repo_url')
-        self.branch = match.group('branch') or 'master'
-        self.username = match.group('username')
-        self.reponame = match.group('reponame')
+        self.remote_path = match.group('remote_path')
+        self.server = match.group('server')
 
     @property
     def path(self):
-        return '/'.join([self.username, self.reponame + '.git'])
+        if not self.remote_path.endswith('.git'):
+            return self.remote_path + '.git'
+        return self.remote_path
 
     def clone_commands(self, filesystem):
         return [
             'git',
             'clone',
             self.repo_url,
-            '--branch',
-            self.branch,
             filesystem.getsyspath(self.path)
         ]

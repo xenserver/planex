@@ -8,12 +8,8 @@ class SpecTemplate(object):
         self.path = path
 
     @property
-    def name(self):
-        return self.rpm_adapter.get_name(self.path, self.filesystem)
-
-    @property
-    def main_source(self):
-        return self.rpm_adapter.get_main_source(self.path, self.filesystem)
+    def sources(self):
+        return self.rpm_adapter.get_sources(self.path, self.filesystem)
 
 
 def template_from_file(path, filesystem, rpm_adapter):
@@ -23,8 +19,8 @@ def template_from_file(path, filesystem, rpm_adapter):
     return SpecTemplate(path, filesystem, rpm_adapter)
 
 
-def templates_from_dir(filesystem, rpm_adapter):
+def templates_from_dir(filesystem, rpm_adapter, fpattern):
     templates = []
-    for fname in filesystem.listdir(wildcard="*.spec.in"):
+    for fname in filesystem.listdir(wildcard=fpattern, files_only=True):
         templates.append(template_from_file(fname, filesystem, rpm_adapter))
     return templates

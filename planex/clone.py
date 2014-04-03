@@ -7,6 +7,7 @@ from planex import spec_template
 from planex import rpm_adapter
 from planex import sources
 from planex import executors
+from planex import exceptions
 
 
 log = logging.getLogger(__name__)
@@ -33,15 +34,26 @@ def main():
 
     logging.basicConfig(level=logging.ERROR if args.quiet else logging.DEBUG)
 
-    rpm_lib = rpm_adapter.SimpleRPM()
+    rpm_lib = rpm_adapter.RPMLibraryAdapter()
 
     templates = spec_template.templates_from_dir(
         fsopendir(args.config_dir),
-        rpm_lib)
+        rpm_lib,
+        '*.spec*')
+
+    srcs = []
+
+    for template in templates:
+        for source_url in template.sources:
+            try:
+                source = sources.GitSource(source_url)
+                srcs.append(source)
+            except exceptions.InvalidURL:
+                log.info('%s not recognised', source_url)
 
     if args.print_only:
-        for template in templates:
-            print template.main_source
+        for source in srcs:
+            print source.repo_url
         sys.exit(0)
 
     target_dir = fsopendir(args.target_dir)
@@ -51,8 +63,7 @@ def main():
     else:
         executor = executors.RealExecutor()
 
-    for template in templates:
-        source = sources.GitHubSource(template.main_source)
+    for source in srcs:
         commands = source.clone_commands(target_dir)
         log.info(commands)
         result = executor.run(commands)
