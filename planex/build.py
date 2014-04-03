@@ -194,7 +194,7 @@ def createrepo():
 def do_build(srpm, target, build_number, use_mock, xs_build_sys):
     print "Building %s - build number: %d" % (srpm, build_number)
     if use_mock:
-        cmd = ["mock", "--configdir=mock", "-r", "xenserver",
+        cmd = ["mock", "--configdir=mock", 
                "--resultdir=%s" % TMP_RPM_PATH, "--rebuild",
                "--target", target,
 #               "--enable-plugin=tmpfs",

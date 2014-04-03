@@ -1,7 +1,8 @@
 %global debug_package %{nil}
+%define planex_version 0.0.0
 
 Name:           ocaml-cohttp
-Version:        0.9.8
+Version:        %{planex_version}
 Release:        1
 Summary:        An HTTP library for OCaml
 License:        LGPL
