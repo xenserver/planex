@@ -197,7 +197,7 @@ def do_build(srpm, target, build_number, use_mock, xs_build_sys):
         cmd = ["mock", "--configdir=mock", 
                "--resultdir=%s" % TMP_RPM_PATH, "--rebuild",
                "--target", target,
-#               "--enable-plugin=tmpfs",
+               "--enable-plugin=tmpfs",
                "--define", "extrarelease .%d" % build_number,
                "-v", srpm]
         if not xs_build_sys:
