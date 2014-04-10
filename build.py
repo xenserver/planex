@@ -42,7 +42,7 @@ def doexec(args, inputtext=None):
 
 
 def run_srpmutil(specfile, srpm):
-    for x in ['i686', 'i386', 'noarch']:
+    for x in ['x86_64', 'noarch']:
         (rc, stdout, stderr) = doexec(["srpmutil", specfile, srpm, x])
         if rc == 0:
             return (stdout, x)
@@ -57,7 +57,7 @@ def get_srpm_info_native(srpm):
     spec = rpm.ts().parseSpec(myspecfile)
     info = {}
     info['deps'] = spec.sourceHeader["requires"]
-    info['arch'] = "i686"
+    info['arch'] = "x86_64"
     info['packages'] = [{'name':p.header['name']} for p in spec.packages]
     info['srcrpm'] = srpm
     content_file = open(myspecfile,'r')
