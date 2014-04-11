@@ -148,16 +148,17 @@ def locate_hg_repo(path, myrepos=MYREPOS):
 
     return None
 
-def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
+def get_dotgit_dir(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     """
-    Returns numeric version tag closest to HEAD in the repository.
+    Returns the original path of the git repo, the
+    real location in the filesystem, and the location of the .git dir
     """
     # We expect path to be a full git url pointing at a path on the local host
     # We only need the path
-    (scheme, _, path, committish, _) = parse_extended_git_url(url)
+    (scheme, _, orig_path, _, _) = parse_extended_git_url(url)
     assert scheme == "git"
 
-    repo_location = locate_git_repo(path, myrepos, github_mirror)
+    repo_location = locate_git_repo(orig_path, myrepos, github_mirror)
 
 #    print "Located git repo at: %s" % repo_location
 
@@ -166,17 +167,16 @@ def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     else:
         dotgitdir = repo_location
 
-    # Hack hack. if the repo name starts with /repos then it's an XS build
-    # system one. In that case, the committish isn't going to work (we
-    # explicitly only ever build from master, which is synced from a
-    # possibly different github branch).
-    if dotgitdir.startswith("/repos"):
-        committish = None
+    return (orig_path, repo_location, dotgitdir)
+
+def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
+    """
+    Returns numeric version tag closest to HEAD in the repository.
+    """
+    (orig_path, repo_location, dotgitdir) = get_dotgit_dir(url, myrepos, github_mirror)
 
     cmd = ["git", "--git-dir=%s" % dotgitdir,
          "describe", "--tags"]
-    if committish:
-        cmd.append(committish)
 
     description = subprocess.Popen(cmd,
         stdout=subprocess.PIPE).communicate()[0].strip()
@@ -229,19 +229,10 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
     URLs.
     """
 
-    # We expect path to be a custom git url pointing at a path on
-    # the local host.   We only need the path, version and archive_name
-    (_, _, path, version, archive_name) = parse_extended_git_url(url)
-    assert archive_name
-    basename = path.split("/")[-1]
+    (orig_path, repo_location, dotgitdir) = get_dotgit_dir(url, myrepos, github_mirror)
+    (_, _, _, version, archive_name) = parse_extended_git_url(url)
 
-    repo_location = locate_git_repo(path, myrepos, github_mirror)
-    #print "fetch_git_source: repo_location = %s" % repo_location
-
-    if(os.path.exists("%s/.git" % repo_location)):
-        dotgitdir = "%s/.git" % repo_location
-    else:
-        dotgitdir = repo_location
+    basename = orig_path.split("/")[-1]
 
     for sourcefile in os.listdir(sources_dir):
         if re.search(r'^(%s\.tar)(\.gz)?$' % basename, sourcefile):
@@ -383,9 +374,6 @@ def prepare_srpm(spec_path, use_distfiles):
         print "Failed to get sources for %s" % spec_path
         sys.exit(1)
 
-    number_skipped = 0
-    number_fetched = 0
-
     for source in sources:
         (scheme, _, _, _, _, _) = urlparse.urlparse(source)
 
@@ -394,19 +382,12 @@ def prepare_srpm(spec_path, use_distfiles):
             if use_distfiles:
                 rewrite_fn = rewrite_to_distfiles
             result = fetch_url(source, rewrite_fn)
-            number_fetched += result
-            number_skipped += (1 - result)
 
         if scheme in ['git']:
             fetch_git_source(source)
-            number_fetched += 1
 
         if scheme in ['hg']:
             fetch_hg_source(source)
-            number_fetched += 1
-
-    return number_fetched, number_skipped
-
 
 def build_srpm(spec_path):
     """
@@ -478,16 +459,9 @@ def copy_specs_to_buildroot(config_dir):
 
 def build_srpms(use_distfiles):
     """Build SRPMs for all SPECs"""
-    number_fetched = 0
-    number_skipped = 0
-
     for spec_path in glob.glob(SPECS_GLOB):
-        fetched, skipped = prepare_srpm(spec_path, use_distfiles)
-        number_fetched += fetched
-        number_skipped += skipped
+        prepare_srpm(spec_path, use_distfiles)
         build_srpm(spec_path)
-
-    return (number_fetched, number_skipped)
 
 
 def main(argv):
@@ -499,10 +473,8 @@ def main(argv):
     prepare_buildroot()
     copy_patches_to_buildroot(config_dir)
     copy_specs_to_buildroot(config_dir)
-    number_fetched, number_skipped = build_srpms(use_distfiles)
+    build_srpms(use_distfiles)
 
-    print "number of packages skipped: %d" % number_skipped
-    print "number of packages fetched: %d" % number_fetched
 
 
 def usage(name):
