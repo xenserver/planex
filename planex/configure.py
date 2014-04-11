@@ -211,7 +211,7 @@ def latest_hg_tag(url, myrepos=MYREPOS):
     repo_location = locate_hg_repo(path, myrepos)
 #    print "fetch_hg_source: repo_location = %s" % repo_location
 
-    cmd = ["hg", "tip", "--template", "{node}"]
+    cmd = ["hg", "-R", repo_location, "tip", "--template", "{node}"]
     hghash = subprocess.Popen(cmd,
         stdout=subprocess.PIPE).communicate()[0].strip()
 
