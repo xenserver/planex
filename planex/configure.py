@@ -13,12 +13,21 @@ import subprocess
 import re
 import glob
 import shutil
+import pipes
 from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
                             SPECS_GLOB)
 import planex.spec
 
 GITHUB_MIRROR = "~/github_mirror"
 MYREPOS = "~/devel2"
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
 
 def rewrite_to_distfiles(url):
     """
@@ -47,7 +56,6 @@ def fetch_url(url, rewrite=None):
             raise Exception
         return 1
 
-
 def make_extended_url(base_url, version):
     """
     Generate a custom repository URL of the form:
@@ -71,11 +79,9 @@ def parse_extended_git_url(url):
 
     Returns the scheme, host, path, version and archive name
     """
-    print "url=%s" % url
     (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
     assert ((scheme == "git") or (scheme == "hg"))
 
-    print "path=%s" % path
     version, archive = None, None
 
     # urlparse only parses fragments from some URLs, mainly http://,
@@ -84,7 +90,6 @@ def parse_extended_git_url(url):
     if "#" in path:
         path, fragment = path.split("#")
 
-    print "fragment=%s" % fragment
     if fragment and "/" in fragment:
         version, archive = fragment.split("/")
     else:
@@ -114,7 +119,6 @@ def locate_git_repo(path, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
         os.path.join(os.getcwd(), basename)]
 
     for trial in trials:
-        print "trying %s" % trial
         if os.path.exists(trial):
             return trial
 
@@ -139,7 +143,6 @@ def locate_hg_repo(path, myrepos=MYREPOS):
         os.path.join(os.getcwd(), basename)]
 
     for trial in trials:
-        print "trying %s" % trial
         if os.path.exists(trial):
             return trial
 
@@ -156,7 +159,7 @@ def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
 
     repo_location = locate_git_repo(path, myrepos, github_mirror)
 
-    print "Located git repo at: %s" % repo_location
+#    print "Located git repo at: %s" % repo_location
 
     if(os.path.exists("%s/.git" % repo_location)):
         dotgitdir = "%s/.git" % repo_location
@@ -174,8 +177,6 @@ def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
          "describe", "--tags"]
     if committish:
         cmd.append(committish)
-
-    print "cmd = %s"
 
     description = subprocess.Popen(cmd,
         stdout=subprocess.PIPE).communicate()[0].strip()
@@ -197,15 +198,13 @@ def latest_hg_tag(url, myrepos=MYREPOS):
     """
     Returns a string representing a unique version for the mercirual repo
     """
-    print "url=%s" % url
     (_, _, path, version, archive_name) = parse_extended_git_url(url)
     basename = path.split("/")[-1]
 
     repo_location = locate_hg_repo(path, myrepos)
-    print "fetch_hg_source: repo_location = %s" % repo_location
+#    print "fetch_hg_source: repo_location = %s" % repo_location
 
     cmd = ["hg", "-R", repo_location, "parents", "--template", "{rev}"]
-    print "%s" % cmd
 
     description = subprocess.Popen(cmd,
         stdout=subprocess.PIPE).communicate()[0].strip()
@@ -232,13 +231,12 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
 
     # We expect path to be a custom git url pointing at a path on
     # the local host.   We only need the path, version and archive_name
-    print "url=%s" % url
     (_, _, path, version, archive_name) = parse_extended_git_url(url)
     assert archive_name
     basename = path.split("/")[-1]
 
     repo_location = locate_git_repo(path, myrepos, github_mirror)
-    print "fetch_git_source: repo_location = %s" % repo_location
+    #print "fetch_git_source: repo_location = %s" % repo_location
 
     if(os.path.exists("%s/.git" % repo_location)):
         dotgitdir = "%s/.git" % repo_location
@@ -255,12 +253,10 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
     cmd = ["git", "--git-dir=%s" % dotgitdir, "archive",
            "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
            "%s/%s" % (sources_dir, tarball_name)]
-    print " ".join(cmd)
     call(cmd)
 
     if archive_name.endswith(".gz"):
         cmd = ["gzip", "-f", "%s/%s" % (sources_dir, tarball_name)]
-    print " ".join(cmd)
     call(cmd)
 
 def fetch_hg_source(url, myrepos=MYREPOS, sources_dir=SOURCES_DIR):
@@ -271,18 +267,17 @@ def fetch_hg_source(url, myrepos=MYREPOS, sources_dir=SOURCES_DIR):
     "reponame-version".
     """
 
-    print "fetch_hg_source: url=%s" % url
     (_, _, path, version, archive_name) = parse_extended_git_url(url)
     assert archive_name
     basename = path.split("/")[-1]
 
     repo_location = locate_hg_repo(path, myrepos)
-    print "fetch_hg_source: repo_location = %s" % repo_location
+#    print "fetch_hg_source: repo_location = %s" % repo_location
 
     cmd = ["hg", "-R", repo_location, "archive", "-t", "tgz", "-p", 
            "%s-%s/" % (basename, version), 
            "%s/%s" % (sources_dir, archive_name)]
-    print "%s" % cmd
+#    print "%s" % cmd
 
     call(cmd)
 
@@ -333,13 +328,15 @@ def preprocess_spec(spec_in_path, spec_out_path, versions, source_mapping):
     """
     assert spec_in_path.endswith('.in')
 
-    print "preprocess_spec: mapping=%s" % source_mapping
+#    print "preprocess_spec: mapping=%s" % source_mapping
     spec_in = open(spec_in_path)
     spec_contents = spec_in.readlines()
     spec_in.close()
 
     output_filename = os.path.basename(spec_in_path)[:-len(".in")]
     spec_out = open(os.path.join(spec_out_path, output_filename), "w")
+
+    spec_basename = spec_in_path.split("/")[-1]
 
     subs = {}
 
@@ -352,10 +349,11 @@ def preprocess_spec(spec_in_path, spec_out_path, versions, source_mapping):
 
     for line in spec_contents:
         match = re.match(r'^([Ss]ource\d*:\s+)(.+)\n', line)
+# TODO: strip whitespace from match.group(2)
         if match and match.group(2) in source_mapping:
-            print "Got a source mapping"
+#            print "Got a source mapping"
             line = match.group(1) + source_mapping[match.group(2)] + "\n"
-            print "mapping %s to %s" % (match.group(2), 
+            print "  " + spec_basename + ": mapping %s to %s" % (match.group(2), 
                                         source_mapping[match.group(2)])
 
         match = re.match(r'^(%define planex_)([^\s]+)(.+)\n', line)
@@ -417,8 +415,21 @@ def build_srpm(spec_path):
     Assumes that all source files have already been downloaded to
     the rpmbuild sources directory, and are correctly named.
     """
-    call(["rpmbuild", "-bs", spec_path,
+    cmd = (["rpmbuild", "-bs", spec_path,
           "--nodeps", "--define", "_topdir %s" % BUILD_ROOT_DIR])
+    proc = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    (stdout,stderr) = proc.communicate()
+    if proc.returncode != 0:
+        print bcolors.FAIL + "ERROR: rpmbuild failed" + bcolors.ENDC
+        print "Command was:\n\n  %s\n" % (" ".join(map(pipes.quote,cmd)))
+        print "stdout"
+        print "------"
+        print stdout
+        print "stderr"
+        print "------"
+        print stderr
+        exit(1)
+
 
 
 def prepare_buildroot():
@@ -447,10 +458,13 @@ def is_scm(uri):
 
 def copy_specs_to_buildroot(config_dir):
     """Pull in spec files, preprocessing if necessary"""
-    for spec_path in glob.glob(os.path.join(config_dir, "*.spec*")):
+    specs = glob.glob(os.path.join(config_dir, "*.spec"))
+    spec_ins = glob.glob(os.path.join(config_dir, "*.spec.in"))
+    for spec_path in specs + spec_ins:
         check_spec_name(spec_path)
         if spec_path.endswith('.in'):
-            print "Configuring package with spec file: %s" % spec_path
+            basename = spec_path.split("/")[-1]
+            print bcolors.OKGREEN + "Configuring '%s'" % basename + bcolors.ENDC
             sources = [source for source in sources_from_spec(spec_path) 
                        if (is_scm(source))]
             versions = [str(latest_tag(source)) for source in sources]
