@@ -56,7 +56,7 @@ def fetch_url(url, rewrite=None):
             raise Exception
         return 1
 
-def make_extended_url(base_url, version):
+def make_extended_url(base_url, scmhash, version):
     """
     Generate a custom repository URL of the form:
        <base_url>#<version>/%{name}-%{version}.tar.gz
@@ -69,7 +69,7 @@ def make_extended_url(base_url, version):
     if base_url.endswith(".hg"):
 	base_url = base_url[:-3]
     name = os.path.split(base_url)[-1]
-    return "%s#%s/%s-%s.tar.gz" % (base_url, version, name, version)
+    return "%s#%s/%s-%s.tar.gz" % (base_url, scmhash, name, version)
 
 
 def parse_extended_git_url(url):
@@ -175,8 +175,15 @@ def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     """
     (orig_path, repo_location, dotgitdir) = get_dotgit_dir(url, myrepos, github_mirror)
 
+    # First, get the hash of the commit
     cmd = ["git", "--git-dir=%s" % dotgitdir,
-         "describe", "--tags"]
+           "rev-parse", "HEAD"]
+
+    githash = subprocess.Popen(cmd,
+        stdout=subprocess.PIPE).communicate()[0].strip()
+
+    cmd = ["git", "--git-dir=%s" % dotgitdir,
+           "describe", "--tags", githash]
 
     description = subprocess.Popen(cmd,
         stdout=subprocess.PIPE).communicate()[0].strip()
@@ -185,14 +192,14 @@ def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     # always increase 
     if description == "":
         cmd = ["git", "--git-dir=%s" % dotgitdir,
-               "log", "--oneline"]
+               "log", githash, "--oneline"]
         description = subprocess.Popen(cmd,
            stdout=subprocess.PIPE).communicate()[0].strip()
         return len(description.splitlines())
 
     match = re.search("[^0-9]*", description)
     matchlen = len(match.group())
-    return description[matchlen:].replace('-', '+')
+    return (githash, description[matchlen:].replace('-', '+'))
 
 def latest_hg_tag(url, myrepos=MYREPOS):
     """
@@ -204,12 +211,16 @@ def latest_hg_tag(url, myrepos=MYREPOS):
     repo_location = locate_hg_repo(path, myrepos)
 #    print "fetch_hg_source: repo_location = %s" % repo_location
 
+    cmd = ["hg", "tip", "--template", "{node}"]
+    hghash = subprocess.Popen(cmd,
+        stdout=subprocess.PIPE).communicate()[0].strip()
+
     cmd = ["hg", "-R", repo_location, "parents", "--template", "{rev}"]
 
     description = subprocess.Popen(cmd,
         stdout=subprocess.PIPE).communicate()[0].strip()
 
-    return description
+    return (hghash,str(description))
 
 def latest_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     (schema, _, _, _, _) = parse_extended_git_url(url)
@@ -230,10 +241,10 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
     """
 
     (orig_path, repo_location, dotgitdir) = get_dotgit_dir(url, myrepos, github_mirror)
-    (_, _, _, version, archive_name) = parse_extended_git_url(url)
+    (_, _, _, scmhash, archive_name) = parse_extended_git_url(url)
 
     basename = orig_path.split("/")[-1]
-
+    archive_basename = archive_name[:-7]
     for sourcefile in os.listdir(sources_dir):
         if re.search(r'^(%s\.tar)(\.gz)?$' % basename, sourcefile):
             os.remove(os.path.join(sources_dir, sourcefile))
@@ -242,7 +253,7 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
     else:
 	tarball_name = archive_name
     cmd = ["git", "--git-dir=%s" % dotgitdir, "archive",
-           "--prefix=%s-%s/" % (basename, version), "HEAD", "-o",
+           "--prefix=%s/" % (archive_basename), scmhash, "-o",
            "%s/%s" % (sources_dir, tarball_name)]
     call(cmd)
 
@@ -331,11 +342,12 @@ def preprocess_spec(spec_in_path, spec_out_path, versions, source_mapping):
 
     subs = {}
 
-    for (index,value) in enumerate(versions):
+    for (index,(scmhash,value)) in enumerate(versions):
         subs['source%d_version' % index] = value
+        subs['source%d_hash' % index] = scmhash
 
     subs.update({
-	"version" : "+".join(versions),
+	"version" : "+".join([y for (x,y) in versions]),
         "release" : "1%{?extrarelease}" })
 
     for line in spec_contents:
@@ -448,21 +460,19 @@ def copy_specs_to_buildroot(config_dir):
             print bcolors.OKGREEN + "Configuring '%s'" % basename + bcolors.ENDC
             sources = [source for source in sources_from_spec(spec_path) 
                        if (is_scm(source))]
-            versions = [str(latest_tag(source)) for source in sources]
-            repo_urls = [make_extended_url(source, version) 
-                         for (source, version) in zip(sources, versions)]
+            versions = [latest_tag(source) for source in sources]
+            repo_urls = [make_extended_url(source, scmhash, version)
+                         for (source, (scmhash,version)) in zip(sources, versions)]
             mapping = dict(zip(sources, repo_urls))
             preprocess_spec(spec_path, SPECS_DIR, versions, mapping)
         else:
             shutil.copy(spec_path, SPECS_DIR)
-
 
 def build_srpms(use_distfiles):
     """Build SRPMs for all SPECs"""
     for spec_path in glob.glob(SPECS_GLOB):
         prepare_srpm(spec_path, use_distfiles)
         build_srpm(spec_path)
-
 
 def main(argv):
     """
@@ -475,14 +485,11 @@ def main(argv):
     copy_specs_to_buildroot(config_dir)
     build_srpms(use_distfiles)
 
-
-
 def usage(name):
     """
     Print usage string
     """
     print "%s --config-dir=<config-dir>" % name
-
 
 def parse_cmdline(argv):
     """
