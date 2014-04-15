@@ -7,7 +7,7 @@ Builds SRPMs for the tarballs or Git repositories in <component-specs-dir>.
 import getopt
 import sys
 import os.path
-from subprocess import call, Popen
+from subprocess import Popen
 import urlparse
 import subprocess
 import re
@@ -21,6 +21,9 @@ import planex.spec
 GITHUB_MIRROR = "~/github_mirror"
 MYREPOS = "~/devel2"
 
+dump_cmds = False
+manifest = {}
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -29,6 +32,27 @@ class bcolors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
+def run(cmd, check=True):
+    if dump_cmds:
+        print bcolors.WARNING, "CMD: ", (" ".join(map(pipes.quote,cmd))), bcolors.ENDC
+
+    proc = subprocess.Popen(cmd,
+        stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    [stdout,stderr] = proc.communicate()
+
+    if check and proc.returncode != 0:
+        print bcolors.FAIL + "ERROR: command failed" + bcolors.ENDC
+        print "Command was:\n\n  %s\n" % (" ".join(map(pipes.quote,cmd)))
+        print "stdout"
+        print "------"
+        print stdout
+        print "stderr"
+        print "------"
+        print stderr
+        raise Exception
+            
+    return {"stdout":stdout, "stderr":stderr, "rc":proc.returncode}
+    
 def rewrite_to_distfiles(url):
     """
     Rewrites url to refer to the local distfiles cache.
@@ -51,9 +75,7 @@ def fetch_url(url, rewrite=None):
     if os.path.exists(final_path):
         return 0
     else:
-        if call(["curl", "-k", "-L", "-o", final_path, url]) != 0:
-            print "Error downloading '%s'" % url
-            raise Exception
+        run(["curl", "-k", "-L", "-o", final_path, url])
         return 1
 
 def make_extended_url(base_url, scmhash, version):
@@ -122,6 +144,9 @@ def locate_git_repo(path, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
         if os.path.exists(trial):
             return trial
 
+    print bcolors.FAIL + "Can't find a git repositor for '%s'" % path + bcolors.ENDC
+    print "tried:\n" + "\n".join(trials)
+
     return None
 
 def locate_hg_repo(path, myrepos=MYREPOS):
@@ -179,23 +204,20 @@ def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
     cmd = ["git", "--git-dir=%s" % dotgitdir,
            "rev-parse", "HEAD"]
 
-    githash = subprocess.Popen(cmd,
-        stdout=subprocess.PIPE).communicate()[0].strip()
+    githash = run(cmd)['stdout'].strip()
 
     cmd = ["git", "--git-dir=%s" % dotgitdir,
            "describe", "--tags", githash]
 
-    description = subprocess.Popen(cmd,
-        stdout=subprocess.PIPE).communicate()[0].strip()
+    description = run(cmd,check=False)['stdout'].strip()
 
     # if there are no tags, get the number of commits, which should 
     # always increase 
     if description == "":
         cmd = ["git", "--git-dir=%s" % dotgitdir,
                "log", githash, "--oneline"]
-        description = subprocess.Popen(cmd,
-           stdout=subprocess.PIPE).communicate()[0].strip()
-        return len(description.splitlines())
+        description=run(cmd)['stdout'].strip()
+        return (githash, str(len(description.splitlines())))
 
     match = re.search("[^0-9]*", description)
     matchlen = len(match.group())
@@ -212,13 +234,11 @@ def latest_hg_tag(url, myrepos=MYREPOS):
 #    print "fetch_hg_source: repo_location = %s" % repo_location
 
     cmd = ["hg", "-R", repo_location, "tip", "--template", "{node}"]
-    hghash = subprocess.Popen(cmd,
-        stdout=subprocess.PIPE).communicate()[0].strip()
+    hghash = run(cmd)['stdout'].strip()
 
     cmd = ["hg", "-R", repo_location, "parents", "--template", "{rev}"]
 
-    description = subprocess.Popen(cmd,
-        stdout=subprocess.PIPE).communicate()[0].strip()
+    description = run(cmd)['stdout'].strip()
 
     return (hghash,str(description))
 
@@ -245,9 +265,11 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
 
     basename = orig_path.split("/")[-1]
     archive_basename = archive_name[:-7]
-    for sourcefile in os.listdir(sources_dir):
-        if re.search(r'^(%s\.tar)(\.gz)?$' % basename, sourcefile):
-            os.remove(os.path.join(sources_dir, sourcefile))
+
+    # If it already exists, we're done.
+    if os.path.exists(os.path.join(sources_dir, archive_name)):
+        return
+
     if archive_name.endswith(".gz"):
         tarball_name = archive_name[:-3]
     else:
@@ -255,11 +277,11 @@ def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR,
     cmd = ["git", "--git-dir=%s" % dotgitdir, "archive",
            "--prefix=%s/" % (archive_basename), scmhash, "-o",
            "%s/%s" % (sources_dir, tarball_name)]
-    call(cmd)
+    run(cmd)
 
     if archive_name.endswith(".gz"):
         cmd = ["gzip", "-f", "%s/%s" % (sources_dir, tarball_name)]
-    call(cmd)
+    run(cmd)
 
 def fetch_hg_source(url, myrepos=MYREPOS, sources_dir=SOURCES_DIR):
     """
@@ -273,6 +295,9 @@ def fetch_hg_source(url, myrepos=MYREPOS, sources_dir=SOURCES_DIR):
     assert archive_name
     basename = path.split("/")[-1]
 
+    if os.path.exists(os.path.join(sources_dir, archive_name)):
+        return
+
     repo_location = locate_hg_repo(path, myrepos)
 #    print "fetch_hg_source: repo_location = %s" % repo_location
 
@@ -281,7 +306,7 @@ def fetch_hg_source(url, myrepos=MYREPOS, sources_dir=SOURCES_DIR):
            "%s/%s" % (sources_dir, archive_name)]
 #    print "%s" % cmd
 
-    call(cmd)
+    run(cmd)
 
 
 def name_from_spec(spec_path):
@@ -401,40 +426,78 @@ def prepare_srpm(spec_path, use_distfiles):
         if scheme in ['hg']:
             fetch_hg_source(source)
 
-def build_srpm(spec_path):
+def get_sha256s():
+    spec_files = glob.glob(os.path.join(SPECS_DIR,"*"))
+    sources_files = glob.glob(os.path.join(SOURCES_DIR,"*"))
+    all_files = spec_files + sources_files
+    cmd = ["sha256sum"] + all_files
+    result = run(cmd)['stdout'].strip().split('\n')
+    def fix(x):
+        words = x.split()
+        if len(words) == 2:
+            fname = words[1].split("/")[-1]
+            return (fname,words[0])
+        else:
+            return None
+    fixed = [fix(x) for x in result]
+    return dict(fixed)       
+
+def ensure_existing_ok(shas, spec_path):
+    pkg_name = name_from_spec(spec_path)
+
+    one_correct = False
+
+    for srpm in glob.glob(os.path.join(SRPMS_DIR, '%s-*.src.rpm' % pkg_name)):
+        # Check it's for the right package:
+        cmd = ["rpm","-qp",srpm, "--qf", "%{name}"]
+        result = run(cmd)['stdout'].strip().split('\n')
+        
+        if result[0] == pkg_name:
+            cmd = ["rpm","--dump","-qp",srpm]
+            result = run(cmd)['stdout'].strip().split('\n')
+            ok = True
+            for line in result:
+                split = line.split()
+                fname = split[0]
+                sha=split[3]
+                if shas[fname] != sha:
+                    ok = False
+
+            if not ok:
+                print bcolors.WARNING + "WARNING: Removing SRPM '%s' (hash mismatch with desired)" + bcolors.ENDC
+                os.remove(srpm)
+            else:
+                one_correct = True
+
+    return one_correct
+
+def build_srpm(shas, spec_path):
     """
     Builds an SRPM from the spec file at spec_path.
 
     Assumes that all source files have already been downloaded to
     the rpmbuild sources directory, and are correctly named.
     """
-    cmd = (["rpmbuild", "-bs", spec_path,
-          "--nodeps", "--define", "_topdir %s" % BUILD_ROOT_DIR])
-    proc = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    (stdout,stderr) = proc.communicate()
-    if proc.returncode != 0:
-        print bcolors.FAIL + "ERROR: rpmbuild failed" + bcolors.ENDC
-        print "Command was:\n\n  %s\n" % (" ".join(map(pipes.quote,cmd)))
-        print "stdout"
-        print "------"
-        print stdout
-        print "stderr"
-        print "------"
-        print stderr
-        exit(1)
+    is_ok = ensure_existing_ok(shas, spec_path)
 
-
+    if not is_ok:
+        cmd = (["rpmbuild", "-bs", spec_path,
+                "--nodeps", "--define", "_topdir %s" % BUILD_ROOT_DIR])
+        run(cmd)
+        return 1
+    else:
+        return 0
 
 def prepare_buildroot():
     """Create a clean rpmbuild directory structure"""
-    for path in [SRPMS_DIR, SPECS_DIR]:
-        if os.path.exists(path):
-            shutil.rmtree(path)
-        os.makedirs(path)
 
-    if not os.path.exists(SOURCES_DIR):
-        os.makedirs(SOURCES_DIR)
+    if os.path.exists(SPECS_DIR):
+        shutil.rmtree(SPECS_DIR)
+    os.makedirs(SPECS_DIR)
 
+    for path in [SRPMS_DIR, SOURCES_DIR]:
+        if not os.path.exists(path):
+            os.makedirs(path)
 
 def copy_patches_to_buildroot(config_dir):
     """Copy patches into the build root"""
@@ -455,24 +518,50 @@ def copy_specs_to_buildroot(config_dir):
     spec_ins = glob.glob(os.path.join(config_dir, "*.spec.in"))
     for spec_path in specs + spec_ins:
         check_spec_name(spec_path)
+        basename = spec_path.split("/")[-1]
         if spec_path.endswith('.in'):
-            basename = spec_path.split("/")[-1]
-            print bcolors.OKGREEN + "Configuring '%s'" % basename + bcolors.ENDC
+            print bcolors.OKGREEN + "Configuring and fetching sources for '%s'" % basename + bcolors.ENDC
             sources = [source for source in sources_from_spec(spec_path) 
                        if (is_scm(source))]
             versions = [latest_tag(source) for source in sources]
+            
+            src_and_vsn = zip(sources, versions)
+            for (source, (scmhash,version)) in src_and_vsn:
+                manifest[source]=scmhash                
             repo_urls = [make_extended_url(source, scmhash, version)
-                         for (source, (scmhash,version)) in zip(sources, versions)]
+                         for (source, (scmhash,version)) in src_and_vsn]
             mapping = dict(zip(sources, repo_urls))
             preprocess_spec(spec_path, SPECS_DIR, versions, mapping)
         else:
+            print bcolors.OKGREEN + "Fetching sources for '%s'" % basename + bcolors.ENDC
             shutil.copy(spec_path, SPECS_DIR)
 
 def build_srpms(use_distfiles):
     """Build SRPMs for all SPECs"""
-    for spec_path in glob.glob(SPECS_GLOB):
+    print bcolors.OKGREEN + "Building/checking SRPMS for all files in SPECSDIR" + bcolors.ENDC
+    print "  Getting SHA256 hashes for source to check against existing SRPMS...",
+    sys.stdout.flush()
+    shas = get_sha256s()
+    print "OK"
+    specs = glob.glob(SPECS_GLOB)
+    n=0
+    for spec_path in specs:
         prepare_srpm(spec_path, use_distfiles)
-        build_srpm(spec_path)
+        n+=build_srpm(shas, spec_path)
+    print bcolors.OKGREEN + "Rebuilt %d out of %d SRPMS" % (n,len(specs)) +  bcolors.ENDC
+
+def dump_manifest():
+    print "---------------------------------------"
+    print bcolors.OKGREEN + "MANIFEST" + bcolors.ENDC
+    sources = manifest.keys()
+    sources.sort()
+    for source in sources:
+        basename = source.split("/")[-1]
+        if basename.endswith(".git"):
+            basename = basename[:-4]
+        if basename.endswith(".hg"):
+            basename = basename[:-3]
+        print basename.rjust(40), manifest[source]
 
 def main(argv):
     """
@@ -484,6 +573,9 @@ def main(argv):
     copy_patches_to_buildroot(config_dir)
     copy_specs_to_buildroot(config_dir)
     build_srpms(use_distfiles)
+    dump_manifest()
+
+        
 
 def usage(name):
     """
