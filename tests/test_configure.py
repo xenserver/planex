@@ -35,21 +35,21 @@ class BasicTests(unittest.TestCase):
 
     # Decorators are applied bottom up
     @patch('os.path.exists')
-    @patch('planex.configure.call') # configure adds subprocess.call to its namespace
-    def test_fetch_url(self, mock_subprocess_call, mock_os_path_exists):
+    @patch('planex.configure.run')
+    def test_fetch_url(self, mock_planex_run, mock_os_path_exists):
         mock_os_path_exists.return_value = False
-        mock_subprocess_call.return_value = 0
+        mock_planex_run.return_value = ("","",0)
         configure.fetch_url(self.cohttp_url)
         assert mock_os_path_exists.called
-        mock_subprocess_call.assert_called_with(["curl", "-k", "-L", "-o",
+        mock_planex_run.assert_called_with(["curl", "-k", "-L", "-o",
             "planex-build-root/SOURCES/ocaml-cohttp-0.9.8.tar.gz",
             self.cohttp_url])
 
     @patch('os.path.exists')
-    @patch('planex.configure.call') # configure adds subprocess.call to its namespace
-    def test_fetch_url_failure(self, mock_subprocess_call, mock_os_path_exists):
+    @patch('planex.configure.run')
+    def test_fetch_url_failure(self, mock_planex_run, mock_os_path_exists):
         mock_os_path_exists.return_value = False
-        mock_subprocess_call.return_value = 1
+        mock_planex_run.return_value = ("","",1)
         try:
             configure.fetch_url(self.cohttp_url)
             assert false
@@ -58,30 +58,30 @@ class BasicTests(unittest.TestCase):
         assert mock_os_path_exists.called
 
     @patch('os.path.exists')
-    @patch('planex.configure.call')
-    def test_fetch_url_existing_file(self, mock_subprocess_call,
+    @patch('planex.configure.run')
+    def test_fetch_url_existing_file(self, mock_planex_run,
                                      mock_os_path_exists):
         mock_os_path_exists.return_value = True
-        mock_subprocess_call.return_value = 0
+        mock_planex_run.return_value = ("","",0)
         configure.fetch_url(self.cohttp_url)
         mock_os_path_exists.assert_called_with(
             "planex-build-root/SOURCES/ocaml-cohttp-0.9.8.tar.gz")
-        assert not mock_subprocess_call.called
+        assert not mock_planex_run.called
 
 
     @patch('os.path.exists')
-    @patch('planex.configure.call')
-    def test_fetch_url_with_rewrite(self, mock_subprocess_call,
+    @patch('planex.configure.run')
+    def test_fetch_url_with_rewrite(self, mock_planex_run,
                                     mock_os_path_exists):
         def rewrite(_url):
             return "http://rewritten.com/file.tar.gz"
 
         mock_os_path_exists.return_value = False
-        mock_subprocess_call.return_value = 0
+        mock_planex_run.return_value = ("","",0)
         configure.fetch_url(self.cohttp_url, rewrite=rewrite)
         mock_os_path_exists.assert_called_with(
             "planex-build-root/SOURCES/file.tar.gz")
-        mock_subprocess_call.assert_called_with(["curl", "-k", "-L", "-o",
+        mock_planex_run.assert_called_with(["curl", "-k", "-L", "-o",
             "planex-build-root/SOURCES/file.tar.gz",
             "http://rewritten.com/file.tar.gz"])
 
