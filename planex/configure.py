@@ -563,6 +563,24 @@ def dump_manifest():
             basename = basename[:-3]
         print basename.rjust(40), manifest[source]
 
+def sort_mockconfig(config_dir):
+    if not os.path.exists('mock'):
+        os.makedirs('mock')
+        print bcolors.OKGREEN + "Creating mock configuration for current working directory" + bcolors.ENDC
+        # Copy in all the files from config_dir
+        mock_files = glob.glob(os.path.join(config_dir,'mock','*'))
+
+        for f in mock_files:
+            basename = f.split('/')[-1]
+            dest_fname = os.path.join('mock',basename)
+            print "  copying file '%s' to '%s'" % (f,dest_fname)
+            shutil.copyfile(f,dest_fname)
+            planex_build_root = os.path.join(os.getcwd(),BUILD_ROOT_DIR)
+            with open(dest_fname,'w') as dst:
+                with open(f) as src:
+                    for line in src:
+                        dst.write(re.sub(r"@PLANEX_BUILD_ROOT@", planex_build_root, line))
+
 def main(argv):
     """
     Main function.  Process all the specfiles in the directory
@@ -570,6 +588,7 @@ def main(argv):
     """
     config_dir, use_distfiles = parse_cmdline(argv)
     prepare_buildroot()
+    sort_mockconfig(config_dir)
     copy_patches_to_buildroot(config_dir)
     copy_specs_to_buildroot(config_dir)
     build_srpms(use_distfiles)
