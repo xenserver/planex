@@ -1,7 +1,7 @@
 %define planex_version 0.0.0
 %define planex_source0_version 0.0.0
 %define planex_release 1%{?extrarelease}
-
+%define planex_source0_hash 0
 
 Name:           dumb
 Version:        %{planex_version}
@@ -33,6 +33,6 @@ rm -rf %{buildroot}
 /usr/share/dummy
 
 %changelog
-* Fri Mar 27 2014 Jon Ludlam <jonathan.ludlam@citrix.com>
+* Thu Mar 27 2014 Jon Ludlam <jonathan.ludlam@citrix.com>
 - Initial package
 
