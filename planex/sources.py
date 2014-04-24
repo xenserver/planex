@@ -129,7 +129,7 @@ class OtherSource(SCM):
 
 def Source(url):
     ty = url.split(":")[0]
-    for cls in SCM.__subclasses__():
+    for cls in SCM.__subclasses__(): #pylint: disable-msg=E1101
         if cls.handles(ty):
             return cls(url)
     return OtherSource(url)
