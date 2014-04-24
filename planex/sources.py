@@ -58,6 +58,13 @@ class GitSource(SCM):
                 'origin',
                 self.repo_url
             ]
+            fetch_cmd = [
+                'git',
+                '--git-dir=%s' % dst_dotgit,
+                'fetch',
+                '--all',
+                '-t'
+            ]
             checkout_cmd = [
                 'git',
                 '--git-dir=%s' % dst_dotgit,
@@ -65,7 +72,7 @@ class GitSource(SCM):
                 'checkout',
                 self.git_branch
             ]
-            return [clone_cmd, reset_urls_cmd, checkout_cmd]
+            return [clone_cmd, reset_urls_cmd, fetch_cmd, checkout_cmd]
         else:
             cmd = [
                 'git',
