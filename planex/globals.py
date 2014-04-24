@@ -7,3 +7,5 @@ BUILD_ROOT_DIR = "planex-build-root"
     ['SPECS', 'SOURCES', 'SRPMS', 'RPMS', 'BUILD']]
 
 SPECS_GLOB = os.path.join(SPECS_DIR, "*.spec")
+
+MIRROR_PATH = "~/git_mirror"

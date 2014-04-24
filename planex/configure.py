@@ -7,51 +7,22 @@ Builds SRPMs for the tarballs or Git repositories in <component-specs-dir>.
 import getopt
 import sys
 import os.path
-from subprocess import Popen
 import urlparse
-import subprocess
 import re
 import glob
 import shutil
-import pipes
 from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
                             SPECS_GLOB)
 import planex.spec
+from planex.util import (bcolors, run, dump_cmds)
+
 
 GITHUB_MIRROR = "~/github_mirror"
 MYREPOS = "~/devel2"
 
-dump_cmds = False
+
 manifest = {}
 
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-
-def run(cmd, check=True):
-    if dump_cmds:
-        print bcolors.WARNING, "CMD: ", (" ".join(map(pipes.quote,cmd))), bcolors.ENDC
-
-    proc = subprocess.Popen(cmd,
-        stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    [stdout,stderr] = proc.communicate()
-
-    if check and proc.returncode != 0:
-        print bcolors.FAIL + "ERROR: command failed" + bcolors.ENDC
-        print "Command was:\n\n  %s\n" % (" ".join(map(pipes.quote,cmd)))
-        print "stdout"
-        print "------"
-        print stdout
-        print "stderr"
-        print "------"
-        print stderr
-        raise Exception
-            
-    return {"stdout":stdout, "stderr":stderr, "rc":proc.returncode}
     
 def rewrite_to_distfiles(url):
     """
@@ -464,7 +435,7 @@ def ensure_existing_ok(shas, spec_path):
                     ok = False
 
             if not ok:
-                print bcolors.WARNING + "WARNING: Removing SRPM '%s' (hash mismatch with desired)" + bcolors.ENDC
+                print bcolors.WARNING + ("WARNING: Removing SRPM '%s' (hash mismatch with desired)" % srpm) + bcolors.ENDC
                 os.remove(srpm)
             else:
                 one_correct = True

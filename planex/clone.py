@@ -1,10 +1,10 @@
 import argparse
 import sys
 import logging
+import glob
+import planex.spec
+import os
 
-from fs.opener import fsopendir
-from planex import spec_template
-from planex import rpm_adapter
 from planex import sources
 from planex import executors
 
@@ -33,18 +33,13 @@ def main():
 
     logging.basicConfig(level=logging.ERROR if args.quiet else logging.DEBUG)
 
-    rpm_lib = rpm_adapter.SimpleRPM()
-
-    templates = spec_template.templates_from_dir(
-        fsopendir(args.config_dir),
-        rpm_lib)
+    templates = [planex.spec.Spec(path) 
+                 for path in glob.glob(os.path.join(args.config_dir, "*.spec.in"))]
 
     if args.print_only:
         for template in templates:
-            print template.main_source
+            print template.source_urls()
         sys.exit(0)
-
-    target_dir = fsopendir(args.target_dir)
 
     if args.dry_run:
         executor = executors.PrintExecutor(sys.stdout)
@@ -52,14 +47,18 @@ def main():
         executor = executors.RealExecutor()
 
     for template in templates:
-        source = sources.GitHubSource(template.main_source)
-        commands = source.clone_commands(target_dir)
-        log.info(commands)
-        result = executor.run(commands)
+        srcs = [sources.Source(url) for url in template.source_urls()]
 
-        if result.return_code != 0:
-            log.warning("FAILED: %s", commands)
-        if result.stdout:
-            log.warning("STDOUT: %s", result.stdout)
-        if result.stderr:
-            log.warning("STDERR: %s", result.stderr)
+        commands_list = [src.clone_commands(args.target_dir) for src in srcs]
+
+        log.info(commands_list)
+        results_list = [[executor.run(command) for command in commands] for commands in commands_list]
+
+        for results in results_list:
+            for result in results:
+                if result.return_code != 0:
+                    log.warning("FAILED: %s", commands)
+                if result.stdout:
+                    log.warning("STDOUT: %s", result.stdout)
+                if result.stderr:
+                    log.warning("STDERR: %s", result.stderr)
