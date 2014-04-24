@@ -49,15 +49,16 @@ def main():
     for template in templates:
         srcs = [sources.Source(url) for url in template.source_urls()]
 
-        commands = [src.clone_commands(args.target_dir) for src in srcs]
+        commands_list = [src.clone_commands(args.target_dir) for src in srcs]
 
-        log.info(commands)
-        results = [executor.run(command) for command in commands if len(command) > 0]
+        log.info(commands_list)
+        results_list = [[executor.run(command) for command in commands] for commands in commands_list]
 
-        for result in results:
-            if result.return_code != 0:
-                log.warning("FAILED: %s", commands)
-            if result.stdout:
-                log.warning("STDOUT: %s", result.stdout)
-            if result.stderr:
-                log.warning("STDERR: %s", result.stderr)
+        for results in results_list:
+            for result in results:
+                if result.return_code != 0:
+                    log.warning("FAILED: %s", commands)
+                if result.stdout:
+                    log.warning("STDOUT: %s", result.stdout)
+                if result.stderr:
+                    log.warning("STDERR: %s", result.stderr)
