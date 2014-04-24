@@ -14,30 +14,24 @@ import hashlib
 from planex.globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
                             SPECS_GLOB)
 
+from planex.util import (bcolors, run, dump_cmds)
 
 TMP_RPM_PATH = "/tmp/RPMS"
 RPM_TOP_DIR = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
 CACHE_DIR = "rpmcache"
 DEFAULT_ARCH = "x86_64"
 
-def doexec(args, inputtext=None):
+def doexec(args, inputtext=None, check=True):
     """Execute a subprocess, then return its return code, stdout and stderr"""
-    print "Executing: %s" % " ".join(args)
     myenv = os.environ.copy()
     myenv['HOME'] = RPM_TOP_DIR
-    proc = subprocess.Popen(args, env=myenv, stdin=subprocess.PIPE,
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                            close_fds=True)
-    (stdout, stderr) = proc.communicate(inputtext)
-    ret = proc.returncode
-    return (ret, stdout, stderr)
+    return run(args, check=check, env=myenv, inputtext=inputtext)
 
 
 def get_srpm_info(srpm):
     for spec_path in glob.glob(SPECS_GLOB):
         os.unlink(spec_path)
-    (ret, _, _) = doexec(["rpm", "-i", srpm])
-    assert ret == 0
+    doexec(["rpm", "-i", srpm])
     myspecfile = glob.glob(SPECS_GLOB)[0]
     spec = rpm.ts().parseSpec(myspecfile)
     info = {}
@@ -176,28 +170,20 @@ def get_new_number(srpm, cache_dir):
 
     os.symlink("%d" % build_number, latest_path)
     num_file_path = os.path.join(CACHE_DIR, srpm, "%d" % build_number)
-    print "Creating: %s" % num_file_path
     num_file = open(num_file_path, 'w')
     num_file.write(cache_dir)
     num_file.close()
     return build_number
 
-
 def createrepo():
-    (ret, _, stderr) = doexec(["createrepo", "--update", RPMS_DIR])
-    if ret != 0:
-        print "Error running createrepo:"
-        print stderr
-        sys.exit(1)
-
+    doexec(["createrepo", "--update", RPMS_DIR])
 
 def do_build(srpm, target, build_number, use_mock, xs_build_sys):
-    print "Building %s - build number: %d" % (srpm, build_number)
     if use_mock:
         cmd = ["mock", "--configdir=mock", 
                "--resultdir=%s" % TMP_RPM_PATH, "--rebuild",
                "--target", target,
-               "--enable-plugin=tmpfs",
+#               "--enable-plugin=tmpfs",
                "--define", "extrarelease .%d" % build_number,
                "-v", srpm]
         if not xs_build_sys:
@@ -207,15 +193,7 @@ def do_build(srpm, target, build_number, use_mock, xs_build_sys):
                "--target", target, "--define",
                "_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm"]
 
-    (ret, stdout, stderr) = doexec(cmd)
-
-    if ret == 0:
-        print "Success"
-    else:
-        print "Failed to build rpm from srpm: %s" % srpm
-        print "\nstdout\n======\n%s" % stdout
-        print "\nstderr\n======\n%s" % stderr
-        sys.exit(1)
+    doexec(cmd)
 
     return glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
 
@@ -226,33 +204,31 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
     if(need_to_build(srpm_infos, external, deps, srpm)):
         target = extract_target(srpm_infos, srpm)
         build_number = get_new_number(srpm, cache_dir)
+        print bcolors.OKGREEN + "CACHE MISS: Building %s (%d)" % (srpm, build_number) + bcolors.ENDC
+        createrepo()
+
         pkgs = do_build(srpm, target, build_number, use_mock, xs_build_sys)
         if cache_dir:
             os.makedirs(cache_dir)
+            print "Archiving result in cache"
             for pkg in pkgs:
-                print "Copying output file %s to %s\n" % (pkg, cache_dir)
                 shutil.copy(pkg, cache_dir)
 
     else:
-        print "Not building %s - getting from cache" % srpm
+        print bcolors.OKGREEN + "CACHE HIT: Not building %s" % srpm + bcolors.ENDC
         pkgs = glob.glob(os.path.join(cache_dir, "*.rpm"))
         for pkg in pkgs:
-            print "Copying cached rpm %s to %s" % (pkg, TMP_RPM_PATH)
             shutil.copy(pkg, TMP_RPM_PATH)
         pkgs = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
 
     if not use_mock:
-        (ret, _, stderr) = doexec(["rpm", "-U", "--force", "--nodeps"] + pkgs)
-        if ret != 0:
+        result = doexec(["rpm", "-U", "--force", "--nodeps"] + pkgs, check=False)
+        if result['rc'] != 0:
             print "Ignoring failure installing rpm batch: %s" % pkgs
-            print stderr
+            print result['stderr']
 
     for pkg in pkgs:
-        print "Moving output RPM %s to %s\n" % (pkg, RPMS_DIR)
         shutil.move(pkg, RPMS_DIR)
-
-    print "Success"
-    createrepo()
 
 
 def main():
@@ -299,6 +275,7 @@ def main():
         for srpm in batch:
             build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys)
 
+    createrepo()
 
 if __name__ == '__main__':
     main()
