@@ -4,7 +4,7 @@
 Builds SRPMs for the tarballs or Git repositories in <component-specs-dir>.
 """
 
-import getopt
+import argparse
 import sys
 import os.path
 import urlparse
@@ -105,7 +105,7 @@ def preprocess_spec(spec_in_path, spec_out_path, scmsources, source_mapping):
     spec_out.close()
 
 
-def prepare_srpm(spec_path, use_distfiles):
+def prepare_srpm(spec_path):
     """
     Downloads sources needed to build an SRPM from the spec file
     at spec_path.
@@ -239,7 +239,7 @@ def copy_specs_to_buildroot(config_dir):
             print bcolors.OKGREEN + "Fetching sources for '%s'" % basename + bcolors.ENDC
             shutil.copy(spec_path, SPECS_DIR)
 
-def build_srpms(use_distfiles):
+def build_srpms():
     """Build SRPMs for all SPECs"""
     print bcolors.OKGREEN + "Building/checking SRPMS for all files in SPECSDIR" + bcolors.ENDC
     print "  Getting %s hashes for source to check against existing SRPMS..." % HASHFN,
@@ -249,7 +249,7 @@ def build_srpms(use_distfiles):
     specs = glob.glob(SPECS_GLOB)
     n=0
     for spec_path in specs:
-        prepare_srpm(spec_path, use_distfiles)
+        prepare_srpm(spec_path)
         n+=build_srpm(hashes, spec_path)
     print bcolors.OKGREEN + "Rebuilt %d out of %d SRPMS" % (n,len(specs)) +  bcolors.ENDC
 
@@ -289,44 +289,22 @@ def main(argv):
     Main function.  Process all the specfiles in the directory
     given by config_dir.
     """
-    config_dir, use_distfiles = parse_cmdline(argv)
+    args = parse_cmdline()
+    config_dir = args.config_dir
     prepare_buildroot()
     sort_mockconfig(config_dir)
     copy_patches_to_buildroot(config_dir)
     copy_specs_to_buildroot(config_dir)
-    build_srpms(use_distfiles)
+    build_srpms()
     dump_manifest()
 
-        
-
-def usage(name):
-    """
-    Print usage string
-    """
-    print "%s --config-dir=<config-dir>" % name
-
-def parse_cmdline(argv):
+def parse_cmdline(argv=None):
     """
     Parse command line options
     """
-    config_dir = None
-    use_distfiles = False
-    try:
-        longopts = ["config-dir=", "use-distfiles"]
-        opts, _ = getopt.getopt(argv[1:], "", longopts)
-    except getopt.GetoptError, err:
-        print str(err)
-        usage(argv[0])
-        sys.exit(1)
-    for opt, arg in opts:
-        if opt == "--config-dir":
-            config_dir = arg
-        if opt == "--use-distfiles":
-            use_distfiles = True
-    if config_dir == None:
-        usage(argv[0])
-        sys.exit(1)
-    return (config_dir, use_distfiles)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config_dir', help='Configuration directory')
+    return parser.parse_args(argv)
 
 
 def _main():
