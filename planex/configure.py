@@ -12,273 +12,14 @@ import re
 import glob
 import shutil
 from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
-                            SPECS_GLOB)
+                            SPECS_GLOB, REPOS_PATH, HASHFN)
 import planex.spec
 from planex.util import (bcolors, run, dump_cmds)
-
+from planex import sources
 
 GITHUB_MIRROR = "~/github_mirror"
-MYREPOS = "~/devel2"
-
 
 manifest = {}
-
-    
-def rewrite_to_distfiles(url):
-    """
-    Rewrites url to refer to the local distfiles cache.
-    """
-    basename = url.split("/")[-1]
-    return "file:///distfiles/ocaml2/" + basename
-
-def fetch_url(url, rewrite=None):
-    """
-    Fetches a url, rewriting it using 'rewrite' if it exists
-
-    Only fetches if the target file doesn't already exist.
-
-    Returns 1 if it actually fetched something, otherwise 0.
-    """
-    if rewrite:
-        url = rewrite(url)
-    basename = url.split("/")[-1]
-    final_path = os.path.join(SOURCES_DIR, basename)
-    if os.path.exists(final_path):
-        return 0
-    else:
-        run(["curl", "-k", "-L", "-o", final_path, url])
-        return 1
-
-def make_extended_url(base_url, scmhash, version):
-    """
-    Generate a custom repository URL of the form:
-       <base_url>#<version>/%{name}-%{version}.tar.gz
-
-    Given such a URL, fetch_git_source() will generate a tarball
-    of the repository with the same form as a tarball downloaded
-    from a GitHub archive URL.
-    """
-    base_url = base_url.split('#')[0]
-    if base_url.endswith(".hg"):
-	base_url = base_url[:-3]
-    name = os.path.split(base_url)[-1]
-    return "%s#%s/%s-%s.tar.gz" % (base_url, scmhash, name, version)
-
-
-def parse_extended_git_url(url):
-    """
-    Parse one of our custom rewritten git URLs of the form:
-       git:///repos/project#version/archive.tar.gz
-
-    Returns the scheme, host, path, version and archive name
-    """
-    (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
-    assert ((scheme == "git") or (scheme == "hg"))
-
-    version, archive = None, None
-
-    # urlparse only parses fragments from some URLs, mainly http://,
-    # https:// and file://.   With a git:// URL, we have to do it
-    # ourselves
-    if "#" in path:
-        path, fragment = path.split("#")
-
-    if fragment and "/" in fragment:
-        version, archive = fragment.split("/")
-    else:
-        version = fragment
-
-    return(scheme, host, path, version, archive)
-
-def locate_git_repo(path, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
-    """
-    Returns the location of the repository
-    """
-    if path.endswith(".git"):
-        path = path[:-4]
-
-    if len(path) == 0:
-        print "Zero length path!"
-        exit(1)
-
-    basename = path.split("/")[-1]
-
-    trials = [
-        os.path.expanduser("%s/%s" % (myrepos, basename)),
-        os.path.expanduser("%s/%s.git" % (myrepos, basename)),
-        "/repos/%s" % basename,
-        os.path.expanduser("%s/%s.git" % (github_mirror, path)),
-        path,
-        os.path.join(os.getcwd(), basename)]
-
-    for trial in trials:
-        if os.path.exists(trial):
-            return trial
-
-    print bcolors.FAIL + "Can't find a git repositor for '%s'" % path + bcolors.ENDC
-    print "tried:\n" + "\n".join(trials)
-
-    return None
-
-def locate_hg_repo(path, myrepos=MYREPOS):
-    """
-    Returns the location of a mercurial repository
-    """
-    if len(path) == 0:
-        print "Zero length path!"
-        exit(1)
-
-    basename = path.split("/")[-1]
-    if not basename.endswith(".hg"):
-	basename = "%s.hg" % basename
-
-    trials = [
-        os.path.expanduser("%s/%s" % (myrepos, basename)),
-        "/repos/%s" % basename,
-        path,
-        os.path.join(os.getcwd(), basename)]
-
-    for trial in trials:
-        if os.path.exists(trial):
-            return trial
-
-    return None
-
-def get_dotgit_dir(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
-    """
-    Returns the original path of the git repo, the
-    real location in the filesystem, and the location of the .git dir
-    """
-    # We expect path to be a full git url pointing at a path on the local host
-    # We only need the path
-    (scheme, _, orig_path, _, _) = parse_extended_git_url(url)
-    assert scheme == "git"
-
-    repo_location = locate_git_repo(orig_path, myrepos, github_mirror)
-
-#    print "Located git repo at: %s" % repo_location
-
-    if(os.path.exists("%s/.git" % repo_location)):
-        dotgitdir = "%s/.git" % repo_location
-    else:
-        dotgitdir = repo_location
-
-    return (orig_path, repo_location, dotgitdir)
-
-def latest_git_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
-    """
-    Returns numeric version tag closest to HEAD in the repository.
-    """
-    (orig_path, repo_location, dotgitdir) = get_dotgit_dir(url, myrepos, github_mirror)
-
-    # First, get the hash of the commit
-    cmd = ["git", "--git-dir=%s" % dotgitdir,
-           "rev-parse", "HEAD"]
-
-    githash = run(cmd)['stdout'].strip()
-
-    cmd = ["git", "--git-dir=%s" % dotgitdir,
-           "describe", "--tags", githash]
-
-    description = run(cmd,check=False)['stdout'].strip()
-
-    # if there are no tags, get the number of commits, which should 
-    # always increase 
-    if description == "":
-        cmd = ["git", "--git-dir=%s" % dotgitdir,
-               "log", githash, "--oneline"]
-        description=run(cmd)['stdout'].strip()
-        return (githash, str(len(description.splitlines())))
-
-    match = re.search("[^0-9]*", description)
-    matchlen = len(match.group())
-    return (githash, description[matchlen:].replace('-', '+'))
-
-def latest_hg_tag(url, myrepos=MYREPOS):
-    """
-    Returns a string representing a unique version for the mercirual repo
-    """
-    (_, _, path, version, archive_name) = parse_extended_git_url(url)
-    basename = path.split("/")[-1]
-
-    repo_location = locate_hg_repo(path, myrepos)
-#    print "fetch_hg_source: repo_location = %s" % repo_location
-
-    cmd = ["hg", "-R", repo_location, "tip", "--template", "{node}"]
-    hghash = run(cmd)['stdout'].strip()
-
-    cmd = ["hg", "-R", repo_location, "parents", "--template", "{rev}"]
-
-    description = run(cmd)['stdout'].strip()
-
-    return (hghash,str(description))
-
-def latest_tag(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR):
-    (schema, _, _, _, _) = parse_extended_git_url(url)
-    if schema == "git":
-        return latest_git_tag(url, myrepos, github_mirror)
-    if schema == "hg":
-        return latest_hg_tag(url, myrepos)
-
-
-def fetch_git_source(url, myrepos=MYREPOS, github_mirror=GITHUB_MIRROR, 
-                     sources_dir=SOURCES_DIR):
-    """
-    Fetches an archive of HEAD of the git repository at path.
-    Produces a tarball called 'archive_name' in SOURCES_DIR,
-    which when unpacked will produce a directory called
-    "reponame-version".   This is similar to GitHub's archive
-    URLs.
-    """
-
-    (orig_path, repo_location, dotgitdir) = get_dotgit_dir(url, myrepos, github_mirror)
-    (_, _, _, scmhash, archive_name) = parse_extended_git_url(url)
-
-    basename = orig_path.split("/")[-1]
-    archive_basename = archive_name[:-7]
-
-    # If it already exists, we're done.
-    if os.path.exists(os.path.join(sources_dir, archive_name)):
-        return
-
-    if archive_name.endswith(".gz"):
-        tarball_name = archive_name[:-3]
-    else:
-	tarball_name = archive_name
-    cmd = ["git", "--git-dir=%s" % dotgitdir, "archive",
-           "--prefix=%s/" % (archive_basename), scmhash, "-o",
-           "%s/%s" % (sources_dir, tarball_name)]
-    run(cmd)
-
-    if archive_name.endswith(".gz"):
-        cmd = ["gzip", "-f", "%s/%s" % (sources_dir, tarball_name)]
-    run(cmd)
-
-def fetch_hg_source(url, myrepos=MYREPOS, sources_dir=SOURCES_DIR):
-    """
-    Fetches an archive of HEAD from a git repository at path.
-    Produces a tarball called 'archive_name' in SOURCES_DIR,
-    which when unpacked will produce a directory called 
-    "reponame-version".
-    """
-
-    (_, _, path, version, archive_name) = parse_extended_git_url(url)
-    assert archive_name
-    basename = path.split("/")[-1]
-
-    if os.path.exists(os.path.join(sources_dir, archive_name)):
-        return
-
-    repo_location = locate_hg_repo(path, myrepos)
-#    print "fetch_hg_source: repo_location = %s" % repo_location
-
-    cmd = ["hg", "-R", repo_location, "archive", "-t", "tgz", "-p", 
-           "%s-%s/" % (basename, version), 
-           "%s/%s" % (sources_dir, archive_name)]
-#    print "%s" % cmd
-
-    run(cmd)
-
 
 def name_from_spec(spec_path):
     """
@@ -318,7 +59,7 @@ def sources_from_spec(spec_path):
     return spec.source_urls()
 
 
-def preprocess_spec(spec_in_path, spec_out_path, versions, source_mapping):
+def preprocess_spec(spec_in_path, spec_out_path, scmsources, source_mapping):
     """
     Preprocesses a spec file containing placeholders.
     Writes the result to the same filename, with the '.in' extension
@@ -338,12 +79,12 @@ def preprocess_spec(spec_in_path, spec_out_path, versions, source_mapping):
 
     subs = {}
 
-    for (index,(scmhash,value)) in enumerate(versions):
-        subs['source%d_version' % index] = value
-        subs['source%d_hash' % index] = scmhash
+    for (index,source) in enumerate(scmsources):
+        subs['source%d_version' % index] = source.version
+        subs['source%d_hash' % index] = source.scmhash
 
     subs.update({
-	"version" : "+".join([y for (x,y) in versions]),
+	"version" : "+".join([source.version for source in scmsources]),
         "release" : "1%{?extrarelease}" })
 
     for line in spec_contents:
@@ -377,31 +118,25 @@ def prepare_srpm(spec_path, use_distfiles):
     # Pull out the source list.   If the spec file pulls its sources
     # from a Git repository, we need to prepreprocess the spec file
     # to fill in the latest version tag from the repository.
-    sources = sources_from_spec(spec_path)
-    if sources == []:
+    allsources = sources_from_spec(spec_path)
+    if allsources == []:
         print "Failed to get sources for %s" % spec_path
         sys.exit(1)
 
-    for source in sources:
-        (scheme, _, _, _, _, _) = urlparse.urlparse(source)
+    for source in allsources:
+        sources.Source(source).archive()
 
-        if scheme in ['file', 'http', 'https', 'ftp']:
-            rewrite_fn = None
-            if use_distfiles:
-                rewrite_fn = rewrite_to_distfiles
-            result = fetch_url(source, rewrite_fn)
-
-        if scheme in ['git']:
-            fetch_git_source(source)
-
-        if scheme in ['hg']:
-            fetch_hg_source(source)
-
-def get_sha256s():
+def get_hashes(ty):
     spec_files = glob.glob(os.path.join(SPECS_DIR,"*"))
     sources_files = glob.glob(os.path.join(SOURCES_DIR,"*"))
     all_files = spec_files + sources_files
-    cmd = ["sha256sum"] + all_files
+    if ty=="md5":
+        cmd = ["md5sum"] + all_files
+    elif ty=="sha256":
+        cmd = ["sha256sum"] + all_files
+    else:
+        print "Invalid hash type"
+        raise Exception
     result = run(cmd)['stdout'].strip().split('\n')
     def fix(x):
         words = x.split()
@@ -413,7 +148,7 @@ def get_sha256s():
     fixed = [fix(x) for x in result]
     return dict(fixed)       
 
-def ensure_existing_ok(shas, spec_path):
+def ensure_existing_ok(hashes, spec_path):
     pkg_name = name_from_spec(spec_path)
 
     one_correct = False
@@ -430,8 +165,8 @@ def ensure_existing_ok(shas, spec_path):
             for line in result:
                 split = line.split()
                 fname = split[0]
-                sha=split[3]
-                if shas[fname] != sha:
+                thishash=split[3]
+                if hashes[fname] != thishash:
                     ok = False
 
             if not ok:
@@ -442,14 +177,14 @@ def ensure_existing_ok(shas, spec_path):
 
     return one_correct
 
-def build_srpm(shas, spec_path):
+def build_srpm(hashes, spec_path):
     """
     Builds an SRPM from the spec file at spec_path.
 
     Assumes that all source files have already been downloaded to
     the rpmbuild sources directory, and are correctly named.
     """
-    is_ok = ensure_existing_ok(shas, spec_path)
+    is_ok = ensure_existing_ok(hashes, spec_path)
 
     if not is_ok:
         cmd = (["rpmbuild", "-bs", spec_path,
@@ -492,17 +227,14 @@ def copy_specs_to_buildroot(config_dir):
         basename = spec_path.split("/")[-1]
         if spec_path.endswith('.in'):
             print bcolors.OKGREEN + "Configuring and fetching sources for '%s'" % basename + bcolors.ENDC
-            sources = [source for source in sources_from_spec(spec_path) 
-                       if (is_scm(source))]
-            versions = [latest_tag(source) for source in sources]
-            
-            src_and_vsn = zip(sources, versions)
-            for (source, (scmhash,version)) in src_and_vsn:
-                manifest[source]=scmhash                
-            repo_urls = [make_extended_url(source, scmhash, version)
-                         for (source, (scmhash,version)) in src_and_vsn]
-            mapping = dict(zip(sources, repo_urls))
-            preprocess_spec(spec_path, SPECS_DIR, versions, mapping)
+            scmsources = [sources.Source(source) for source in sources_from_spec(spec_path)
+                          if (is_scm(source))]
+            mapping = {}
+            for source in scmsources:
+                source.pin()
+                manifest[source.repo_name]=source.scmhash
+                mapping[source.orig_url]=source.extendedurl
+            preprocess_spec(spec_path, SPECS_DIR, scmsources, mapping)
         else:
             print bcolors.OKGREEN + "Fetching sources for '%s'" % basename + bcolors.ENDC
             shutil.copy(spec_path, SPECS_DIR)
@@ -510,15 +242,15 @@ def copy_specs_to_buildroot(config_dir):
 def build_srpms(use_distfiles):
     """Build SRPMs for all SPECs"""
     print bcolors.OKGREEN + "Building/checking SRPMS for all files in SPECSDIR" + bcolors.ENDC
-    print "  Getting SHA256 hashes for source to check against existing SRPMS...",
+    print "  Getting %s hashes for source to check against existing SRPMS..." % HASHFN,
     sys.stdout.flush()
-    shas = get_sha256s()
+    hashes = get_hashes(HASHFN)
     print "OK"
     specs = glob.glob(SPECS_GLOB)
     n=0
     for spec_path in specs:
         prepare_srpm(spec_path, use_distfiles)
-        n+=build_srpm(shas, spec_path)
+        n+=build_srpm(hashes, spec_path)
     print bcolors.OKGREEN + "Rebuilt %d out of %d SRPMS" % (n,len(specs)) +  bcolors.ENDC
 
 def dump_manifest():
