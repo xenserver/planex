@@ -172,20 +172,22 @@ class GitSource(SCM):
 
     def archive(self, sources_dir=SOURCES_DIR):    
         # If it already exists, we're done.
+        dotgitdir = os.path.join(self.localpath, ".git")
+
         if os.path.exists(os.path.join(sources_dir, self.archivename)):
             return
         
         if self.archivename.endswith(".gz"):
-            tarball_name = archive_name[:-3]
+            tarball_name = self.archivename[:-3]
         else:
-            tarball_name = archive_name
+            tarball_name = self.archivename
 
         cmd = ["git", "--git-dir=%s" % dotgitdir, "archive",
                "--prefix=%s/" % self.tarballprefix, self.scmhash, "-o",
                "%s/%s" % (sources_dir, tarball_name)]
         run(cmd)
 
-        if archive_name.endswith(".gz"):
+        if self.archivename.endswith(".gz"):
             cmd = ["gzip", "-f", "%s/%s" % (sources_dir, tarball_name)]
             run(cmd)
 
