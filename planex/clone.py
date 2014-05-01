@@ -15,7 +15,6 @@ log = logging.getLogger(__name__)
 def parse_args_or_exit(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('config_dir', help='Configuration directory')
-    parser.add_argument('target_dir', help='Target directory')
     parser.add_argument(
         '--print-only', help='Only print sources, do not clone them',
         action='store_true')
@@ -49,7 +48,7 @@ def main():
     for template in templates:
         srcs = [sources.Source(url) for url in template.source_urls()]
 
-        commands_list = [src.clone_commands(args.target_dir) for src in srcs]
+        commands_list = [src.clone_commands() for src in srcs]
 
         log.info(commands_list)
         results_list = [[executor.run(command) for command in commands] for commands in commands_list]
