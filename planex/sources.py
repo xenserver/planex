@@ -8,8 +8,22 @@ from planex.util import run
 
 repos_path = "repos"
 
+def register_scheme(scheme):
+    for method in filter(lambda s: s.startswith('uses_'), dir(urlparse)):
+        getattr(urlparse, method).append(scheme)
+
+def fix_urlparse():
+    (scheme, host, path, _, _, fragment) = urlparse.urlparse("git://foo.bar/baz#fragment")
+    if fragment != "fragment":
+	print "Fixing urlparse"
+	register_scheme("git")
+	register_scheme("hg")
+
 class SCM(object):
     def __init__(self, url):
+	# Test whether we need to fix urlparse:
+	fix_urlparse()
+
         (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
         urlparts = url.split('#')
         repo_url = "%s://%s%s" % (scheme, host, path) # Strip of fragment
