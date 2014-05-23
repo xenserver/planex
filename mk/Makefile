@@ -15,7 +15,6 @@ buildrpms:
 	chown -R root.root $(CONFIG_DIR)/*
 	planex-configure --config-dir=$(CONFIG_DIR) --use-distfiles
 	planex-build --xs-build-sys
-	planex-install $(CONFIG_DIR) $(MY_MAIN_PACKAGES)
 	cp -r ./planex-build-root/RPMS $(MY_OUTPUT_DIR)
 	rm -rf $(MY_OUTPUT_DIR)/RPMS/repodata
 	cp -r ./planex-build-root/SRPMS $(MY_OUTPUT_DIR)

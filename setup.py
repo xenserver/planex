@@ -7,7 +7,6 @@ setup(name='planex',
           'console_scripts': [
               'planex-configure = planex.configure:_main',
               'planex-build = planex.build:main',
-              'planex-install = planex.install:main',
               'planex-clone = planex.clone:main',
           ]
       })
