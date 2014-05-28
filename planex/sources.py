@@ -3,17 +3,16 @@ import os.path
 import re
 import urlparse
 from planex import exceptions
-from planex.globals import MIRROR_PATH, REPOS_PATH, SOURCES_DIR
+from planex.globals import SOURCES_DIR
 from planex.util import run
 
-repos_path = "repos"
-
 class SCM(object):
-    def __init__(self, url):
+    def __init__(self, url, repomirror):
         (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
         urlparts = url.split('#')
         repo_url = "%s://%s%s" % (scheme, host, path) # Strip of fragment
         self.repo_name = path.split('/')[-1]
+        self.repomirror = repomirror
 
         def strip_ext(ext):
             if self.repo_name.endswith(ext):
@@ -42,7 +41,7 @@ class SCM(object):
 
     @property
     def localpath(self):
-        return os.path.join(os.getcwd(), repos_path, self.repo_name)
+        return os.path.join(self.repomirror, self.repo_name)
 
     @property
     def tarballprefix(self):
@@ -60,8 +59,8 @@ class SCM(object):
         
 
 class GitSource(SCM):
-    def __init__(self, url):
-        super(GitSource, self).__init__(url)
+    def __init__(self, url, repomirror):
+        super(GitSource, self).__init__(url, repomirror)
         if self.fragment:
             self.git_committish = self.fragment.split('/')[0]
         else:
@@ -83,53 +82,20 @@ class GitSource(SCM):
         # For a repo e.g. git://github.com/foo/bar.git
         # Check for a mirror of the form mirrorpath/github.com/foo/bar.git
         (_, host, urlpath, _, _, _) = urlparse.urlparse(self.repo_url)
-        mirrorpath=os.path.expanduser(os.path.join(MIRROR_PATH, host, urlpath.strip("/")))
-
-        if os.path.exists(mirrorpath):
-            clone_cmd = [
-                'git',
-                'clone',
-                mirrorpath,
-                dst
-            ]
-            reset_urls_cmd = [
-                'git',
-                '--git-dir=%s' % dst_dotgit,
-                'remote',
-                'set-url',
-                'origin',
-                self.repo_url
-            ]
-            fetch_cmd = [
-                'git',
-                '--git-dir=%s' % dst_dotgit,
-                'fetch',
-                '--all',
-                '-t'
-            ]
-            checkout_cmd = [
-                'git',
-                '--git-dir=%s' % dst_dotgit,
-                '--work-tree=%s' % dst,
-                'checkout',
-                self.git_committish
-            ]
-            return [clone_cmd, reset_urls_cmd, fetch_cmd, checkout_cmd]
-        else:
-            clone_cmd = [
-                'git',
-                'clone',
-                self.repo_url,
-                dst
-            ]
-            checkout_cmd = [
-                'git',
-                '--git-dir=%s' % dst_dotgit,
-                '--work-tree=%s' % dst,
-                'checkout',
-                self.git_committish
-            ]
-            return [clone_cmd, checkout_cmd]
+        clone_cmd = [
+            'git',
+            'clone',
+            self.repo_url,
+            dst
+        ]
+        checkout_cmd = [
+            'git',
+            '--git-dir=%s' % dst_dotgit,
+            '--work-tree=%s' % dst,
+            'checkout',
+            self.git_committish
+        ]
+        return [clone_cmd, checkout_cmd]
 
     def pin(self, scmhash=None):
         dotgitdir = os.path.join(self.localpath, ".git")
@@ -192,8 +158,8 @@ class GitSource(SCM):
             run(cmd)
 
 class HgSource(SCM):
-    def __init__(self, url):
-        super(HgSource, self).__init__(url)
+    def __init__(self, url, repomirror):
+        super(HgSource, self).__init__(url, repomirror)
         if os.path.exists(self.localpath):
             # Don't pin if the repo doesn't currently exist
             self.pin()
@@ -204,8 +170,8 @@ class HgSource(SCM):
 
     @property
     def localpath(self):
-        # Mercurial repos clone with the extention .hg
-        return os.path.join(os.getcwd(), repos_path, "%s.hg" % self.repo_name)
+        # Mercurial repos clone with the extension .hg
+        return os.path.join(self.repomirror, "%s.hg" % self.repo_name)
 
     def clone_commands(self):
         dst = self.localpath
@@ -256,8 +222,8 @@ class HgSource(SCM):
 
 
 class FileSource(SCM):
-    def __init__(self, url):
-        super(FileSource, self).__init__(url)
+    def __init__(self, url, repomirror):
+        super(FileSource, self).__init__(url, repomirror)
 
     @property
     def archivename(self):
@@ -287,9 +253,9 @@ class OtherSource(SCM):
     def archive(self, sources_dir=SOURCES_DIR):
         return
 
-def Source(url):
+def Source(url, repomirror):
     ty = url.split(":")[0]
     for cls in SCM.__subclasses__(): #pylint: disable-msg=E1101
         if cls.handles(ty):
-            return cls(url)
-    return OtherSource(url)
+            return cls(url, repomirror)
+    return OtherSource(url, repomirror)

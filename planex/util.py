@@ -5,6 +5,7 @@
 import subprocess
 import os
 import pipes
+import urlparse
 
 dump_cmds = True
 
@@ -21,11 +22,13 @@ def rewrite_url(url, destination=None):
     """
     Rewrite url to point to destination
     """
-    if destination is None:
+    (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
+    if destination is None or scheme in ["git", "hg"]:
         return url
+
     else:
-        basename = url.split("/")[-1]
-        return destination + basename
+        basename = path.split("/")[-1]
+        return destination + basename + fragment
 
 
 def run(cmd, check=True, env=None, inputtext=None):

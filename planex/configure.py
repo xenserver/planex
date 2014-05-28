@@ -12,7 +12,7 @@ import re
 import glob
 import shutil
 from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
-                            SPECS_GLOB, REPOS_PATH, HASHFN)
+                            SPECS_GLOB, HASHFN)
 import planex.spec
 from planex.util import (bcolors, run, dump_cmds, rewrite_url)
 from planex import sources
@@ -105,7 +105,7 @@ def preprocess_spec(spec_in_path, spec_out_path, scmsources, source_mapping):
     spec_out.close()
 
 
-def prepare_srpm(spec_path, mirrorsite):
+def prepare_srpm(spec_path, mirrorsite, repomirror):
     """
     Downloads sources needed to build an SRPM from the spec file
     at spec_path.
@@ -125,7 +125,7 @@ def prepare_srpm(spec_path, mirrorsite):
 
     allsources = [rewrite_url(url, mirrorsite) for url in allsources]
     for source in allsources:
-        sources.Source(source).archive()
+        sources.Source(source, repomirror).archive()
 
 def get_hashes(ty):
     spec_files = glob.glob(os.path.join(SPECS_DIR,"*"))
@@ -219,7 +219,7 @@ def is_scm(uri):
 	return True
    return False
 
-def copy_specs_to_buildroot(config_dir):
+def copy_specs_to_buildroot(config_dir, repomirror):
     """Pull in spec files, preprocessing if necessary"""
     specs = glob.glob(os.path.join(config_dir, "*.spec"))
     spec_ins = glob.glob(os.path.join(config_dir, "*.spec.in"))
@@ -228,7 +228,7 @@ def copy_specs_to_buildroot(config_dir):
         basename = spec_path.split("/")[-1]
         if spec_path.endswith('.in'):
             print bcolors.OKGREEN + "Configuring and fetching sources for '%s'" % basename + bcolors.ENDC
-            scmsources = [sources.Source(source) for source in sources_from_spec(spec_path)
+            scmsources = [sources.Source(source, repomirror) for source in sources_from_spec(spec_path)
                           if (is_scm(source))]
             mapping = {}
             for source in scmsources:
@@ -240,7 +240,7 @@ def copy_specs_to_buildroot(config_dir):
             print bcolors.OKGREEN + "Fetching sources for '%s'" % basename + bcolors.ENDC
             shutil.copy(spec_path, SPECS_DIR)
 
-def build_srpms(mirrorsite):
+def build_srpms(mirrorsite, repomirror):
     """Build SRPMs for all SPECs"""
     print bcolors.OKGREEN + "Building/checking SRPMS for all files in SPECSDIR" + bcolors.ENDC
     print "  Getting %s hashes for source to check against existing SRPMS..." % HASHFN,
@@ -250,7 +250,7 @@ def build_srpms(mirrorsite):
     specs = glob.glob(SPECS_GLOB)
     n=0
     for spec_path in specs:
-        prepare_srpm(spec_path, mirrorsite)
+        prepare_srpm(spec_path, mirrorsite, repomirror)
         n+=build_srpm(hashes, spec_path)
     print bcolors.OKGREEN + "Rebuilt %d out of %d SRPMS" % (n,len(specs)) +  bcolors.ENDC
 
@@ -292,11 +292,12 @@ def main(argv):
     """
     args = parse_cmdline()
     config_dir = args.config_dir
+    repomirror = args.repomirror or os.path.join(os.getcwd(), "repos")
     prepare_buildroot()
     sort_mockconfig(config_dir)
     copy_patches_to_buildroot(config_dir)
-    copy_specs_to_buildroot(config_dir)
-    build_srpms(args.mirrorsite)
+    copy_specs_to_buildroot(config_dir, repomirror)
+    build_srpms(args.mirrorsite, repomirror)
     dump_manifest()
 
 def parse_cmdline(argv=None):
@@ -306,6 +307,9 @@ def parse_cmdline(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--mirrorsite', help='Rewrite URLs to point to this directory', 
+        default=None)
+    parser.add_argument(
+        '--repomirror', help='Rewrite repository URLs to point to this directory', 
         default=None)
     parser.add_argument('config_dir', help='Configuration directory')
     return parser.parse_args(argv)

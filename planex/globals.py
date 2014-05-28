@@ -8,6 +8,4 @@ BUILD_ROOT_DIR = "planex-build-root"
 
 SPECS_GLOB = os.path.join(SPECS_DIR, "*.spec")
 
-MIRROR_PATH = "~/git_mirror"
-REPOS_PATH = "repos"
 HASHFN = "md5"
