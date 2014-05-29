@@ -166,7 +166,7 @@ def ensure_existing_ok(hashes, spec_path):
                 split = line.split()
                 fname = split[0]
                 thishash=split[3]
-                if hashes[fname] != thishash:
+                if fname not in hashes or hashes[fname] != thishash:
                     ok = False
 
             if not ok:
