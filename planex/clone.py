@@ -7,6 +7,7 @@ import os
 
 from planex import sources
 from planex import executors
+from planex import util
 
 
 log = logging.getLogger(__name__)
@@ -24,6 +25,9 @@ def parse_args_or_exit(argv=None):
     parser.add_argument(
         '--quiet', help='Do not print warnings',
         action='store_true')
+    parser.add_argument(
+        '--mirrorsite', help='Rewrite URLs to point to this directory', 
+        default=None)
     return parser.parse_args(argv)
 
 
@@ -46,7 +50,9 @@ def main():
         executor = executors.RealExecutor()
 
     for template in templates:
-        srcs = [sources.Source(url) for url in template.source_urls()]
+        urls = [util.rewrite_url(url, args.mirrorsite) 
+                for url in template.source_urls()]
+        srcs = [sources.Source(url) for url in urls]
 
         commands_list = [src.clone_commands() for src in srcs]
 

@@ -14,7 +14,7 @@ import shutil
 from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
                             SPECS_GLOB, REPOS_PATH, HASHFN)
 import planex.spec
-from planex.util import (bcolors, run, dump_cmds)
+from planex.util import (bcolors, run, dump_cmds, rewrite_url)
 from planex import sources
 
 GITHUB_MIRROR = "~/github_mirror"
@@ -105,7 +105,7 @@ def preprocess_spec(spec_in_path, spec_out_path, scmsources, source_mapping):
     spec_out.close()
 
 
-def prepare_srpm(spec_path):
+def prepare_srpm(spec_path, mirrorsite):
     """
     Downloads sources needed to build an SRPM from the spec file
     at spec_path.
@@ -123,6 +123,7 @@ def prepare_srpm(spec_path):
         print "Failed to get sources for %s" % spec_path
         sys.exit(1)
 
+    allsources = [rewrite_url(url, mirrorsite) for url in allsources]
     for source in allsources:
         sources.Source(source).archive()
 
@@ -239,7 +240,7 @@ def copy_specs_to_buildroot(config_dir):
             print bcolors.OKGREEN + "Fetching sources for '%s'" % basename + bcolors.ENDC
             shutil.copy(spec_path, SPECS_DIR)
 
-def build_srpms():
+def build_srpms(mirrorsite):
     """Build SRPMs for all SPECs"""
     print bcolors.OKGREEN + "Building/checking SRPMS for all files in SPECSDIR" + bcolors.ENDC
     print "  Getting %s hashes for source to check against existing SRPMS..." % HASHFN,
@@ -249,7 +250,7 @@ def build_srpms():
     specs = glob.glob(SPECS_GLOB)
     n=0
     for spec_path in specs:
-        prepare_srpm(spec_path)
+        prepare_srpm(spec_path, mirrorsite)
         n+=build_srpm(hashes, spec_path)
     print bcolors.OKGREEN + "Rebuilt %d out of %d SRPMS" % (n,len(specs)) +  bcolors.ENDC
 
@@ -295,7 +296,7 @@ def main(argv):
     sort_mockconfig(config_dir)
     copy_patches_to_buildroot(config_dir)
     copy_specs_to_buildroot(config_dir)
-    build_srpms()
+    build_srpms(args.mirrorsite)
     dump_manifest()
 
 def parse_cmdline(argv=None):
@@ -303,6 +304,9 @@ def parse_cmdline(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--mirrorsite', help='Rewrite URLs to point to this directory', 
+        default=None)
     parser.add_argument('config_dir', help='Configuration directory')
     return parser.parse_args(argv)
 

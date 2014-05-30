@@ -16,6 +16,18 @@ class bcolors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
+
+def rewrite_url(url, destination=None):
+    """
+    Rewrite url to point to destination
+    """
+    if destination is None:
+        return url
+    else:
+        basename = url.split("/")[-1]
+        return destination + basename
+
+
 def run(cmd, check=True, env=None, inputtext=None):
     """
     Run a command, dumping it cut-n-pasteably if required. Checks the return
