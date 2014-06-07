@@ -69,7 +69,6 @@ This will install 4 binaries:
 
 * `planex-configure`
 * `planex-build`
-* `planex-install`
 * `planex-clone`
 
 ## Testing

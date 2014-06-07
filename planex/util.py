@@ -5,6 +5,7 @@
 import subprocess
 import os
 import pipes
+import urlparse
 
 dump_cmds = True
 
@@ -15,6 +16,20 @@ class bcolors:
     WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
+
+
+def rewrite_url(url, destination=None):
+    """
+    Rewrite url to point to destination
+    """
+    (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
+    if destination is None or scheme in ["git", "hg"]:
+        return url
+
+    else:
+        basename = path.split("/")[-1]
+        return destination + basename + fragment
+
 
 def run(cmd, check=True, env=None, inputtext=None):
     """
