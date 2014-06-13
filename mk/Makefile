@@ -13,6 +13,7 @@ buildrpms:
 	@cd .. && python setup.py install
 	echo confdir $(CONFIG_DIR)
 	chown -R root.root $(CONFIG_DIR)/*
+	rm -rf ./planex-build-root/SRPMS/*
 	planex-configure --mirrorsite "file:///distfiles/ocaml2/" --repomirror "/repos" $(CONFIG_DIR)
 	planex-build --xs-build-sys --no-mock
 	cp -r ./planex-build-root/RPMS $(MY_OUTPUT_DIR)
