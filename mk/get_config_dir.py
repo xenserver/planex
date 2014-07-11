@@ -8,4 +8,6 @@ if component == "ocaml":
     print "/repos/xen-dist-ocaml.hg"
 if component == "api-libs":
     print "/repos/xen-api-libs-specs"
+if component == "perf-tools":
+    print "/repos/perf-tools"
 
