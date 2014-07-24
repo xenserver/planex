@@ -139,6 +139,16 @@ def get_srpm_hash(srpm_infos, external, deps, srpm):
     return srpm_hash.hexdigest()
 
 
+def get_external_hash(external_deps):
+    external_deps.sort()
+    external_hash = hashlib.md5()
+    for dep in external_deps:
+        with open(dep, "rb") as f:
+            for block in iter(lambda: f.read(1024), ""):
+                external_hash.update(block)
+    return external_hash.hexdigest()
+
+
 def get_cache_dir(srpm_infos, external, deps, srpm):
     if not os.path.exists(CACHE_DIR):
         return None
@@ -243,6 +253,9 @@ def parse_cmdline(argv=None):
         action='store_true')
     parser.add_argument('--i686', help='Build for i686',
         action='store_true')
+    parser.add_argument('--external-dependencies',
+        help='External dependencies to include in the package hash',
+        metavar="file", nargs="+", default=[])
     return parser.parse_args(argv)
 
 
@@ -265,7 +278,7 @@ def main():
     srpm_infos = [get_srpm_info(pkg) for pkg in packages]
     deps = get_deps(srpm_infos)
     order = toposort2(deps)
-    external = "external dependencies hash"
+    external = get_external_hash(args.external_dependencies)
 
     for path in (TMP_RPM_PATH, BUILD_DIR, RPMS_DIR):
         if os.path.exists(path):
