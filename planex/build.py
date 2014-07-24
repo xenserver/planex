@@ -2,6 +2,7 @@
 
 # Build a bunch of SRPMs
 
+import argparse
 import getopt
 import sys
 import os
@@ -230,25 +231,29 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
     for pkg in pkgs:
         shutil.move(pkg, RPMS_DIR)
 
+def parse_cmdline(argv=None):
+    """
+    Parse command line options
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--no-mock', help="Don't use mock", action='store_true')
+    parser.add_argument(
+        '--xs-build-sys', help='Assume XenServer build system',
+        action='store_true')
+    parser.add_argument('--i686', help='Build for i686',
+        action='store_true')
+    return parser.parse_args(argv)
+
 
 def main():
     global DEFAULT_ARCH
 
-    use_mock = True
-    xs_build_sys = False
-    try:
-        longopts = ["no-mock", "xs-build-sys", "i686"]
-        opts, _ = getopt.getopt(sys.argv[1:], "", longopts)
-    except getopt.GetoptError, err:
-        print str(err)
-        sys.exit(1)
-    for opt, _ in opts:
-        if opt == "--no-mock":
-            use_mock = False
-        if opt == "--xs-build-sys":
-            xs_build_sys = True
-        if opt == "--i686":
-            DEFAULT_ARCH = "i686"
+    args = parse_cmdline()
+    use_mock = not args.no_mock
+    xs_build_sys = args.xs_build_sys
+    if args.i686:
+        DEFAULT_ARCH = "i686"
 
     if not os.path.isdir(SRPMS_DIR) or not os.listdir(SRPMS_DIR):
         print ("Error: No srpms found in %s; First run configure.py." %
