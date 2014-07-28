@@ -52,7 +52,7 @@ def main():
     for template in templates:
         urls = [util.rewrite_url(url, args.mirrorsite) 
                 for url in template.source_urls()]
-        srcs = [sources.Source(url) for url in urls]
+        srcs = [sources.Source(url,os.path.join(os.getcwd(),"repos")) for url in urls]
 
         commands_list = [src.clone_commands() for src in srcs]
 

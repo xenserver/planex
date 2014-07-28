@@ -2,7 +2,7 @@ import unittest
 
 from planex import clone
 
-MANDATORY_ARGS = ['config_dir', 'target_dir']
+MANDATORY_ARGS = ['config_dir']
 
 
 class TestParseArgsOrExit(unittest.TestCase):
@@ -37,10 +37,9 @@ class TestParseArgsOrExit(unittest.TestCase):
         self.assertEquals(True, args.print_only)
 
     def test_correct_call(self):
-        args = clone.parse_args_or_exit(['config_dir', 'target_dir'])
+        args = clone.parse_args_or_exit(['config_dir'])
 
         self.assertEquals('config_dir', args.config_dir)
-        self.assertEquals('target_dir', args.target_dir)
 
     def test_incorrect_call(self):
-        self.assertRaises(SystemExit, clone.parse_args_or_exit, ['config_dir'])
+        self.assertRaises(SystemExit, clone.parse_args_or_exit, [])

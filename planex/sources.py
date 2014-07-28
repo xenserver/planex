@@ -111,9 +111,9 @@ class GitSource(SCM):
                    "show", scmhash]
             try:
                 run(cmd)
-            except e:
+            except:
                 print "Invalid hash '%s' for repo '%s'" % (scmhash, self.localpath)
-                raise e
+                raise
 
         # Verified good hash.
         self.scmhash = scmhash
@@ -198,9 +198,9 @@ class HgSource(SCM):
             cmd = ["hg", "-R", self.localpath, "export", scmhash]
             try:
                 run(cmd)
-            except e:
+            except:
                 print "Invalid hash '%s' for repo '%s'" % (scmhash, self.localpath)
-                raise e
+                raise
 
         self.scmhash = scmhash
 
