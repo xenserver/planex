@@ -29,15 +29,9 @@ class SCM(object):
         self.scmhash = None
         self.version = None
  
-    def clone_commands(self):
-        raise Exception
-
     def set_hash_and_vsn(self, scmhash, version):
         self.scmhash = scmhash
         self.version = version
-
-    def pin(self, scmhash=None):
-        raise Exception
 
     @property
     def localpath(self):

@@ -114,6 +114,15 @@ class GitTests(unittest.TestCase):
         self.assertTrue(os.path.exists(expected_tarball))
 
 
+    def test_extendedurl(self):
+        source = sources.Source("git://host.com/test.git",self.repos_dir)
+        self.assertEqual(source.extendedurl,"git://host.com/test.git#c48e124df2f82d910a8b60dfb54b666285debc04/test-1.1.0.tar.gz")
+
+    def test_scmhash(self):
+        source = sources.Source("git://host.com/test.git#7519f065cdf315522d9351dc9a87ea3926550e6f",self.repos_dir)
+        self.assertEqual(source.git_committish,"7519f065cdf315522d9351dc9a87ea3926550e6f")
+
+
 class HgTests(unittest.TestCase):
     def setUp(self):
         # pylint: disable=C0103
@@ -142,3 +151,21 @@ class HgTests(unittest.TestCase):
         source.archive(sources_dir=self.sources_dir)
         expected_tarball = os.path.join(self.sources_dir, "test-0.tar.gz")
         self.assertTrue(os.path.exists(expected_tarball))
+
+    @patch('os.path.exists')
+    def test_clone_command_nomirror(self, mock_os_path_exists):
+        mock_os_path_exists.return_value = False
+        source = sources.Source(
+            'hg://host.com/foo.hg',self.repos_dir)
+
+        self.assertEquals(
+            [
+                [
+                    'hg',
+                    'clone',
+                    'http://host.com/foo.hg',
+                    '%s/repos/foo.hg' % self.working_dir
+                ]
+            ],
+            source.clone_commands()
+        )
