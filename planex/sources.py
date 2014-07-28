@@ -8,6 +8,10 @@ from planex.util import run
 
 class SCM(object):
     def __init__(self, url, repomirror):
+        for protocol in ['git', 'hg']:
+            if protocol not in urlparse.uses_fragment:
+                urlparse.uses_fragment.append(protocol)
+
         (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
         urlparts = url.split('#')
         repo_url = "%s://%s%s" % (scheme, host, path) # Strip of fragment
