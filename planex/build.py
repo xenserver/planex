@@ -2,6 +2,7 @@
 
 # Build a bunch of SRPMs
 
+import argparse
 import getopt
 import sys
 import os
@@ -138,6 +139,16 @@ def get_srpm_hash(srpm_infos, external, deps, srpm):
     return srpm_hash.hexdigest()
 
 
+def get_external_hash(external_deps):
+    external_deps.sort()
+    external_hash = hashlib.md5()
+    for dep in external_deps:
+        with open(dep, "rb") as f:
+            for block in iter(lambda: f.read(1024), ""):
+                external_hash.update(block)
+    return external_hash.hexdigest()
+
+
 def get_cache_dir(srpm_infos, external, deps, srpm):
     if not os.path.exists(CACHE_DIR):
         return None
@@ -230,25 +241,32 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
     for pkg in pkgs:
         shutil.move(pkg, RPMS_DIR)
 
+def parse_cmdline(argv=None):
+    """
+    Parse command line options
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--no-mock', help="Don't use mock", action='store_true')
+    parser.add_argument(
+        '--xs-build-sys', help='Assume XenServer build system',
+        action='store_true')
+    parser.add_argument('--i686', help='Build for i686',
+        action='store_true')
+    parser.add_argument('--external-dependencies',
+        help='External dependencies to include in the package hash',
+        metavar="file", nargs="+", default=[])
+    return parser.parse_args(argv)
+
 
 def main():
     global DEFAULT_ARCH
 
-    use_mock = True
-    xs_build_sys = False
-    try:
-        longopts = ["no-mock", "xs-build-sys", "i686"]
-        opts, _ = getopt.getopt(sys.argv[1:], "", longopts)
-    except getopt.GetoptError, err:
-        print str(err)
-        sys.exit(1)
-    for opt, _ in opts:
-        if opt == "--no-mock":
-            use_mock = False
-        if opt == "--xs-build-sys":
-            xs_build_sys = True
-        if opt == "--i686":
-            DEFAULT_ARCH = "i686"
+    args = parse_cmdline()
+    use_mock = not args.no_mock
+    xs_build_sys = args.xs_build_sys
+    if args.i686:
+        DEFAULT_ARCH = "i686"
 
     if not os.path.isdir(SRPMS_DIR) or not os.listdir(SRPMS_DIR):
         print ("Error: No srpms found in %s; First run configure.py." %
@@ -260,7 +278,7 @@ def main():
     srpm_infos = [get_srpm_info(pkg) for pkg in packages]
     deps = get_deps(srpm_infos)
     order = toposort2(deps)
-    external = "external dependencies hash"
+    external = get_external_hash(args.external_dependencies)
 
     for path in (TMP_RPM_PATH, BUILD_DIR, RPMS_DIR):
         if os.path.exists(path):
