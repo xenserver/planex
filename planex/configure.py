@@ -208,7 +208,7 @@ def prepare_buildroot():
 
 def copy_patches_to_buildroot(config):
     """Copy patches into the build root"""
-    patches_dir = os.path.join(config.config_dir, 'SOURCES')
+    patches_dir = os.path.join(config.config_dir, config.sources_dir)
     for patch in glob.glob(os.path.join(patches_dir, '*')):
         shutil.copy(patch, SOURCES_DIR)
 
@@ -222,8 +222,8 @@ def is_scm(uri):
 def copy_specs_to_buildroot(config):
     """Pull in spec files, preprocessing if necessary"""
     config_dir = config.config_dir
-    specs = glob.glob(os.path.join(config_dir, "*.spec"))
-    spec_ins = glob.glob(os.path.join(config_dir, "*.spec.in"))
+    specs = glob.glob(os.path.join(config_dir, config.specs_dir, "*.spec"))
+    spec_ins = glob.glob(os.path.join(config_dir, config.specs_dir, "*.spec.in"))
     for spec_path in specs + spec_ins:
         check_spec_name(spec_path)
         basename = spec_path.split("/")[-1]
@@ -317,6 +317,14 @@ def parse_cmdline(argv=None):
     parser.add_argument(
         '--repos_path', help='Local path to the repositories',
         default="repos")
+    parser.add_argument(
+        '--sources_path', help='Path (relative to config_dir) to the SOURCES directory containing patches '
+        'and extra sources for the RPMs',
+        default="SOURCES")
+    parser.add_argument(
+        '--specs_path', help='Path (relative to config_dir) to the SPECS directory containing spec '
+        'files to be preprocessed as well as those simply to be built.'
+        default="SPECS")
     parser.add_argument('config_dir', help='Configuration directory')
     return parser.parse_args(argv)
 
