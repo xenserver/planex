@@ -24,6 +24,7 @@ class BasicTests(unittest.TestCase):
     def setUp(self):
         # 'setUp' breaks Pylint's naming rules
         # pylint: disable=C0103
+        self.config = configure.parse_cmdline(['config_dir'])
         self.cohttp_url = "https://github.com/mirage/ocaml-cohttp" \
             "/archive/ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz"
 
@@ -59,7 +60,7 @@ class BasicTests(unittest.TestCase):
         working_dir = tempfile.mkdtemp()
         mapping = {"https://github.com/mirage/%{name}/archive/"
                    "%{name}-%{version}/%{name}-%{version}.tar.gz": "foo.tar.gz"}
-        source = sources.SCM("git://github.com/foo/bar.git#somebranch","/tmp/repos")
+        source = sources.SCM("git://github.com/foo/bar.git#somebranch",self.config)
         source.set_hash_and_vsn("abcde","1.2.3")
         configure.preprocess_spec(path_to("ocaml-cohttp.spec.in"),
                                   working_dir, [source], mapping)

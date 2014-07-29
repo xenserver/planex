@@ -26,33 +26,38 @@ def parse_args_or_exit(argv=None):
         '--quiet', help='Do not print warnings',
         action='store_true')
     parser.add_argument(
-        '--mirrorsite', help='Rewrite URLs to point to this directory', 
-        default=None)
+        '--repos_mirror_path', help='Path to a local repository mirror directory. '
+        'This should be a file path where for a git url '
+        '"git://host.com/some/path.git" the mirror '
+        'should contain <mirror_path>/host.com/some/path.git', 
+        default="")
+    parser.add_argument(
+        '--repos_path', help='Local path under which the repositories should be '
+        'checked out',
+        default="repos")
     return parser.parse_args(argv)
 
 
 def main():
-    args = parse_args_or_exit()
+    config = parse_args_or_exit()
 
-    logging.basicConfig(level=logging.ERROR if args.quiet else logging.DEBUG)
+    logging.basicConfig(level=logging.ERROR if config.quiet else logging.DEBUG)
 
     templates = [planex.spec.Spec(path) 
-                 for path in glob.glob(os.path.join(args.config_dir, "*.spec.in"))]
+                 for path in glob.glob(os.path.join(config.config_dir, "*.spec.in"))]
 
-    if args.print_only:
+    if config.print_only:
         for template in templates:
             print template.source_urls()
         sys.exit(0)
 
-    if args.dry_run:
+    if config.dry_run:
         executor = executors.PrintExecutor(sys.stdout)
     else:
         executor = executors.RealExecutor()
 
     for template in templates:
-        urls = [util.rewrite_url(url, args.mirrorsite) 
-                for url in template.source_urls()]
-        srcs = [sources.Source(url,os.path.join(os.getcwd(),"repos")) for url in urls]
+        srcs = [sources.Source(url,config) for url in template.source_urls()]
 
         commands_list = [src.clone_commands() for src in srcs]
 

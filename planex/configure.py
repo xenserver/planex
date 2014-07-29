@@ -105,7 +105,7 @@ def preprocess_spec(spec_in_path, spec_out_path, scmsources, source_mapping):
     spec_out.close()
 
 
-def prepare_srpm(spec_path, mirrorsite, repomirror):
+def prepare_srpm(spec_path, config):
     """
     Downloads sources needed to build an SRPM from the spec file
     at spec_path.
@@ -123,9 +123,9 @@ def prepare_srpm(spec_path, mirrorsite, repomirror):
         print "Failed to get sources for %s" % spec_path
         sys.exit(1)
 
-    allsources = [rewrite_url(url, mirrorsite) for url in allsources]
+    allsources = [rewrite_url(url, config.mirror_path) for url in allsources]
     for source in allsources:
-        sources.Source(source, repomirror).archive()
+        sources.Source(source, config).archive()
 
 def get_hashes(ty):
     spec_files = glob.glob(os.path.join(SPECS_DIR,"*"))
@@ -206,9 +206,9 @@ def prepare_buildroot():
         if not os.path.exists(path):
             os.makedirs(path)
 
-def copy_patches_to_buildroot(config_dir):
+def copy_patches_to_buildroot(config):
     """Copy patches into the build root"""
-    patches_dir = os.path.join(config_dir, 'SOURCES')
+    patches_dir = os.path.join(config.config_dir, 'SOURCES')
     for patch in glob.glob(os.path.join(patches_dir, '*')):
         shutil.copy(patch, SOURCES_DIR)
 
@@ -219,8 +219,9 @@ def is_scm(uri):
 	return True
    return False
 
-def copy_specs_to_buildroot(config_dir, repomirror):
+def copy_specs_to_buildroot(config):
     """Pull in spec files, preprocessing if necessary"""
+    config_dir = config.config_dir
     specs = glob.glob(os.path.join(config_dir, "*.spec"))
     spec_ins = glob.glob(os.path.join(config_dir, "*.spec.in"))
     for spec_path in specs + spec_ins:
@@ -228,7 +229,7 @@ def copy_specs_to_buildroot(config_dir, repomirror):
         basename = spec_path.split("/")[-1]
         if spec_path.endswith('.in'):
             print bcolors.OKGREEN + "Configuring and fetching sources for '%s'" % basename + bcolors.ENDC
-            scmsources = [sources.Source(source, repomirror) for source in sources_from_spec(spec_path)
+            scmsources = [sources.Source(source, config) for source in sources_from_spec(spec_path)
                           if (is_scm(source))]
             mapping = {}
             for source in scmsources:
@@ -240,7 +241,7 @@ def copy_specs_to_buildroot(config_dir, repomirror):
             print bcolors.OKGREEN + "Fetching sources for '%s'" % basename + bcolors.ENDC
             shutil.copy(spec_path, SPECS_DIR)
 
-def build_srpms(mirrorsite, repomirror):
+def build_srpms(config):
     """Build SRPMs for all SPECs"""
     print bcolors.OKGREEN + "Building/checking SRPMS for all files in SPECSDIR" + bcolors.ENDC
     print "  Getting %s hashes for source to check against existing SRPMS..." % HASHFN,
@@ -250,7 +251,7 @@ def build_srpms(mirrorsite, repomirror):
     specs = glob.glob(SPECS_GLOB)
     n=0
     for spec_path in specs:
-        prepare_srpm(spec_path, mirrorsite, repomirror)
+        prepare_srpm(spec_path, config)
         n+=build_srpm(hashes, spec_path)
     print bcolors.OKGREEN + "Rebuilt %d out of %d SRPMS" % (n,len(specs)) +  bcolors.ENDC
 
@@ -267,7 +268,8 @@ def dump_manifest():
             basename = basename[:-3]
         print basename.rjust(40), manifest[source]
 
-def sort_mockconfig(config_dir):
+def sort_mockconfig(config):
+    config_dir = config.config_dir
     if not os.path.exists('mock'):
         os.makedirs('mock')
         print bcolors.OKGREEN + "Creating mock configuration for current working directory" + bcolors.ENDC
@@ -290,14 +292,12 @@ def main(argv):
     Main function.  Process all the specfiles in the directory
     given by config_dir.
     """
-    args = parse_cmdline()
-    config_dir = args.config_dir
-    repomirror = args.repomirror or os.path.join(os.getcwd(), "repos")
+    config = parse_cmdline()
     prepare_buildroot()
-    sort_mockconfig(config_dir)
-    copy_patches_to_buildroot(config_dir)
-    copy_specs_to_buildroot(config_dir, repomirror)
-    build_srpms(args.mirrorsite, repomirror)
+    sort_mockconfig(config)
+    copy_patches_to_buildroot(config)
+    copy_specs_to_buildroot(config)
+    build_srpms(config)
     dump_manifest()
 
 def parse_cmdline(argv=None):
@@ -306,11 +306,17 @@ def parse_cmdline(argv=None):
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--mirrorsite', help='Rewrite URLs to point to this directory', 
-        default=None)
+        '--mirror_path', help='Rewrite URLs to point to this directory', 
+        default="")
     parser.add_argument(
-        '--repomirror', help='Rewrite repository URLs to point to this directory', 
-        default=None)
+        '--repos_mirror_path', help='Path to a local repository mirror directory. '
+        'This should be a file path where for a git url '
+        '"git://host.com/some/path.git" the mirror '
+        'should contain <mirror_path>/host.com/some/path.git', 
+        default="")
+    parser.add_argument(
+        '--repos_path', help='Local path to the repositories',
+        default="repos")
     parser.add_argument('config_dir', help='Configuration directory')
     return parser.parse_args(argv)
 
