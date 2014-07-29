@@ -8,6 +8,10 @@ from planex.util import run
 
 class SCM(object):
     def __init__(self, url, repomirror):
+        for protocol in ['git', 'hg']:
+            if protocol not in urlparse.uses_fragment:
+                urlparse.uses_fragment.append(protocol)
+
         (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
         urlparts = url.split('#')
         repo_url = "%s://%s%s" % (scheme, host, path) # Strip of fragment
@@ -29,15 +33,9 @@ class SCM(object):
         self.scmhash = None
         self.version = None
  
-    def clone_commands(self):
-        raise Exception
-
     def set_hash_and_vsn(self, scmhash, version):
         self.scmhash = scmhash
         self.version = version
-
-    def pin(self, scmhash=None):
-        raise Exception
 
     @property
     def localpath(self):
@@ -111,9 +109,9 @@ class GitSource(SCM):
                    "show", scmhash]
             try:
                 run(cmd)
-            except e:
+            except:
                 print "Invalid hash '%s' for repo '%s'" % (scmhash, self.localpath)
-                raise e
+                raise
 
         # Verified good hash.
         self.scmhash = scmhash
@@ -198,9 +196,9 @@ class HgSource(SCM):
             cmd = ["hg", "-R", self.localpath, "export", scmhash]
             try:
                 run(cmd)
-            except e:
+            except:
                 print "Invalid hash '%s' for repo '%s'" % (scmhash, self.localpath)
-                raise e
+                raise
 
         self.scmhash = scmhash
 
