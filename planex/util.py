@@ -29,7 +29,7 @@ def rewrite_url(url, destination=None):
     Rewrite url to point to destination
     """
     (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
-    if destination is None or scheme in ["git", "hg"]:
+    if destination=="" or scheme in ["git", "hg"]:
         return url
 
     else:
