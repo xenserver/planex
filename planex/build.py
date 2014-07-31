@@ -15,7 +15,7 @@ import hashlib
 from planex.globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
                             SPECS_GLOB)
 
-from planex.util import (bcolors, run, dump_cmds)
+from planex.util import (bcolours, print_col, run, dump_cmds)
 
 TMP_RPM_PATH = "/tmp/RPMS"
 RPM_TOP_DIR = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
@@ -215,7 +215,7 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
     if(need_to_build(srpm_infos, external, deps, srpm)):
         target = extract_target(srpm_infos, srpm)
         build_number = get_new_number(srpm, cache_dir)
-        print bcolors.OKGREEN + "CACHE MISS: Building %s (%d)" % (srpm, build_number) + bcolors.ENDC
+        print_col(bcolours.OKGREEN, "CACHE MISS: Building %s (%d)" % (srpm, build_number))
         createrepo()
 
         pkgs = do_build(srpm, target, build_number, use_mock, xs_build_sys)
@@ -226,7 +226,7 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
                 shutil.copy(pkg, cache_dir)
 
     else:
-        print bcolors.OKGREEN + "CACHE HIT: Not building %s" % srpm + bcolors.ENDC
+        print_col(bcolours.OKGREEN,"CACHE HIT: Not building %s" % srpm)
         pkgs = glob.glob(os.path.join(cache_dir, "*.rpm"))
         for pkg in pkgs:
             shutil.copy(pkg, TMP_RPM_PATH)

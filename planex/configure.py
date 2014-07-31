@@ -14,7 +14,7 @@ import shutil
 from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
                             SPECS_GLOB, HASHFN)
 import planex.spec
-from planex.util import (bcolors, run, dump_cmds, rewrite_url)
+from planex.util import (bcolours, print_col, run, dump_cmds, rewrite_url)
 from planex import sources
 
 GITHUB_MIRROR = "~/github_mirror"
@@ -171,7 +171,7 @@ def ensure_existing_ok(hashes, spec_path):
                     ok = False
 
             if not ok:
-                print bcolors.WARNING + ("WARNING: Removing SRPM '%s' (hash mismatch with desired)" % srpm) + bcolors.ENDC
+                print_col(bcolours.WARNING,"WARNING: Removing SRPM '%s' (hash mismatch with desired)" % srpm)
                 os.remove(srpm)
             else:
                 one_correct = True
@@ -228,7 +228,7 @@ def copy_specs_to_buildroot(config):
         check_spec_name(spec_path)
         basename = spec_path.split("/")[-1]
         if spec_path.endswith('.in'):
-            print bcolors.OKGREEN + "Configuring and fetching sources for '%s'" % basename + bcolors.ENDC
+            print_col(bcolours.OKGREEN,"Configuring and fetching sources for '%s'" % basename)
             scmsources = [sources.Source(source, config) for source in sources_from_spec(spec_path)
                           if (is_scm(source))]
             mapping = {}
@@ -238,12 +238,12 @@ def copy_specs_to_buildroot(config):
                 mapping[source.orig_url]=source.extendedurl
             preprocess_spec(spec_path, SPECS_DIR, scmsources, mapping)
         else:
-            print bcolors.OKGREEN + "Fetching sources for '%s'" % basename + bcolors.ENDC
+            print_col(bcolours.OKGREEN, "Fetching sources for '%s'" % basename)
             shutil.copy(spec_path, SPECS_DIR)
 
 def build_srpms(config):
     """Build SRPMs for all SPECs"""
-    print bcolors.OKGREEN + "Building/checking SRPMS for all files in SPECSDIR" + bcolors.ENDC
+    print_col(bcolours.OKGREEN, "Building/checking SRPMS for all files in SPECSDIR")
     print "  Getting %s hashes for source to check against existing SRPMS..." % HASHFN,
     sys.stdout.flush()
     hashes = get_hashes(HASHFN)
@@ -253,11 +253,11 @@ def build_srpms(config):
     for spec_path in specs:
         prepare_srpm(spec_path, config)
         n+=build_srpm(hashes, spec_path)
-    print bcolors.OKGREEN + "Rebuilt %d out of %d SRPMS" % (n,len(specs)) +  bcolors.ENDC
+    print_col(bcolours.OKGREEN,"Rebuilt %d out of %d SRPMS" % (n,len(specs)))
 
 def dump_manifest():
     print "---------------------------------------"
-    print bcolors.OKGREEN + "MANIFEST" + bcolors.ENDC
+    print_col(bcolours.OKGREEN,"MANIFEST")
     sources = manifest.keys()
     sources.sort()
     for source in sources:
@@ -272,7 +272,7 @@ def sort_mockconfig(config):
     config_dir = config.config_dir
     if not os.path.exists('mock'):
         os.makedirs('mock')
-        print bcolors.OKGREEN + "Creating mock configuration for current working directory" + bcolors.ENDC
+        print_col(bcolours.OKGREEN, "Creating mock configuration for current working directory")
         # Copy in all the files from config_dir
         mock_files = glob.glob(os.path.join(config_dir,'mock','*'))
 
