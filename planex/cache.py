@@ -226,8 +226,11 @@ def main(argv):
     srpm = load_srpm_from_file(passthrough_args[-1])
     pkg_hash = get_srpm_hash(srpm, yumbase)
 
+    cache_basedir = os.path.expanduser(
+        os.getenv("PLANEX_CACHEDIR", 
+            default=os.path.join("~", ".planex-cache")))
+
     # Rebuild if not available in the cache
-    cache_basedir = os.path.expanduser(os.path.join("~", ".planex-cache"))
     if not in_cache(cache_basedir, pkg_hash):
         log_debug("Cache miss - rebuilding")
         build_output = build_package(intercepted_args.configdir,
