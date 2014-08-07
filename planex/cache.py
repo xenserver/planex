@@ -204,7 +204,7 @@ def build_package(configdir, root, passthrough_args):
     Spawn a mock process to build the package.   Some arguments
     are intercepted and rewritten, for instance --resultdir.
     """
-    working_directory = tempfile.mkdtemp()
+    working_directory = tempfile.mkdtemp(prefix="planex-cache")
     log_debug("Mock working directory: %s" % working_directory)
 
     cmd = ["mock", "--configdir=%s" % configdir,
