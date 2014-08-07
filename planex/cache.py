@@ -134,14 +134,14 @@ def add_to_cache(cache_basedir, pkg_hash, build_dir):
     Add the build products in build_dir to the cache
     """
     cache_dir = cache_location(cache_basedir, pkg_hash)
-    assert os.path.isdir(cache_basedir)
     assert not os.path.isdir(cache_dir)
 
     if not os.path.isdir(cache_basedir):
-        os.makedirs(cache_basedir)
+        os.makedirs(cache_dir)
 
-    shutil.move(build_dir, cache_dir)
-    log_debug("moved to %s" % cache_dir)
+    cache_output_dir = os.path.join(cache_dir, "output")
+    shutil.move(build_dir, cache_output_dir)
+    log_debug("moved to %s" % cache_output_dir)
 
 
 def get_from_cache(cache_basedir, pkg_hash, resultdir):
@@ -151,11 +151,13 @@ def get_from_cache(cache_basedir, pkg_hash, resultdir):
     cache_dir = cache_location(cache_basedir, pkg_hash)
     assert os.path.isdir(cache_dir)
 
+    build_output = os.path.join(cache_dir, "output")
+
     if not os.path.isdir(resultdir):
         os.makedirs(resultdir)
 
-    for cached_file in os.listdir(cache_dir):
-        shutil.copy(os.path.join(cache_dir, cached_file), resultdir)
+    for cached_file in os.listdir(build_output):
+        shutil.copy(os.path.join(build_output, cached_file), resultdir)
 
 
 def get_srpm_hash(srpm, yumbase, mock_config):
