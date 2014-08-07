@@ -158,13 +158,14 @@ def get_from_cache(cache_basedir, pkg_hash, resultdir):
         shutil.copy(os.path.join(cache_dir, cached_file), resultdir)
 
 
-def get_srpm_hash(srpm, yumbase):
+def get_srpm_hash(srpm, yumbase, mock_config):
     """
     Calculate the cache hash of srpm, including the hashes of its build
     dependencies.  Only the first layer of dependencies are hashed -
     as OCaml libraries are statically linked this should be sufficient.
     """
     pkg_hash = hashlib.md5()
+    pkg_hash.update(mock_config)
 
     log_debug("Hashes of SRPM contents (%s):" %
         RFC4880_HASHES[srpm.filedigestalgo])
@@ -224,7 +225,9 @@ def main(argv):
     yum_config = load_mock_config(config)
     yumbase = get_yum(yum_config)
     srpm = load_srpm_from_file(passthrough_args[-1])
-    pkg_hash = get_srpm_hash(srpm, yumbase)
+    with open(config) as cfg:
+        mock_config = cfg.read()
+    pkg_hash = get_srpm_hash(srpm, yumbase, mock_config)
 
     cache_basedir = os.path.expanduser(
         os.getenv("PLANEX_CACHEDIR", 
