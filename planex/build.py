@@ -190,8 +190,12 @@ def createrepo():
     doexec(["createrepo", "--update", RPMS_DIR])
 
 def do_build(srpm, target, build_number, use_mock, xs_build_sys):
+    if xs_build_sys:
+	mock = "/usr/bin/mock"
+    else:
+	mock = "mock"
     if use_mock:
-        cmd = ["mock", "--configdir=mock", 
+        cmd = [mock, "--configdir=mock", 
                "--resultdir=%s" % TMP_RPM_PATH, "--rebuild",
                "--target", target,
 #               "--enable-plugin=tmpfs",
