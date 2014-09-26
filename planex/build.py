@@ -11,6 +11,7 @@ import subprocess
 import shutil
 import rpm
 import hashlib
+import time
 
 from planex.globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
                             SPECS_GLOB)
@@ -224,16 +225,22 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
 
         pkgs = do_build(srpm, target, build_number, use_mock, xs_build_sys)
         if cache_dir:
-            os.makedirs(cache_dir)
-            print "Archiving result in cache"
-            for pkg in pkgs:
-                shutil.copy(pkg, cache_dir)
+            try:
+                os.makedirs(cache_dir+".tmp")
+                print "Archiving result in cache"
+                for pkg in pkgs:
+                    shutil.copy(pkg, cache_dir+".tmp")
+                os.rename(cache_dir+".tmp",cache_dir)
+            except:
+                print bgcolors.WARNING + "FAILED TO PUT BUILD RESULTS INTO CACHE"
 
     else:
         print_col(bcolours.OKGREEN,"CACHE HIT: Not building %s" % srpm)
         pkgs = glob.glob(os.path.join(cache_dir, "*.rpm"))
         for pkg in pkgs:
             shutil.copy(pkg, TMP_RPM_PATH)
+        mytime=time.time()
+        os.utime(cache_dir,(mytime,mytime))
         pkgs = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
 
     if not use_mock:
@@ -260,6 +267,9 @@ def parse_cmdline(argv=None):
     parser.add_argument('--external-dependencies',
         help='External dependencies to include in the package hash',
         metavar="file", nargs="+", default=[])
+    parser.add_argument('--cache-dir',
+        help='Root directory of the RPM cache',
+        metavar="directory", default=None)
     return parser.parse_args(argv)
 
 
@@ -271,6 +281,8 @@ def main():
     xs_build_sys = args.xs_build_sys
     if args.i686:
         DEFAULT_ARCH = "i686"
+    if args.cache_dir:
+        CACHE_DIR = args.cache_dir
 
     if not os.path.isdir(SRPMS_DIR) or not os.listdir(SRPMS_DIR):
         print ("Error: No srpms found in %s; First run configure.py." %
