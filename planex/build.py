@@ -224,10 +224,14 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
 
         pkgs = do_build(srpm, target, build_number, use_mock, xs_build_sys)
         if cache_dir:
-            os.makedirs(cache_dir)
-            print "Archiving result in cache"
-            for pkg in pkgs:
-                shutil.copy(pkg, cache_dir)
+            try:
+                os.makedirs(cache_dir+".tmp")
+                print "Archiving result in cache"
+                for pkg in pkgs:
+                    shutil.copy(pkg, cache_dir+".tmp")
+                os.rename(cache_dir+".tmp",cache_dir)
+            except:
+                print bgcolors.WARNING + "FAILED TO PUT BUILD RESULTS INTO CACHE"
 
     else:
         print bcolors.OKGREEN + "CACHE HIT: Not building %s" % srpm + bcolors.ENDC
