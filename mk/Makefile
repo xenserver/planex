@@ -15,7 +15,7 @@ buildrpms:
 	chown -R root.root $(CONFIG_DIR)/*
 	rm -rf ./planex-build-root/SRPMS/*
 	planex-configure --mirror_path "file:///distfiles/ocaml2/" --repos_path "/repos" $(CONFIG_DIR)
-	planex-build --xs-build-sys --external-dependencies /obj/.ext_dependencies
+	planex-build --xs-build-sys --external-dependencies /obj/.ext_dependencies --cache-dir /rpmcache
 	cp -r ./planex-build-root/RPMS $(MY_OUTPUT_DIR)
 	rm -rf $(MY_OUTPUT_DIR)/RPMS/repodata
 	cp -r ./planex-build-root/SRPMS $(MY_OUTPUT_DIR)
