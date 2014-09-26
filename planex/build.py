@@ -11,6 +11,7 @@ import subprocess
 import shutil
 import rpm
 import hashlib
+import time
 
 from planex.globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
                             SPECS_GLOB)
@@ -238,6 +239,8 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
         pkgs = glob.glob(os.path.join(cache_dir, "*.rpm"))
         for pkg in pkgs:
             shutil.copy(pkg, TMP_RPM_PATH)
+        mytime=time.time()
+        os.utime(cache_dir,(mytime,mytime))
         pkgs = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
 
     if not use_mock:
