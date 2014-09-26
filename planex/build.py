@@ -267,6 +267,9 @@ def parse_cmdline(argv=None):
     parser.add_argument('--external-dependencies',
         help='External dependencies to include in the package hash',
         metavar="file", nargs="+", default=[])
+    parser.add_argument('--cache-dir',
+        help='Root directory of the RPM cache',
+        metavar="directory", default=None)
     return parser.parse_args(argv)
 
 
@@ -278,6 +281,8 @@ def main():
     xs_build_sys = args.xs_build_sys
     if args.i686:
         DEFAULT_ARCH = "i686"
+    if args.cache_dir:
+        CACHE_DIR = args.cache_dir
 
     if not os.path.isdir(SRPMS_DIR) or not os.listdir(SRPMS_DIR):
         print ("Error: No srpms found in %s; First run configure.py." %
