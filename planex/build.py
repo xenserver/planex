@@ -211,6 +211,11 @@ def do_build(srpm, target, build_number, use_mock, xs_build_sys):
 
     doexec(cmd)
 
+    srpms = glob.glob(os.path.join(TMP_RPM_PATH, "*.src.rpm"))
+    for srpm in srpms:
+        print_col(bcolours.WARNING,"Removing SRPM %s" % srpm)        
+        os.unlink(srpm)
+
     return glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
 
 
