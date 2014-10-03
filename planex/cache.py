@@ -18,7 +18,7 @@ LOG_DEBUG = 5
 LOG_INFO = 1
 LOG_NONE = 0
 
-LOGLEVEL = 3
+LOGLEVEL = LOG_INFO
 
 def log(level, message):
     """Conditional logging function"""
@@ -41,6 +41,9 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(description='Cache package building')
+    parser.add_argument('--debug',
+        action='store_true', default=False,
+        help='Print debugging information')
 
     # Overridden mock arguments.  Help text taken directly from mock.
     parser.add_argument('--configdir',
@@ -222,10 +225,14 @@ def main(argv):
     Main function.  Parse spec file and iterate over its sources, downloading
     them as appropriate.
     """
+    global LOGLEVEL
+
     intercepted_args, passthrough_args = parse_args_or_exit(argv)
     config = os.path.join(intercepted_args.configdir,
                           intercepted_args.root + ".cfg")
 
+    if intercepted_args.debug:
+        LOGLEVEL = LOG_DEBUG
 
     yum_config = load_mock_config(config)
     yumbase = get_yum(yum_config)
