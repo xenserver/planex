@@ -20,6 +20,8 @@ LOG_NONE = 0
 
 LOGLEVEL = LOG_INFO
 
+PLANEX_CACHE_SALT = "planex-cache-1"
+
 def log(level, message):
     """Conditional logging function"""
     if level <= LOGLEVEL:
@@ -172,6 +174,7 @@ def get_srpm_hash(srpm, yumbase, mock_config):
     as OCaml libraries are statically linked this should be sufficient.
     """
     pkg_hash = hashlib.md5()
+    pkg_hash.update(PLANEX_CACHE_SALT)
     pkg_hash.update(mock_config)
 
     log_debug("Hashes of SRPM contents (%s):" %
