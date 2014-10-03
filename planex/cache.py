@@ -42,12 +42,14 @@ def parse_args_or_exit(argv=None):
     """
     parser = argparse.ArgumentParser(description='Cache package building')
 
-    # Overridden mock arguments
+    # Overridden mock arguments.  Help text taken directly from mock.
     parser.add_argument('--configdir',
+        default="/etc/mock",
         help='Change where config files are found')
     parser.add_argument('--resultdir',
         help='path for resulting files to be put')
     parser.add_argument('-r', '--root',
+        default="default",
         help='chroot name/config file name default: default')
     return parser.parse_known_args(argv)
 
@@ -224,6 +226,7 @@ def main(argv):
     config = os.path.join(intercepted_args.configdir,
                           intercepted_args.root + ".cfg")
 
+
     yum_config = load_mock_config(config)
     yumbase = get_yum(yum_config)
     srpm = load_srpm_from_file(passthrough_args[-1])
@@ -232,7 +235,7 @@ def main(argv):
     pkg_hash = get_srpm_hash(srpm, yumbase, mock_config)
 
     cache_basedir = os.path.expanduser(
-        os.getenv("PLANEX_CACHEDIR", 
+        os.getenv("PLANEX_CACHEDIR",
             default=os.path.join("~", ".planex-cache")))
 
     # Rebuild if not available in the cache
@@ -242,7 +245,10 @@ def main(argv):
                                      intercepted_args.root, passthrough_args)
         add_to_cache(cache_basedir, pkg_hash, build_output)
 
-    get_from_cache(cache_basedir, pkg_hash, intercepted_args.resultdir)
+    # Expand default resultdir as done in mock.backend.Root
+    resultdir = intercepted_args.resultdir or \
+        yum_config['resultdir'] % yum_config
+    get_from_cache(cache_basedir, pkg_hash, resultdir)
 
 
 def _main():
@@ -250,7 +256,6 @@ def _main():
     Entry point for setuptools CLI wrapper
     """
     main(sys.argv[1:])
-
 
 # Entry point when run directly
 if __name__ == "__main__":
