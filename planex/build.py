@@ -280,6 +280,7 @@ def parse_cmdline(argv=None):
 
 def main():
     global DEFAULT_ARCH
+    global CACHE_DIR
 
     args = parse_cmdline()
     use_mock = not args.no_mock
