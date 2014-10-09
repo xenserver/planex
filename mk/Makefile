@@ -12,7 +12,6 @@ buildrpms:
 	echo "Installing latest planex"
 	@cd .. && python setup.py install
 	echo confdir $(CONFIG_DIR)
-	chown -R root.root $(CONFIG_DIR)/*
 	rm -rf ./planex-build-root/SRPMS/*
 	planex-configure --mirror_path "file:///distfiles/ocaml2/" --repos_path "/repos" $(CONFIG_DIR) --specs_path .
 	planex-build --xs-build-sys --external-dependencies /obj/.ext_dependencies --cache-dir /rpmcache
