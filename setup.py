@@ -8,5 +8,6 @@ setup(name='planex',
               'planex-configure = planex.configure:_main',
               'planex-build = planex.build:main',
               'planex-clone = planex.clone:main',
+              'planex-cache = planex.cache:_main',
           ]
       })
