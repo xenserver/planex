@@ -177,8 +177,10 @@ def get_srpm_hash(srpm, yumbase, mock_config):
     pkg_hash.update(PLANEX_CACHE_SALT)
     pkg_hash.update(mock_config)
 
-    log_debug("Hashes of SRPM contents (%s):" %
-        RFC4880_HASHES[srpm.filedigestalgo])
+    if srpm.filedigestalgo:
+        log_debug("Hashes of SRPM contents (%s):" %
+            RFC4880_HASHES[srpm.filedigestalgo])
+
     for name, digest in zip(srpm.filenames, srpm.filedigests):
         log_debug("  %s: %s" % (name, digest))
         pkg_hash.update(digest)
@@ -215,7 +217,7 @@ def build_package(configdir, root, passthrough_args):
     working_directory = tempfile.mkdtemp(prefix="planex-cache")
     log_debug("Mock working directory: %s" % working_directory)
 
-    cmd = ["mock", "--configdir=%s" % configdir,
+    cmd = ["sudo", "mock", "--configdir=%s" % configdir,
            "--root=%s" % root,
            "--resultdir=%s" % working_directory] + passthrough_args
 
