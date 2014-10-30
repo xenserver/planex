@@ -9,5 +9,8 @@ setup(name='planex',
               'planex-build = planex.build:main',
               'planex-clone = planex.clone:main',
               'planex-cache = planex.cache:_main',
+              'planex-downloader = planex.downloader:main',
+              'planex-makedeb = planex.makedeb:main',
+	      'planex-specdep = planex.specdep:main'
           ]
       })
