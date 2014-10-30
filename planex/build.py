@@ -194,7 +194,7 @@ def do_build(srpm, target, build_number, use_mock, xs_build_sys):
     if xs_build_sys:
 	mock = "/usr/bin/mock"
     else:
-	mock = "mock"
+	mock = "planex-cache"
     if use_mock:
         cmd = [mock, "--configdir=mock", 
                "--resultdir=%s" % TMP_RPM_PATH, "--rebuild",
@@ -203,7 +203,7 @@ def do_build(srpm, target, build_number, use_mock, xs_build_sys):
                "--define", "extrarelease .%d" % build_number,
                "-v", srpm]
         if not xs_build_sys:
-            cmd = ["sudo"] + cmd + ["--disable-plugin=package_state"]
+            cmd = cmd
     else:
         cmd = ["rpmbuild", "--rebuild", "-v", "%s" % srpm,
                "--target", target, "--define",
