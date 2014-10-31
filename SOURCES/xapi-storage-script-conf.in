@@ -1,2 +1,0 @@
-# Place to look for plugins
-root = @LIBEXECDIR@/xapi-storage-script
