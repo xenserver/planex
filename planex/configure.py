@@ -304,7 +304,36 @@ def parse_cmdline(argv=None):
     """
     Parse command line options
     """
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="""
+    Configure the planex build directory.
+
+    This command will generate the directory structure planex requires
+    to build RPMs. The following directories will be created in the
+    curent directory:
+
+        planex-build-root/{RPMS,SRPMS,SPECS}
+        mock
+
+    The configuration directory should contain a template mock
+    configuration directory, a set of SPEC files and/or SPEC file
+    templates. The files in the mock template will be processed and
+    the following substitions made:
+
+        @PLANEX_BUILD_ROOT@ -> the full path of the planex-build-root 
+                               directory.
+
+    The SPEC file templates (.spec.in) are processed in the following way.
+    Any Source directive that references a git or mercurial repository will
+    be extended with a SCM hash and an archive filename. The filename contains
+    a version derived from the SCM repository. Additionally, the following
+    definitions are also rewritten if they were present in the template:
+
+        %source{n}_version -> version derived from the nth repository
+        %source{n}_hash    -> SCM hash from the nth repository
+        %planex_version    -> combined version
+        %planex_release    -> 1%{?extrarelease}
+    """,formatter_class=argparse.RawDescriptionHelpFormatter)
+
     parser.add_argument(
         '--mirror_path', help='Rewrite URLs to point to this directory', 
         default="")
