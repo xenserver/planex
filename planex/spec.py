@@ -7,7 +7,7 @@ import os
 import re
 import rpm
 import urlparse
-from scripts.lib import debianmisc
+import debianmisc
 
 # Could have a decorator / context manager to set and unset all the RPM macros
 # around methods such as 'provides'

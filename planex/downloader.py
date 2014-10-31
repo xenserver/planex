@@ -62,7 +62,7 @@ def look_for_it(url, destination):
 			print >>sys.stderr, "%s does not exist: downloading" % destination
 			download(url, destination)
 
-if __name__ == "__main__":
+def main():
 	if len(sys.argv) <> 3:
 		print >>sys.stderr, "Wrong number of arguments. Use %s <url> <destination>" % sys.argv[0]
 		exit(1)
@@ -84,3 +84,6 @@ if __name__ == "__main__":
 		url_path = "/".join(path[0:-2] + [ path[-2] + ext ])
 		url_string = str(urlparse.urlunsplit((url.scheme, url.netloc, url_path, url.query, url.fragment),))
 	look_for_it(url_string, destination)
+
+if __name__ == "__main__":
+        main()

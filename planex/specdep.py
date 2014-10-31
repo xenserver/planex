@@ -4,12 +4,11 @@
 
 import argparse
 import os
-import pkg
+import spec as pkg
 import platform
 import sys
 import urlparse
-
-from scripts.lib import mappkgname
+import mappkgname
 
 
 def build_type():
@@ -46,7 +45,7 @@ def download_rpm_sources(spec):
         if source.scheme in ["http", "https"]:
             print '%s: %s' % (path, spec.specpath())
             print '\t@echo [DOWNLOADER] $@'
-            print '\t@./scripts/downloader.py %s %s' % (url, path)
+            print '\t@planex-downloader %s %s' % (url, path)
 
         # Source comes from a local file or directory
         if source.scheme == "file":
