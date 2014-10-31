@@ -1,0 +1,3 @@
+auth       include     passwd
+account    include     passwd
+password   include     passwd

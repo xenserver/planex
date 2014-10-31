@@ -1,0 +1,67 @@
+%global debug_package %{nil}
+
+Name:           ocaml-zed
+Version:        1.3
+Release:        1%{?dist}
+Summary:        An abstract engine for text editing for OCaml
+License:        BSD3
+URL:            https://github.com/diml/zed
+Source0:        https://github.com/diml/zed/archive/%{version}/%{name}-%{version}.tar.gz
+BuildRequires:  ocaml
+BuildRequires:  ocaml-camomile-devel
+BuildRequires:  ocaml-findlib
+BuildRequires:  ocaml-ocamldoc
+BuildRequires:  ocaml-react-devel
+
+%description
+Zed is an abstract engine for text editing. It can be used for writing
+text editors, editing widgets, readlines...
+
+%package        devel
+Summary:        Development files for %{name}
+Requires:       %{name} = %{version}-%{release}
+Requires:       ocaml-camomile-devel%{?_isa}
+Requires:       ocaml-react-devel%{?_isa}
+
+%description    devel
+The %{name}-devel package contains libraries and signature files for
+developing applications that use %{name}.
+
+%prep
+%setup -q -n zed-%{version}
+
+%build
+./configure
+make
+
+%install
+export OCAMLFIND_DESTDIR=%{buildroot}/%{_libdir}/ocaml
+mkdir -p $OCAMLFIND_DESTDIR
+make install
+
+%files
+%doc CHANGES.md
+%doc LICENSE
+%doc README.md
+%{_libdir}/ocaml/zed
+%exclude %{_libdir}/ocaml/zed/*.a
+%exclude %{_libdir}/ocaml/zed/*.cmxa
+%exclude %{_libdir}/ocaml/zed/*.cmx
+%exclude %{_libdir}/ocaml/zed/*.mli
+
+%files devel
+%{_libdir}/ocaml/zed/*.a
+%{_libdir}/ocaml/zed/*.cmxa
+%{_libdir}/ocaml/zed/*.cmx
+%{_libdir}/ocaml/zed/*.mli
+
+%changelog
+* Thu Oct 2 2014 Euan Harris <euan.harris@citrix.com> - 1.3-1
+- Update to 1.3 and switch to GitHub sources
+
+* Mon Jun  2 2014 Euan Harris <euan.harris@citrix.com> - 1.2-2
+- Split files correctly between base and devel packages
+
+* Thu Jun  6 2013 David Scott <dave.scott@eu.citrix.com> - 1.2-1
+- Initial package
+
