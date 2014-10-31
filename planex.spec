@@ -11,6 +11,10 @@ Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{versio
 License: GPLv2
 BuildArch: noarch
 BuildRequires: python-setuptools
+Requires: mock
+Requires: rpm-build
+Requires: createrepo
+Requires: python-argparse
 
 %description
 Planex is a tool for building RPMs and deb files. It manages interdependencies
