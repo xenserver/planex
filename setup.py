@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='planex',
-      version='0.0.0',
+      version='0.5.0',
       packages=['planex'],
       entry_points={
           'console_scripts': [
@@ -9,5 +9,8 @@ setup(name='planex',
               'planex-build = planex.build:main',
               'planex-clone = planex.clone:main',
               'planex-cache = planex.cache:_main',
+              'planex-downloader = planex.downloader:main',
+              'planex-makedeb = planex.makedeb:main',
+              'planex-specdep = planex.specdep:main'
           ]
       })
