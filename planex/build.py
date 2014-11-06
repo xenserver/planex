@@ -33,7 +33,9 @@ def doexec(args, inputtext=None, check=True):
 def get_srpm_info(srpm):
     for spec_path in glob.glob(SPECS_GLOB):
         os.unlink(spec_path)
-    doexec(["rpm", "-i", srpm])
+    myenv = os.environ.copy()
+    myenv['HOME'] = RPM_TOP_DIR
+    run(["rpm", "-i", srpm], check=True, env=myenv)
     myspecfile = glob.glob(SPECS_GLOB)[0]
     spec = rpm.ts().parseSpec(myspecfile)
     info = {}
@@ -188,7 +190,7 @@ def get_new_number(srpm, cache_dir):
     return build_number
 
 def createrepo():
-    doexec(["createrepo", "--update", RPMS_DIR])
+    run(["createrepo", "--update", RPMS_DIR])
 
 def do_build(srpm, target, build_number, use_mock, xs_build_sys):
     if xs_build_sys:
@@ -209,8 +211,9 @@ def do_build(srpm, target, build_number, use_mock, xs_build_sys):
                "--target", target, "--define",
                "_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm"]
 
-    doexec(cmd + [srpm])
+    res=run(cmd + [srpm])
 
+    print "stdout: %s" % res['stdout']
     srpms = glob.glob(os.path.join(TMP_RPM_PATH, "*.src.rpm"))
     for srpm in srpms:
         print_col(bcolours.WARNING,"Removing SRPM %s" % srpm)        
@@ -249,7 +252,7 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
         pkgs = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
 
     if not use_mock:
-        result = doexec(["rpm", "-U", "--force", "--nodeps"] + pkgs, check=False)
+        result = run(["rpm", "-U", "--force", "--nodeps"] + pkgs, check=False)
         if result['rc'] != 0:
             print "Ignoring failure installing rpm batch: %s" % pkgs
             print result['stderr']
