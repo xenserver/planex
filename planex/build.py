@@ -13,7 +13,7 @@ import rpm
 import hashlib
 import time
 
-from planex.globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
+from planex.globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR, MOCK_DIR,
                             SPECS_GLOB)
 
 from planex.util import (bcolours, print_col, run, dump_cmds)
@@ -196,20 +196,20 @@ def do_build(srpm, target, build_number, use_mock, xs_build_sys):
     else:
 	mock = "planex-cache"
     if use_mock:
-        cmd = [mock, "--configdir=mock", 
+        cmd = [mock, "--debug", "--configdir=%s" % MOCK_DIR, 
                "--resultdir=%s" % TMP_RPM_PATH, "--rebuild",
                "--target", target,
 #               "--enable-plugin=tmpfs",
                "--define", "extrarelease .%d" % build_number,
-               "-v", srpm]
+               "-v"]
         if not xs_build_sys:
-            cmd = cmd
+            cmd = cmd + [ "--disable-plugin=package_state" ]
     else:
-        cmd = ["rpmbuild", "--rebuild", "-v", "%s" % srpm,
+        cmd = ["rpmbuild", "--rebuild", "-v",
                "--target", target, "--define",
                "_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm"]
 
-    doexec(cmd)
+    doexec(cmd + [srpm])
 
     srpms = glob.glob(os.path.join(TMP_RPM_PATH, "*.src.rpm"))
     for srpm in srpms:

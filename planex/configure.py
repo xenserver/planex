@@ -11,7 +11,7 @@ import urlparse
 import re
 import glob
 import shutil
-from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
+from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR, MOCK_DIR,
                             SPECS_GLOB, HASHFN)
 import planex.spec
 from planex.util import (bcolours, print_col, run, dump_cmds, rewrite_url)
@@ -131,6 +131,8 @@ def get_hashes(ty):
     spec_files = glob.glob(os.path.join(SPECS_DIR,"*"))
     sources_files = glob.glob(os.path.join(SOURCES_DIR,"*"))
     all_files = spec_files + sources_files
+    if all_files==[]:
+	return []
     if ty=="md5":
         cmd = ["md5sum"] + all_files
     elif ty=="sha256":
@@ -270,15 +272,15 @@ def dump_manifest():
 
 def sort_mockconfig(config):
     config_dir = config.config_dir
-    if not os.path.exists('mock'):
-        os.makedirs('mock')
+    if not os.path.exists(MOCK_DIR):
+        os.makedirs(MOCK_DIR)
         print_col(bcolours.OKGREEN, "Creating mock configuration for current working directory")
         # Copy in all the files from config_dir
         mock_files = glob.glob(os.path.join(config_dir,'mock','*'))
 
         for f in mock_files:
             basename = f.split('/')[-1]
-            dest_fname = os.path.join('mock',basename)
+            dest_fname = os.path.join(MOCK_DIR,basename)
             print "  copying file '%s' to '%s'" % (f,dest_fname)
             shutil.copyfile(f,dest_fname)
             planex_build_root = os.path.join(os.getcwd(),BUILD_ROOT_DIR)
@@ -311,8 +313,7 @@ def parse_cmdline(argv=None):
     to build RPMs. The following directories will be created in the
     curent directory:
 
-        planex-build-root/{RPMS,SRPMS,SPECS}
-        mock
+        planex-build-root/{RPMS,SRPMS,SPECS,mock}
 
     The configuration directory should contain a template mock
     configuration directory, a set of SPEC files and/or SPEC file
