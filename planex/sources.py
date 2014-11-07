@@ -185,7 +185,7 @@ class GitSource(SCM):
                "%s/%s" % (sources_dir, tarball_name)]
         run(cmd)
 
-        cmd = ["gzip", "-f", "%s/%s" % (sources_dir, tarball_name)]
+        cmd = ["gzip", "--no-name", "-f", "%s/%s" % (sources_dir, tarball_name)]
         run(cmd)
 
 class HgSource(SCM):
