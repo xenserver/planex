@@ -15,7 +15,8 @@ log = logging.getLogger(__name__)
 
 def parse_args_or_exit(argv=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument('config_dir', help='Configuration directory')
+    parser.add_argument('--config_dir', help='Configuration directory',
+	default=".")
     parser.add_argument(
         '--print-only', help='Only print sources, do not clone them',
         action='store_true')

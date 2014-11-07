@@ -355,7 +355,8 @@ def parse_cmdline(argv=None):
         '--specs_path', help='Path (relative to config_dir) to the SPECS directory containing spec '
         'files to be preprocessed as well as those simply to be built.',
         default="SPECS")
-    parser.add_argument('config_dir', help='Configuration directory')
+    parser.add_argument('--config_dir', help='Configuration directory',
+	default=".")
     return parser.parse_args(argv)
 
 
