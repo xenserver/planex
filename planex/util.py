@@ -23,6 +23,7 @@ def print_col(col, msg):
         print col, msg, bcolours.ENDC
     else:
         print msg
+    sys.stdout.flush()
 
 def rewrite_url(url, destination=None):
     """

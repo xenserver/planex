@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python -u
 
 # Build a bunch of SRPMs
 
@@ -194,11 +194,11 @@ def createrepo():
 
 def do_build(srpm, target, build_number, use_mock, xs_build_sys):
     if xs_build_sys:
-	mock = "/usr/bin/mock"
+	mock = ["/usr/bin/mock"]
     else:
-	mock = "planex-cache"
+	mock = ["planex-cache", "--debug"]
     if use_mock:
-        cmd = [mock, "--debug", "--configdir=%s" % MOCK_DIR, 
+        cmd = mock + ["--configdir=%s" % MOCK_DIR, 
                "--resultdir=%s" % TMP_RPM_PATH, "--rebuild",
                "--target", target,
 #               "--enable-plugin=tmpfs",
