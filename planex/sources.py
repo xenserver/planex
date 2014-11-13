@@ -25,7 +25,11 @@ class SCM(object):
             else:
                 return os.path.join(os.getcwd(),path)
 
-        self.repos_mirror_path = absolutize(config.repos_mirror_path)
+        if "repos_mirror_path" in config:
+            self.repos_mirror_path = absolutize(config.repos_mirror_path)
+        else:
+            self.repos_mirror_path = "/nonexistant"
+
         self.repos_path = absolutize(config.repos_path)
         
         def strip_ext(ext):
@@ -40,8 +44,13 @@ class SCM(object):
         self.repo_url = repo_url
         self.fragment = fragment
 
-        self.scmhash = None
-        self.version = None
+        matches=re.search("([0-9a-f]*)\/([^\/]*)",fragment)
+        if matches:
+            self.scmhash = matches.group(1)
+            self.version = matches.group(2)[len(self.repo_name)+1:-7]
+        else:
+            self.scmhash = None
+            self.version = None
  
     def set_hash_and_vsn(self, scmhash, version):
         self.scmhash = scmhash
@@ -170,7 +179,7 @@ class GitSource(SCM):
         matchlen = len(match.group())
         self.version = description[matchlen:].replace('-', '+')
 
-    def archive(self, sources_dir=SOURCES_DIR):    
+    def archive_commands(self, sources_dir=SOURCES_DIR):    
         # If it already exists, we're done.
         dotgitdir = os.path.join(self.localpath, ".git")
 
@@ -180,13 +189,14 @@ class GitSource(SCM):
         # archive name always ends in .gz - strip it off
         tarball_name = self.archivename[:-3]
 
-        cmd = ["git", "--git-dir=%s" % dotgitdir, "archive",
-               "--prefix=%s/" % self.tarballprefix, self.scmhash, "-o",
-               "%s/%s" % (sources_dir, tarball_name)]
-        run(cmd)
+        return [ ["git", "--git-dir=%s" % dotgitdir, "archive",
+                  "--prefix=%s/" % self.tarballprefix, self.scmhash, "-o",
+                  "%s/%s" % (sources_dir, tarball_name)],
+                 ["gzip", "--no-name", "-f", "%s/%s" % (sources_dir, tarball_name)] ]
 
-        cmd = ["gzip", "--no-name", "-f", "%s/%s" % (sources_dir, tarball_name)]
-        run(cmd)
+    def archive(self, sources_dir=SOURCES_DIR):
+        for cmd in self.archive_commands(sources_dir):
+            run(cmd)
 
 class HgSource(SCM):
     def __init__(self, url, config):

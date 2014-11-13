@@ -144,7 +144,7 @@ class Spec(object):
                 sources.append(os.path.join(SRCDIR, os.path.basename(url.path)))
 
             # Source comes from a local file or directory
-            if url.scheme == "file":
+            if url.scheme in ["file", "git", "hg"]:
                 sources.append(
                     os.path.join(SRCDIR, os.path.basename(url.fragment)))
 

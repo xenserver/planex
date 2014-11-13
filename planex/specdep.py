@@ -9,7 +9,7 @@ import platform
 import sys
 import urlparse
 import mappkgname
-
+from planex import sources
 
 def build_type():
     debian_like = ["ubuntu", "debian", "linaro"]
@@ -37,9 +37,12 @@ def build_srpm_from_spec(spec):
 # Assumes each RPM only needs one download - we have some multi-source
 # packages but in all cases the additional sources are patches provided
 # in the Git repository
-def download_rpm_sources(spec):
+def download_rpm_sources(spec, args):
     for (url, path) in zip(spec.source_urls(), spec.source_paths()):
         source = urlparse.urlparse(url)
+
+        print "# source.scheme: " + source.scheme
+        print "# url: " + url
 
         # Source comes from a remote HTTP server
         if source.scheme in ["http", "https"]:
@@ -58,6 +61,12 @@ def download_rpm_sources(spec):
             dirname = "%s-%s" % (os.path.basename(source.path), spec.version())
             print '\t@git --git-dir=%s/.git '\
                 'archive --prefix %s/ -o $@ HEAD' % (source.path, dirname)
+
+        if source.scheme in ["git", "hg"]:
+            print '%s: %s' % (path, spec.specpath())
+            cmds = sources.Source(url, args).archive_commands()
+            for cmd in cmds:
+                print '\t%s' % (' '.join(cmd))
 
 
 # Rules to build RPMS from SRPMS (uses information from the SPECs to
@@ -110,6 +119,8 @@ def parse_cmdline():
         default=[], help="file of package names to be ignored")
     parser.add_argument("-d", "--dist", metavar="DIST",
         default="", help="distribution tag (used in RPM filenames)")
+    parser.add_argument("-r", "--repos_path", metavar="DIR",
+        default="repos", help='Local path to the repositories')
     return parser.parse_args()
 
 
@@ -147,7 +158,7 @@ def main():
 
     for spec in specs.itervalues():
         build_srpm_from_spec(spec)
-        download_rpm_sources(spec)
+        download_rpm_sources(spec, args)
         build_rpm_from_srpm(spec)
         buildrequires_for_rpm(spec, provides_to_rpm)
         print ""
