@@ -14,7 +14,7 @@ import debianmisc
 
 
 # for debugging, make all paths relative to PWD
-rpm.addMacro('_topdir', '.')
+rpm.addMacro('_topdir', 'planex-build-root')
 
 # Directories where rpmbuild/mock expects to find inputs
 # and writes outputs

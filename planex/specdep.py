@@ -65,8 +65,9 @@ def download_rpm_sources(spec, args):
         if source.scheme in ["git", "hg"]:
             print '%s: %s' % (path, spec.specpath())
             cmds = sources.Source(url, args).archive_commands()
+            print '\t@echo [ARCHIVER] $@'
             for cmd in cmds:
-                print '\t%s' % (' '.join(cmd))
+                print '\t@%s' % (' '.join(cmd))
 
 
 # Rules to build RPMS from SRPMS (uses information from the SPECs to
@@ -121,6 +122,8 @@ def parse_cmdline():
         default="", help="distribution tag (used in RPM filenames)")
     parser.add_argument("-r", "--repos_path", metavar="DIR",
         default="repos", help='Local path to the repositories')
+    parser.add_argument("-b", "--build-type", metavar="DISTRO",
+        default="rpm", help='Build type (rpm or deb)')
     return parser.parse_args()
 
 
@@ -138,7 +141,7 @@ def main():
 
     for spec_path in args.specs:
         try:
-            if build_type() == "deb":
+            if args.build_type == "deb":
                 os_type = platform.linux_distribution(full_distribution_name=False)[1].lower()
                 map_name_fn=lambda name: mappkgname.map_package(name, os_type)
                 spec = pkg.Spec(spec_path, target="deb", map_name=map_name_fn)

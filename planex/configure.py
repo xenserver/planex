@@ -299,7 +299,7 @@ def main(argv):
     sort_mockconfig(config)
     copy_patches_to_buildroot(config)
     copy_specs_to_buildroot(config)
-    build_srpms(config)
+#    build_srpms(config)
     dump_manifest()
 
 def parse_cmdline(argv=None):

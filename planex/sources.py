@@ -73,6 +73,10 @@ class SCM(object):
     @property
     def extendedurl(self):
         return "%s#%s/%s" % (self.repo_url, self.scmhash, self.archivename)
+
+    def archive(self, sources_dir=SOURCES_DIR):
+        for cmd in self.archive_commands(sources_dir):
+            run(cmd)
         
 
 class GitSource(SCM):
@@ -83,9 +87,10 @@ class GitSource(SCM):
         else:
             self.git_committish = "master"
 
-        if os.path.exists(self.localpath):
-            # Don't pin if the repo doesn't currently exist
-            self.pin()
+        if not self.version:
+            if os.path.exists(self.localpath):
+                # Don't pin if the repo doesn't currently exist
+                self.pin()
 
     @staticmethod
     def handles(ty):
@@ -183,9 +188,6 @@ class GitSource(SCM):
         # If it already exists, we're done.
         dotgitdir = os.path.join(self.localpath, ".git")
 
-        if os.path.exists(os.path.join(sources_dir, self.archivename)):
-            return
-        
         # archive name always ends in .gz - strip it off
         tarball_name = self.archivename[:-3]
 
@@ -194,9 +196,6 @@ class GitSource(SCM):
                   "%s/%s" % (sources_dir, tarball_name)],
                  ["gzip", "--no-name", "-f", "%s/%s" % (sources_dir, tarball_name)] ]
 
-    def archive(self, sources_dir=SOURCES_DIR):
-        for cmd in self.archive_commands(sources_dir):
-            run(cmd)
 
 class HgSource(SCM):
     def __init__(self, url, config):
@@ -242,18 +241,16 @@ class HgSource(SCM):
 
         self.version = str(description)
 
-    def archive(self, sources_dir=SOURCES_DIR):    
+    def archive_commands(self, sources_dir=SOURCES_DIR):    
         # If it already exists, we're done.
         if os.path.exists(os.path.join(sources_dir, self.archivename)):
             print "File's already here!"
             return
         
         print "File's not here!"
-        cmd = ["hg", "-R", self.localpath, "archive", "-t", "tgz", "-p", 
+        return [["hg", "-R", self.localpath, "archive", "-t", "tgz", "-p", 
                "%s/" % self.tarballprefix, 
-               "%s/%s" % (sources_dir, self.archivename)]
-
-        run(cmd)
+               "%s/%s" % (sources_dir, self.archivename)]]
 
 
 class FileSource(SCM):
@@ -271,11 +268,11 @@ class FileSource(SCM):
     def clone_commands(self):
         return []
 
-    def archive(self, sources_dir=SOURCES_DIR):
+    def archive_commands(self, sources_dir=SOURCES_DIR):
         final_path = os.path.join(sources_dir, self.archivename)
         if os.path.exists(final_path):
             return
-        run(["curl", "-k", "-L", "-o", final_path, self.orig_url])
+        return ["curl", "-k", "-L", "-o", final_path, self.orig_url]
 
 class OtherSource(SCM):
     @staticmethod
