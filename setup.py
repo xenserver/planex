@@ -3,6 +3,10 @@ from setuptools import setup
 setup(name='planex',
       version='0.5.0',
       packages=['planex'],
+      include_package_data = True,
+      package_data={
+	'planex':['Makefile.common']
+	},
       entry_points={
           'console_scripts': [
               'planex-configure = planex.configure:_main',
