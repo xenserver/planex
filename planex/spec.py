@@ -14,7 +14,7 @@ import debianmisc
 
 
 # for debugging, make all paths relative to PWD
-rpm.addMacro('_topdir', '.')
+rpm.addMacro('_topdir', 'planex-build-root')
 
 # Directories where rpmbuild/mock expects to find inputs
 # and writes outputs
@@ -144,7 +144,7 @@ class Spec(object):
                 sources.append(os.path.join(SRCDIR, os.path.basename(url.path)))
 
             # Source comes from a local file or directory
-            if url.scheme == "file":
+            if url.scheme in ["file", "git", "hg"]:
                 sources.append(
                     os.path.join(SRCDIR, os.path.basename(url.fragment)))
 

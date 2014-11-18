@@ -25,7 +25,11 @@ class SCM(object):
             else:
                 return os.path.join(os.getcwd(),path)
 
-        self.repos_mirror_path = absolutize(config.repos_mirror_path)
+        if "repos_mirror_path" in config:
+            self.repos_mirror_path = absolutize(config.repos_mirror_path)
+        else:
+            self.repos_mirror_path = "/nonexistant"
+
         self.repos_path = absolutize(config.repos_path)
         
         def strip_ext(ext):
@@ -40,8 +44,13 @@ class SCM(object):
         self.repo_url = repo_url
         self.fragment = fragment
 
-        self.scmhash = None
-        self.version = None
+        matches=re.search("([0-9a-f]*)\/([^\/]*)",fragment)
+        if matches:
+            self.scmhash = matches.group(1)
+            self.version = matches.group(2)[len(self.repo_name)+1:-7]
+        else:
+            self.scmhash = None
+            self.version = None
  
     def set_hash_and_vsn(self, scmhash, version):
         self.scmhash = scmhash
@@ -64,6 +73,10 @@ class SCM(object):
     @property
     def extendedurl(self):
         return "%s#%s/%s" % (self.repo_url, self.scmhash, self.archivename)
+
+    def archive(self, sources_dir=SOURCES_DIR):
+        for cmd in self.archive_commands(sources_dir):
+            run(cmd)
         
 
 class GitSource(SCM):
@@ -74,9 +87,10 @@ class GitSource(SCM):
         else:
             self.git_committish = "master"
 
-        if os.path.exists(self.localpath):
-            # Don't pin if the repo doesn't currently exist
-            self.pin()
+        if not self.version:
+            if os.path.exists(self.localpath):
+                # Don't pin if the repo doesn't currently exist
+                self.pin()
 
     @staticmethod
     def handles(ty):
@@ -170,23 +184,18 @@ class GitSource(SCM):
         matchlen = len(match.group())
         self.version = description[matchlen:].replace('-', '+')
 
-    def archive(self, sources_dir=SOURCES_DIR):    
+    def archive_commands(self, sources_dir=SOURCES_DIR):    
         # If it already exists, we're done.
         dotgitdir = os.path.join(self.localpath, ".git")
 
-        if os.path.exists(os.path.join(sources_dir, self.archivename)):
-            return
-        
         # archive name always ends in .gz - strip it off
         tarball_name = self.archivename[:-3]
 
-        cmd = ["git", "--git-dir=%s" % dotgitdir, "archive",
-               "--prefix=%s/" % self.tarballprefix, self.scmhash, "-o",
-               "%s/%s" % (sources_dir, tarball_name)]
-        run(cmd)
+        return [ ["git", "--git-dir=%s" % dotgitdir, "archive",
+                  "--prefix=%s/" % self.tarballprefix, self.scmhash, "-o",
+                  "%s/%s" % (sources_dir, tarball_name)],
+                 ["gzip", "--no-name", "-f", "%s/%s" % (sources_dir, tarball_name)] ]
 
-        cmd = ["gzip", "-f", "%s/%s" % (sources_dir, tarball_name)]
-        run(cmd)
 
 class HgSource(SCM):
     def __init__(self, url, config):
@@ -232,18 +241,16 @@ class HgSource(SCM):
 
         self.version = str(description)
 
-    def archive(self, sources_dir=SOURCES_DIR):    
+    def archive_commands(self, sources_dir=SOURCES_DIR):    
         # If it already exists, we're done.
         if os.path.exists(os.path.join(sources_dir, self.archivename)):
             print "File's already here!"
-            return
+            return []
         
         print "File's not here!"
-        cmd = ["hg", "-R", self.localpath, "archive", "-t", "tgz", "-p", 
+        return [["hg", "-R", self.localpath, "archive", "-t", "tgz", "-p", 
                "%s/" % self.tarballprefix, 
-               "%s/%s" % (sources_dir, self.archivename)]
-
-        run(cmd)
+               "%s/%s" % (sources_dir, self.archivename)]]
 
 
 class FileSource(SCM):
@@ -261,11 +268,11 @@ class FileSource(SCM):
     def clone_commands(self):
         return []
 
-    def archive(self, sources_dir=SOURCES_DIR):
+    def archive_commands(self, sources_dir=SOURCES_DIR):
         final_path = os.path.join(sources_dir, self.archivename)
         if os.path.exists(final_path):
-            return
-        run(["curl", "-k", "-L", "-o", final_path, self.orig_url])
+            return []
+        return [["curl", "-k", "-L", "-o", final_path, self.orig_url]]
 
 class OtherSource(SCM):
     @staticmethod

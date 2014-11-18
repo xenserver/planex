@@ -15,7 +15,8 @@ log = logging.getLogger(__name__)
 
 def parse_args_or_exit(argv=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument('config_dir', help='Configuration directory')
+    parser.add_argument('--config_dir', help='Configuration directory',
+	default=".")
     parser.add_argument(
         '--print-only', help='Only print sources, do not clone them',
         action='store_true')
@@ -35,6 +36,10 @@ def parse_args_or_exit(argv=None):
         '--repos_path', help='Local path under which the repositories should be '
         'checked out',
         default="repos")
+    parser.add_argument(
+        '--specs_path', help='Path (relative to config_dir) to the SPECS directory containing spec '
+        'files to be preprocessed as well as those simply to be built.',
+        default="SPECS")
     return parser.parse_args(argv)
 
 
@@ -44,7 +49,7 @@ def main():
     logging.basicConfig(level=logging.ERROR if config.quiet else logging.DEBUG)
 
     templates = [planex.spec.Spec(path) 
-                 for path in glob.glob(os.path.join(config.config_dir, "*.spec.in"))]
+                 for path in glob.glob(os.path.join(config.config_dir, config.specs_path, "*.spec.in"))]
 
     if config.print_only:
         for template in templates:

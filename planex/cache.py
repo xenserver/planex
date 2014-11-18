@@ -13,6 +13,8 @@ import subprocess
 import sys
 import tempfile
 import yum
+import util
+import itertools
 
 LOG_DEBUG = 5
 LOG_INFO = 1
@@ -46,6 +48,9 @@ def parse_args_or_exit(argv=None):
     parser.add_argument('--debug',
         action='store_true', default=False,
         help='Print debugging information')
+    parser.add_argument('--cachedirs',
+        default='~/.planex-cache:/misc/cache/planex-cache',
+        help='colon-separated cache search path')
 
     # Overridden mock arguments.  Help text taken directly from mock.
     parser.add_argument('--configdir',
@@ -122,42 +127,39 @@ def load_srpm_from_file(filename):
     with open(filename) as srpm:
         return rpm.ts().hdrFromFdno(srpm.fileno())
 
-def cache_location(cache_basedir, pkg_hash):
+def cache_locations(cachedirs, pkg_hash):
     """
     Return the cache path to the build products with the given hash
     """
-    return os.path.join(cache_basedir, pkg_hash)
+    return [os.path.join(x, pkg_hash) for x in cachedirs]
 
 
-def in_cache(cache_basedir, pkg_hash):
+def in_cache(cachedirs, pkg_hash):
     """
     Return true if build products with the given hash are in the cache
     """
-    return os.path.isdir(cache_location(cache_basedir, pkg_hash))
+    return any(os.path.isdir(x) for x in cache_locations(cachedirs, pkg_hash))
 
 
-def add_to_cache(cache_basedir, pkg_hash, build_dir):
+def add_to_cache(cachedirs, pkg_hash, build_dir):
     """
     Add the build products in build_dir to the cache
     """
-    cache_dir = cache_location(cache_basedir, pkg_hash)
+    cache_dir = cache_locations(cachedirs, pkg_hash)[0]
     assert not os.path.isdir(cache_dir)
 
-    if not os.path.isdir(cache_basedir):
-        os.makedirs(cache_dir)
+    if not os.path.isdir(cachedirs[0]):
+        os.makedirs(cachedirs[0])
 
     cache_output_dir = os.path.join(cache_dir, "output")
     shutil.move(build_dir, cache_output_dir)
     log_debug("moved to %s" % cache_output_dir)
 
 
-def get_from_cache(cache_basedir, pkg_hash, resultdir):
+def get_from_specified_cache(cache_dir, resultdir):
     """
-    Copy the build products specified by the hash to resultdir
+    Copy the build products in the specific location to resultdir
     """
-    cache_dir = cache_location(cache_basedir, pkg_hash)
-    assert os.path.isdir(cache_dir)
-
     build_output = os.path.join(cache_dir, "output")
 
     if not os.path.isdir(resultdir):
@@ -165,6 +167,17 @@ def get_from_cache(cache_basedir, pkg_hash, resultdir):
 
     for cached_file in os.listdir(build_output):
         shutil.copy(os.path.join(build_output, cached_file), resultdir)
+
+
+def get_from_cache(cachedirs, pkg_hash, resultdir):
+    """
+    Copy the build products specified by the hash to resultdir
+    """
+    possibilities = cache_locations(cachedirs, pkg_hash)
+    print "possibilities: %s" + ",".join(possibilities)
+    cache_dir = next(itertools.ifilter(os.path.isdir, possibilities), None)
+    if cache_dir:
+	get_from_specified_cache(cache_dir, resultdir)
 
 
 def get_srpm_hash(srpm, yumbase, mock_config):
@@ -221,7 +234,7 @@ def build_package(configdir, root, passthrough_args):
            "--root=%s" % root,
            "--resultdir=%s" % working_directory] + passthrough_args
 
-    subprocess.call(cmd)
+    util.run(cmd)
     return working_directory
 
 
@@ -246,21 +259,20 @@ def main(argv):
         mock_config = cfg.read()
     pkg_hash = get_srpm_hash(srpm, yumbase, mock_config)
 
-    cache_basedir = os.path.expanduser(
-        os.getenv("PLANEX_CACHEDIR",
-            default=os.path.join("~", ".planex-cache")))
+    cachedirs = [ os.path.expanduser(x) for x in
+        intercepted_args.cachedirs.split(':') ] 
 
     # Rebuild if not available in the cache
-    if not in_cache(cache_basedir, pkg_hash):
+    if not in_cache(cachedirs, pkg_hash):
         log_debug("Cache miss - rebuilding")
         build_output = build_package(intercepted_args.configdir,
                                      intercepted_args.root, passthrough_args)
-        add_to_cache(cache_basedir, pkg_hash, build_output)
+        add_to_cache(cachedirs, pkg_hash, build_output)
 
     # Expand default resultdir as done in mock.backend.Root
     resultdir = intercepted_args.resultdir or \
         yum_config['resultdir'] % yum_config
-    get_from_cache(cache_basedir, pkg_hash, resultdir)
+    get_from_cache(cachedirs, pkg_hash, resultdir)
 
 
 def _main():

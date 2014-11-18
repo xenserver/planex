@@ -27,6 +27,8 @@ def looks_like_an_archive(path):
 		return False
 	if ty.startswith("gzip") or ty.startswith("bzip"):
 		return True
+        if ty.startswith("PDF"):
+		return True
 	print >>sys.stderr, "%s has an unrecognised file type: %s" % (path, ty)
 	print >>sys.stderr, "Please extend %s:looks_like_an_archive to include this case."
 	exit(1)
