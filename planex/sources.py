@@ -272,7 +272,7 @@ class FileSource(SCM):
         final_path = os.path.join(sources_dir, self.archivename)
         if os.path.exists(final_path):
             return []
-        return ["curl", "-k", "-L", "-o", final_path, self.orig_url]
+        return [["curl", "-k", "-L", "-o", final_path, self.orig_url]]
 
 class OtherSource(SCM):
     @staticmethod
