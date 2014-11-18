@@ -245,7 +245,7 @@ class HgSource(SCM):
         # If it already exists, we're done.
         if os.path.exists(os.path.join(sources_dir, self.archivename)):
             print "File's already here!"
-            return
+            return []
         
         print "File's not here!"
         return [["hg", "-R", self.localpath, "archive", "-t", "tgz", "-p", 
@@ -271,7 +271,7 @@ class FileSource(SCM):
     def archive_commands(self, sources_dir=SOURCES_DIR):
         final_path = os.path.join(sources_dir, self.archivename)
         if os.path.exists(final_path):
-            return
+            return []
         return ["curl", "-k", "-L", "-o", final_path, self.orig_url]
 
 class OtherSource(SCM):
