@@ -1,17 +1,12 @@
-DIST := .el6
 
-.PHONY: all rpms srpms srpm_repo
-
-all: rpms
+.PHONY: rpms srpms srpm_repo
 
 .PHONY: clean
 clean:
 	rm -rf planex-build-root deps
 
-repos:
-	@echo [REPO CLONE]
-	@planex-clone
-
+planex-build-root:
+	planex-configure
 
 ############################################################################
 # RPM build rules
@@ -42,7 +37,7 @@ srpm_repo: srpms
 # to find and install it.
 %.rpm:
 	@echo [MOCK] $@
-	@/usr/bin/mock --configdir=planex-build-root/mock --quiet \
+	@planex-cache --debug --configdir=planex-build-root/mock --quiet \
 		--resultdir=$(dir $@) --uniqueext=$(notdir $@) \
 		--disable-plugin=package_state --rebuild $<
 	@echo [CREATEREPO] $@
@@ -88,7 +83,7 @@ srpm_repo: srpms
 # for RPM or Debian builds depending on the host distribution.
 # If dependency generation fails, the deps file is deleted to avoid
 # problems with empty, incomplete or corrupt deps.   
-deps: SPECS/*.spec 
+deps: planex-build-root planex-build-root/SPECS/*.spec 
 	@echo Updating dependencies...
 	@planex-specdep -d $(DIST) --ignore-from ignore planex-build-root/SPECS/*.spec > $@ || rm -f $@
 
