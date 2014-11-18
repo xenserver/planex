@@ -13,7 +13,7 @@ buildrpms:
 	@cd .. && python setup.py install
 	echo confdir $(CONFIG_DIR)
 	rm -rf ./planex-build-root/SRPMS/*
-	planex-configure --mirror_path "file:///distfiles/ocaml2/" --repos_path "/repos" --config_dir $(CONFIG_DIR) --specs_path .
+	planex-configure --mirror_path "file:///distfiles/ocaml2/" --repos_path "/repos" --config_dir $(CONFIG_DIR) --specs_path . --build_srpms
 	planex-build --xs-build-sys --external-dependencies /obj/.ext_dependencies --cache-dir /rpmcache
 	cp -r ./planex-build-root/RPMS $(MY_OUTPUT_DIR)
 	rm -rf $(MY_OUTPUT_DIR)/RPMS/repodata

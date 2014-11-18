@@ -299,7 +299,8 @@ def main(argv):
     sort_mockconfig(config)
     copy_patches_to_buildroot(config)
     copy_specs_to_buildroot(config)
-#    build_srpms(config)
+    if config.build_srpms:
+        build_srpms(config)
     dump_manifest()
 
 def parse_cmdline(argv=None):
@@ -355,6 +356,8 @@ def parse_cmdline(argv=None):
         '--specs_path', help='Path (relative to config_dir) to the SPECS directory containing spec '
         'files to be preprocessed as well as those simply to be built.',
         default="SPECS")
+    parser.add_argument('--build_srpms', help='Build SRPMs',
+        action="store_true", default=False)
     parser.add_argument('--config_dir', help='Configuration directory',
 	default=".")
     return parser.parse_args(argv)
