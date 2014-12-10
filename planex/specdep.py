@@ -38,6 +38,8 @@ def build_srpm_from_spec(spec):
 # packages but in all cases the additional sources are patches provided
 # in the Git repository
 def download_rpm_sources(spec, args):
+    print "# spec.source_urls: " + ','.join(spec.source_urls())
+    print "# spec.source_paths: " + ','.join(spec.source_paths())
     for (url, path) in zip(spec.source_urls(), spec.source_paths()):
         source = urlparse.urlparse(url)
 
@@ -133,9 +135,12 @@ def main():
    
     pkgs_to_ignore = args.ignore
     for ignore_from in args.ignore_from:
-        with open(ignore_from) as f:
-            for name in f.readlines():
-                pkgs_to_ignore.append(name.strip())
+        try:
+            with open(ignore_from) as f:
+                for name in f.readlines():
+                    pkgs_to_ignore.append(name.strip())
+        except:
+            pass
     for i in pkgs_to_ignore:
       print "# Will ignore: %s" % i
 

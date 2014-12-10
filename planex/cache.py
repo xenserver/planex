@@ -16,6 +16,8 @@ import yum
 import util
 import itertools
 
+from planex.globals import PLANEX_REPO_NAME
+
 LOG_DEBUG = 5
 LOG_INFO = 1
 LOG_NONE = 0
@@ -74,50 +76,18 @@ RFC4880_HASHES = {
     11: "SHA224"}
 
 
-def load_mock_config(cfg):
-    """
-    Load the yum configuration from the mock configuration file
-    Nasty, but this is how mock loads its configuration file...
-    From /usr/sbin/mock
-    """
+def setup_yumbase(yumbase):
+    # the following call creates a /var/tmp/yum-<username>-<random>
+    # directory to use as a cache.   reuse=True makes yum check
+    # for similarly-named directories and re-use them, which makes
+    # dependency searching much faster
 
-    import mockbuild.util
-    unprivUid = os.getuid()
-    __VERSION__ = 1
-    PKGPYTHONDIR = "/usr/lib/python2.7/site-packages/mockbuild"
-    config_opts = mockbuild.util.setup_default_config_opts(unprivUid,
-        __VERSION__, PKGPYTHONDIR)
-    config_opts['config_paths'] = []
-    config_opts['config_paths'].append(cfg)
-    execfile(cfg)
-    return config_opts
+    # much faster if we only enable our own repository
+    yumbase.repos.disableRepo('*')
+    yumbase.repos.enableRepo(PLANEX_REPO_NAME)
 
-
-def get_yum(config):
-    """
-    Initialise the Yum library and return an object which can be
-    used to query the package database
-    """
-    with tempfile.NamedTemporaryFile() as temp:
-        temp.write(config['yum.conf'])
-        temp.flush()
-
-        yumbase = yum.YumBase()
-        yumbase.repos.disableRepo('*')
-        yumbase.getReposFromConfigFile(temp.name)
-
-        # the following call creates a /var/tmp/yum-<username>-<random>
-        # directory to use as a cache.   reuse=True makes yum check
-        # for similarly-named directories and re-use them, which makes
-        # dependency searching much faster
-
-	# much faster if we only enable our own repository
-        yumbase.repos.disableRepo('*')
-        yumbase.repos.enableRepo('mock')
-
-        yumbase.setCacheDir(force=True, reuse=True)
-        #yumbase.repos.populateSack(cacheonly=True)
-    return yumbase
+    yumbase.setCacheDir(force=True, reuse=True)
+    #yumbase.repos.populateSack(cacheonly=True)
 
 
 def load_srpm_from_file(filename):
@@ -252,8 +222,9 @@ def main(argv):
     if intercepted_args.debug:
         LOGLEVEL = LOG_DEBUG
 
-    yum_config = load_mock_config(config)
-    yumbase = get_yum(yum_config)
+    yum_config = util.load_mock_config(config)
+    yumbase = util.get_yumbase(yum_config)
+    setup_yumbase(yumbase)
     srpm = load_srpm_from_file(passthrough_args[-1])
     with open(config) as cfg:
         mock_config = cfg.read()

@@ -83,10 +83,10 @@ class Spec(object):
         rpm.addMacro('dist', self.dist)
         self.spec = rpm.ts().parseSpec(path)
 
-        if os.path.basename(path).split(".")[0] != self.name():
-            raise SpecNameMismatch(
-                "spec file name '%s' does not match package name '%s'" %
-                (path, self.name()))
+#        if os.path.basename(path).split(".")[0] != self.name():
+#            raise SpecNameMismatch(
+#                "spec file name '%s' does not match package name '%s'" %
+#                (path, self.name()))
 
         if target == "rpm":
             self.rpmfilenamepat = rpm.expandMacro('%_build_name_fmt')

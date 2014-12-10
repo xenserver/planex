@@ -7,6 +7,8 @@ import os
 import pipes
 import urlparse
 import sys
+import tempfile
+import yum
 
 dump_cmds = True
 
@@ -18,12 +20,14 @@ class bcolours:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
+
 def print_col(col, msg):
     if sys.stdout.isatty():
         print col, msg, bcolours.ENDC
     else:
         print msg
     sys.stdout.flush()
+
 
 def rewrite_url(url, destination=None):
     """
@@ -36,6 +40,41 @@ def rewrite_url(url, destination=None):
     else:
         basename = path.split("/")[-1]
         return destination + basename + fragment
+
+
+def load_mock_config(cfg):
+    """
+    Load the yum configuration from the mock configuration file
+    Nasty, but this is how mock loads its configuration file...
+    From /usr/sbin/mock
+    """
+
+    import mockbuild.util
+    unprivUid = os.getuid()
+    __VERSION__ = 1
+    PKGPYTHONDIR = "/usr/lib/python2.7/site-packages/mockbuild"
+    config_opts = mockbuild.util.setup_default_config_opts(unprivUid,
+        __VERSION__, PKGPYTHONDIR)
+    config_opts['config_paths'] = []
+    config_opts['config_paths'].append(cfg)
+    execfile(cfg)
+    return config_opts
+
+
+def get_yumbase(config):
+    """
+    Initialise the Yum library and return an object which can be
+    used to query the package database
+    """
+    with tempfile.NamedTemporaryFile() as temp:
+        temp.write(config['yum.conf'])
+        temp.flush()
+
+        yumbase = yum.YumBase()
+        yumbase.repos.disableRepo('*')
+        yumbase.getReposFromConfigFile(temp.name)
+
+    return yumbase
 
 
 def run(cmd, check=True, env=None, inputtext=None):
