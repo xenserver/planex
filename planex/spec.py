@@ -60,7 +60,7 @@ class SpecNameMismatch(Exception):
 class Spec(object):
     """Represents an RPM spec file"""
 
-    def __init__(self, path, target="rpm", map_name=None, dist=""):
+    def __init__(self, path, target="rpm", map_name=None, dist="", check_package_name=True):
         if map_name:
             self.map_package_name = map_name
         else:
@@ -83,10 +83,10 @@ class Spec(object):
         rpm.addMacro('dist', self.dist)
         self.spec = rpm.ts().parseSpec(path)
 
-#        if os.path.basename(path).split(".")[0] != self.name():
-#            raise SpecNameMismatch(
-#                "spec file name '%s' does not match package name '%s'" %
-#                (path, self.name()))
+        if check_package_name and os.path.basename(path).split(".")[0] != self.name():
+            raise SpecNameMismatch(
+                "spec file name '%s' does not match package name '%s'" %
+                (path, self.name()))
 
         if target == "rpm":
             self.rpmfilenamepat = rpm.expandMacro('%_build_name_fmt')

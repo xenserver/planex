@@ -51,13 +51,13 @@ def check_spec_name(spec_path):
         sys.exit(1)
 
 
-def sources_from_spec(spec_path):
+def sources_from_spec(spec_path, config):
     """
     Extracts all source URLS from the spec file at spec_path.
 
     Returns a list of source URLs with RPM macros expanded.
     """
-    spec = planex.spec.Spec(spec_path)
+    spec = planex.spec.Spec(spec_path, check_package_name=not config.no_package_name_check)
     return spec.source_urls()
 
 
@@ -120,7 +120,7 @@ def prepare_srpm(spec_path, config):
     # Pull out the source list.   If the spec file pulls its sources
     # from a Git repository, we need to prepreprocess the spec file
     # to fill in the latest version tag from the repository.
-    allsources = sources_from_spec(spec_path)
+    allsources = sources_from_spec(spec_path, config)
     if allsources == []:
         print "Failed to get sources for %s" % spec_path
         sys.exit(1)
@@ -409,6 +409,9 @@ def parse_cmdline(argv=None):
         default="SPECS")
     parser.add_argument('--build_srpms', help='Build SRPMs',
         action="store_true", default=False)
+    parser.add_argument("--no-package-name-check",
+        action="store_true", help="Don't check that package name matches spec file name",
+        default=False)
     parser.add_argument('--config_dir', help='Configuration directory',
 	default=".")
     return parser.parse_args(argv)
