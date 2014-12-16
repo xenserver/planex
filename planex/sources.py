@@ -157,6 +157,9 @@ class GitSource(SCM):
     def pin(self):
         dotgitdir = os.path.join(self.localpath, ".git")
 
+        if not os.path.exists(dotgitdir):
+            raise exceptions.NoRepository
+
         # First, get the hash of the commit
         cmd = ["git", "--git-dir=%s" % dotgitdir,
                "rev-parse", "HEAD"]

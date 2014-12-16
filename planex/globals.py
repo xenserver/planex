@@ -9,3 +9,5 @@ BUILD_ROOT_DIR = "planex-build-root"
 SPECS_GLOB = os.path.join(SPECS_DIR, "*.spec")
 
 HASHFN = "md5"
+
+PLANEX_REPO_NAME = "planex-repo"

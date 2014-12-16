@@ -4,3 +4,8 @@ class NoSuchFile(Exception):
 
 class InvalidURL(Exception):
     pass
+
+
+class NoRepository(Exception):
+    pass
+

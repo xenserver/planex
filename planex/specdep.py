@@ -38,6 +38,8 @@ def build_srpm_from_spec(spec):
 # packages but in all cases the additional sources are patches provided
 # in the Git repository
 def download_rpm_sources(spec, args):
+    print "# spec.source_urls: " + ','.join(spec.source_urls())
+    print "# spec.source_paths: " + ','.join(spec.source_paths())
     for (url, path) in zip(spec.source_urls(), spec.source_paths()):
         source = urlparse.urlparse(url)
 
@@ -124,6 +126,9 @@ def parse_cmdline():
         default="repos", help='Local path to the repositories')
     parser.add_argument("-b", "--build-type", metavar="DISTRO",
         default="rpm", help='Build type (rpm or deb)')
+    parser.add_argument("--no-package-name-check",
+        action="store_true", help="Don't check that package name matches spec file name",
+        default=False)
     return parser.parse_args()
 
 
@@ -133,9 +138,12 @@ def main():
    
     pkgs_to_ignore = args.ignore
     for ignore_from in args.ignore_from:
-        with open(ignore_from) as f:
-            for name in f.readlines():
-                pkgs_to_ignore.append(name.strip())
+        try:
+            with open(ignore_from) as f:
+                for name in f.readlines():
+                    pkgs_to_ignore.append(name.strip())
+        except:
+            pass
     for i in pkgs_to_ignore:
       print "# Will ignore: %s" % i
 
@@ -144,9 +152,9 @@ def main():
             if args.build_type == "deb":
                 os_type = platform.linux_distribution(full_distribution_name=False)[1].lower()
                 map_name_fn=lambda name: mappkgname.map_package(name, os_type)
-                spec = pkg.Spec(spec_path, target="deb", map_name=map_name_fn)
+                spec = pkg.Spec(spec_path, target="deb", map_name=map_name_fn, check_package_name=not args.no_package_name_check)
             else:
-                spec = pkg.Spec(spec_path, target="rpm", dist=args.dist)
+                spec = pkg.Spec(spec_path, target="rpm", dist=args.dist, check_package_name=not args.no_package_name_check)
             pkg_name = spec.name()
             if pkg_name in pkgs_to_ignore:
                 continue
