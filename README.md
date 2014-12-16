@@ -5,40 +5,36 @@ Scripts and libraries to build rpms
 ## Usage
 
 This is an example run to demonstrate how you can build the software specified
-by `xen-api-libs-specs`.
+in the planex-demo subdirectory
 
- * Clone a configuration
+ * Change directory to planex-demo
 ```bash
-git clone https://github.com/xapi-project/xen-api-libs-specs
+cd planex-demo
 ```
- * Apply a workaround [#42](https://github.com/xenserver/planex/issues/42)
+ * Clone the repositories specified in the spec files
 ```bash
-grep --exclude-dir=".git" -lr "@VERSION@" xen-api-libs-specs/ |
-while read fname; do sed -ie 's/@VERSION@/UNRELEASED/g' $fname; done
-find xen-api-libs-specs/ -name '*.ine' -delete
-```
- * Clone github repositories
-```bash
-mkdir ~/github_mirror
-planex-clone xen-api-libs-specs ~/github_mirror
+planex-clone
 ```
  * Configure
 ```bash
-planex-configure --config-dir=xen-api-libs-specs
+planex-configure
 ```
- * TODO: At the moment configure throws an error - this needs to be resolved
+ * Build
+```bash
+make
+```
 
 ## Installation
 
 ### Dependencies
 
-#### Ubuntu 12.04
+#### Ubuntu 14.04
 
 ```bash
 sudo apt-get -qy install python-rpm rpm
 ```
 
-#### CentOS 6.4
+#### CentOS 6
 
  * Basic dependencies:
 
@@ -65,15 +61,17 @@ To install PlanEx, clone this repository and run the following:
 sudo python setup.py install
 ```
 
-This will install 4 binaries:
+This will install the planex binaries:
 
 * `planex-configure`
 * `planex-build`
 * `planex-clone`
+* `planex-specdep`
+* and a few others
 
 ## Testing
 
-To run unittest, use `tox`:
+To run unit tests, use `tox`:
 
 ```bash
 $ tox
