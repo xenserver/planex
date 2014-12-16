@@ -5,7 +5,7 @@
 clean:
 	rm -rf planex-build-root deps
 
-planex-build-root: SPECS/* SOURCES/*
+planex-build-root: $(wildcard SPECS/* SOURCES/*)
 	planex-configure
 	touch planex-build-root
 

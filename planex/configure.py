@@ -237,7 +237,7 @@ def copy_specs_to_buildroot(config):
         basename = spec_path.split("/")[-1]
         if spec_path.endswith('.in'):
             print_col(bcolours.OKGREEN,"Configuring and fetching sources for '%s'" % basename)
-            scmsources = [sources.Source(source, config) for source in sources_from_spec(spec_path)
+            scmsources = [sources.Source(source, config) for source in sources_from_spec(spec_path, config)
                           if (is_scm(source))]
             mapping = {}
             for source in scmsources:
