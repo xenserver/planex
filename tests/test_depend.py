@@ -7,7 +7,7 @@ import os
 import sys
 import unittest
 
-import specdep
+import depend
 import pkg
 
 class BasicTests(unittest.TestCase):
@@ -15,7 +15,7 @@ class BasicTests(unittest.TestCase):
         self.spec = pkg.Spec("SPECS/ocaml-cohttp.spec", dist=".el6")
 
     def test_build_srpm_from_spec(self):
-        specdep.build_srpm_from_spec(self.spec)
+        depend.build_srpm_from_spec(self.spec)
 
         self.assertEqual(sys.stdout.getvalue(),
             "./SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
@@ -23,7 +23,7 @@ class BasicTests(unittest.TestCase):
                 "./SOURCES/ocaml-cohttp-0.9.8.tar.gz\n")
 
     def test_download_rpm_sources(self):
-        specdep.download_rpm_sources(self.spec)
+        depend.download_rpm_sources(self.spec)
 
         self.assertEqual(sys.stdout.getvalue(),
             "./SOURCES/ocaml-cohttp-0.9.8.tar.gz: ./SPECS/ocaml-cohttp.spec\n"
@@ -33,7 +33,7 @@ class BasicTests(unittest.TestCase):
                 "ocaml-cohttp-0.9.8.tar.gz\n")
 
     def test_build_rpm_from_srpm(self):
-        specdep.build_rpm_from_srpm(self.spec)
+        depend.build_rpm_from_srpm(self.spec)
 
         self.assertEqual(sys.stdout.getvalue(),
             "./RPMS/x86_64/ocaml-cohttp-0.9.8-1.el6.x86_64.rpm: "
@@ -46,8 +46,8 @@ class BasicTests(unittest.TestCase):
         spec_paths = glob.glob(os.path.join("./SPECS", "*.spec"))
         specs = [pkg.Spec(spec_path, dist='.el6') for spec_path in spec_paths]
 
-        specdep.buildrequires_for_rpm(self.spec,
-            specdep.package_to_rpm_map(specs))
+        depend.buildrequires_for_rpm(self.spec,
+            depend.package_to_rpm_map(specs))
 
         self.assertEqual(sys.stdout.getvalue(),
             "./RPMS/x86_64/ocaml-cohttp-0.9.8-1.el6.x86_64.rpm: "

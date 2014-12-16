@@ -39,7 +39,7 @@ and caching.
 %{_bindir}/planex-configure
 %{_bindir}/planex-downloader
 %{_bindir}/planex-makedeb
-%{_bindir}/planex-specdep
+%{_bindir}/planex-depend
 %{python_sitelib}/planex-*.egg-info
 %{python_sitelib}/planex
 
