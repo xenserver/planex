@@ -10,6 +10,16 @@ planex-build-root: $(wildcard SPECS/* SOURCES/*)
 	touch planex-build-root
 
 ############################################################################
+# Source download rules
+############################################################################
+
+# Fetch a source tarball listed in a spec file.
+%.tar %.tar.gz %.tar.bz2 %.tgz %.tbz %.zip:
+	@echo [FETCH] $@
+	@planex-fetch $< $@
+
+
+############################################################################
 # RPM build rules
 ############################################################################
 
