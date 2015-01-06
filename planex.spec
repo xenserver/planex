@@ -5,7 +5,7 @@
 Summary: RPM/deb build tool
 Name: %{name}
 Version: %{version}
-Release: %{release}
+Release: %{release}%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
 License: GPLv2
