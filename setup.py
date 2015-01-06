@@ -15,6 +15,6 @@ setup(name='planex',
               'planex-cache = planex.cache:_main',
               'planex-downloader = planex.downloader:main',
               'planex-makedeb = planex.makedeb:main',
-              'planex-specdep = planex.specdep:main'
+              'planex-depend = planex.depend:main'
           ]
       })
