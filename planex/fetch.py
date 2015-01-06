@@ -7,7 +7,6 @@ import os
 import planex.spec
 import pycurl
 import sys
-from urlparse import urlparse
 
 
 def get(url_string, out_file):
@@ -51,6 +50,20 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
+def url_for_source(spec, source):
+    """
+    Find the URL corresponding to source in the spec file
+    """
+    spec = planex.spec.Spec(spec)
+    source_basename = os.path.basename(source)
+
+    for path, url in zip(spec.source_paths(), spec.source_urls()):
+        if url.endswith(source_basename):
+            return url
+
+    raise KeyError(source_basename)
+
+
 def main(argv):
     """
     Main function.  Parse spec file and iterate over its sources, downloading
@@ -59,24 +72,20 @@ def main(argv):
     args = parse_args_or_exit(argv)
 
     try:
-        spec = planex.spec.Spec(args.spec)
-        for path, url in zip(spec.source_paths(), spec.source_urls()):
-            source_basename = os.path.basename(args.source)
-            if not url.endswith(source_basename):
-                continue
+	url = url_for_source(args.spec, args.source)
 
-            if urlparse(url).scheme not in ["http", "https"]:
-                sys.stderr.write("Warning: skipping non-HTTP source %s\n" % url)
-                continue
+        if args.verbose:
+            print "Fetching %s to %s" % (url, args.source)
 
-            if args.verbose:
-                print "Fetching %s to %s" % (url, args.source)
+        with open(args.source, "wb") as out_file:
+            get(url, out_file)
 
-            with open(args.source, "wb") as out_file:
-                get(url, out_file)
+    except KeyError as exn:
+        sys.exit("%s: No source corresponding to %s" % (sys.argv[0], exn))
 
     except IOError as exn:
         sys.exit("%s: %s: %s" % (sys.argv[0], exn.strerror, exn.filename))
+
     except pycurl.error as exn:
         sys.exit("%s: %s" % (sys.argv[0], exn[1]))
 
