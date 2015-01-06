@@ -9,7 +9,7 @@ import pycurl
 import sys
 
 
-def get(url_string, out_file):
+def curl_get(url_string, out_file):
     """
     Fetch the contents of url_string and store to file represented by out_file
     """
@@ -38,16 +38,27 @@ def get(url_string, out_file):
         curl.close()
 
 
-def parse_args_or_exit(argv=None):
+def fetch_http(url, filename, retries, verbose):
     """
-    Parse command line options
+    Download the file at url and store it as filename
     """
-    parser = argparse.ArgumentParser(description='Download package sources')
-    parser.add_argument('spec', help='RPM Spec file')
-    parser.add_argument('source', help='Source file')
-    parser.add_argument('--verbose', '-v', help='Be verbose',
-                        action='store_true')
-    return parser.parse_args(argv)
+
+    while True:
+        try:
+            if verbose:
+                print "Fetching %s to %s" % (url, filename)
+
+            with open(filename, "wb") as out_file:
+                curl_get(url, out_file)
+                return
+
+        except pycurl.error as exn:
+            if retries > 0:
+                retries -= 1
+                if verbose:
+                    print "%s: retrying" % exn[1]
+            else:
+                raise
 
 
 def url_for_source(spec, source):
@@ -58,10 +69,25 @@ def url_for_source(spec, source):
     source_basename = os.path.basename(source)
 
     for path, url in zip(spec.source_paths(), spec.source_urls()):
-        if url.endswith(source_basename):
+        if path.endswith(source_basename):
             return url
 
     raise KeyError(source_basename)
+
+
+def parse_args_or_exit(argv=None):
+    """
+    Parse command line options
+    """
+    parser = argparse.ArgumentParser(description='Download package sources')
+    parser.add_argument('spec', help='RPM Spec file')
+    parser.add_argument('source', help='Source file')
+    parser.add_argument('--verbose', '-v', help='Be verbose',
+                        action='store_true')
+    parser.add_argument('--retries', '-r',
+                        help='Number of times to retry a failed download',
+                        type=int, default=5)
+    return parser.parse_args(argv)
 
 
 def main(argv):
@@ -72,22 +98,20 @@ def main(argv):
     args = parse_args_or_exit(argv)
 
     try:
-	url = url_for_source(args.spec, args.source)
+        url = url_for_source(args.spec, args.source)
+        fetch_http(url, args.source, args.retries, args.verbose)
 
-        if args.verbose:
-            print "Fetching %s to %s" % (url, args.source)
-
-        with open(args.source, "wb") as out_file:
-            get(url, out_file)
+    except pycurl.error as exn:
+        # Curl download failed
+        sys.exit("%s: Failed to fetch %s: %s" % (sys.argv[0], url, exn[1]))
 
     except KeyError as exn:
+        # Source file doesn't exist in the spec
         sys.exit("%s: No source corresponding to %s" % (sys.argv[0], exn))
 
     except IOError as exn:
+        # IO error saving source file
         sys.exit("%s: %s: %s" % (sys.argv[0], exn.strerror, exn.filename))
-
-    except pycurl.error as exn:
-        sys.exit("%s: %s" % (sys.argv[0], exn[1]))
 
 
 def _main():
@@ -97,8 +121,6 @@ def _main():
     main(sys.argv[1:])
 
 
-"""
-Entry point when run directly
-"""
+# Entry point when run directly
 if __name__ == "__main__":
     _main()
