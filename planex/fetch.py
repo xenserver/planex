@@ -7,6 +7,7 @@ import os
 import planex.spec
 import pycurl
 import sys
+import logging
 
 
 def curl_get(url_string, out_file):
@@ -38,7 +39,7 @@ def curl_get(url_string, out_file):
         curl.close()
 
 
-def fetch_http(url, filename, retries, verbose):
+def fetch_http(url, filename, retries):
     """
     Download the file at url and store it as filename
     """
@@ -46,16 +47,14 @@ def fetch_http(url, filename, retries, verbose):
     while True:
         retries -= 1
         try:
-            if verbose:
-                print "Fetching %s to %s" % (url, filename)
+            logging.info("Fetching %s to %s", url, filename)
 
             with open(filename, "wb") as out_file:
                 curl_get(url, out_file)
                 return
 
         except pycurl.error as exn:
-            if verbose:
-                print "%s" % exn[1]
+            logging.info(exn[1])
             if not retries > 0:
                 raise
 
@@ -95,10 +94,12 @@ def main(argv):
     them as appropriate.
     """
     args = parse_args_or_exit(argv)
+    if args.verbose:
+        logging.basicConfig(format='%(message)s', level=logging.INFO)
 
     try:
         url = url_for_source(args.spec, args.source)
-        fetch_http(url, args.source, args.retries, args.verbose)
+        fetch_http(url, args.source, args.retries + 1)
 
     except pycurl.error as exn:
         # Curl download failed
