@@ -87,6 +87,7 @@ srpm_repo: srpms
 deps: planex-build-root planex-build-root/SPECS/*.spec 
 	@echo Updating dependencies...
 	@planex-depend -d $(DIST) --ignore-from ignore \
+		--topdir planex-build-root \
 		planex-build-root/SPECS/*.spec > $@ || rm -f $@
 
 -include deps

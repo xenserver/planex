@@ -129,6 +129,8 @@ def parse_cmdline():
     parser.add_argument("--no-package-name-check",
         action="store_true", help="Don't check that package name matches spec file name",
         default=False)
+    parser.add_argument("-t", "--topdir", metavar="DIR",
+        default=None, help='Set rpmbuild toplevel directory')
     return parser.parse_args()
 
 
@@ -152,9 +154,13 @@ def main():
             if args.build_type == "deb":
                 os_type = platform.linux_distribution(full_distribution_name=False)[1].lower()
                 map_name_fn=lambda name: mappkgname.map_package(name, os_type)
-                spec = pkg.Spec(spec_path, target="deb", map_name=map_name_fn, check_package_name=not args.no_package_name_check)
+                spec = pkg.Spec(spec_path, target="deb", map_name=map_name_fn,
+                                check_package_name=not args.no_package_name_check,
+                                topdir=args.topdir)
             else:
-                spec = pkg.Spec(spec_path, target="rpm", dist=args.dist, check_package_name=not args.no_package_name_check)
+                spec = pkg.Spec(spec_path, target="rpm", dist=args.dist,
+                                check_package_name=not args.no_package_name_check,
+                                topdir=args.topdir)
             pkg_name = spec.name()
             if pkg_name in pkgs_to_ignore:
                 continue

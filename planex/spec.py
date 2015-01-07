@@ -13,16 +13,19 @@ import debianmisc
 # around methods such as 'provides'
 
 
-# for debugging, make all paths relative to PWD
-rpm.addMacro('_topdir', 'planex-build-root')
-
 # Directories where rpmbuild/mock expects to find inputs
 # and writes outputs
-RPMDIR  = rpm.expandMacro('%_rpmdir')
-SRPMDIR = rpm.expandMacro('%_srcrpmdir')
-SPECDIR = rpm.expandMacro('%_specdir')
-SRCDIR  = rpm.expandMacro('%_sourcedir')
+def rpmdir():
+    return rpm.expandMacro('%_rpmdir')
 
+def srpmdir():
+    return rpm.expandMacro('%_srcrpmdir')
+
+def specdir():
+    return rpm.expandMacro('%_specdir')
+
+def sourcedir():
+    return rpm.expandMacro('%_sourcedir')
 
 def flatten(lst):
     """Flatten a list of lists"""
@@ -60,14 +63,18 @@ class SpecNameMismatch(Exception):
 class Spec(object):
     """Represents an RPM spec file"""
 
-    def __init__(self, path, target="rpm", map_name=None, dist="", check_package_name=True):
+    def __init__(self, path, target="rpm", map_name=None, dist="",
+                 check_package_name=True, topdir=None):
         if map_name:
             self.map_package_name = map_name
         else:
             self.map_package_name = identity_list
 
-        self.path = os.path.join(SPECDIR, os.path.basename(path))
+        # _topdir defaults to $HOME/rpmbuild
+        if topdir:
+            rpm.addMacro('_topdir', topdir)
 
+        self.path = os.path.join(specdir(), os.path.basename(path))
         with open(path) as spec:
             self.spectext = spec.readlines()
 
@@ -76,7 +83,7 @@ class Spec(object):
         # the binary package).   We must override it on the host,
         # otherwise the names of packages in the dependencies won't
         # match the files actually produced by mock.
-	self.dist = ""
+        self.dist = ""
         if target == "rpm":
             self.dist = dist
 
@@ -141,16 +148,16 @@ class Spec(object):
 
             # Source comes from a remote HTTP server
             if url.scheme in ["http", "https"]:
-                sources.append(os.path.join(SRCDIR, os.path.basename(url.path)))
+                sources.append(os.path.join(sourcedir(), os.path.basename(url.path)))
 
             # Source comes from a local file or directory
             if url.scheme in ["file", "git", "hg"]:
                 sources.append(
-                    os.path.join(SRCDIR, os.path.basename(url.fragment)))
+                    os.path.join(sourcedir(), os.path.basename(url.fragment)))
 
             # Source is an otherwise unqualified file, probably a patch
             if url.scheme == "":
-                sources.append(os.path.join(SRCDIR, url.path))
+                sources.append(os.path.join(sourcedir(), url.path))
 
         return sources
 
@@ -185,7 +192,7 @@ class Spec(object):
         rpm.delMacro('RELEASE')
         rpm.delMacro('ARCH')
 
-        return os.path.join(SRPMDIR, srpmname)
+        return os.path.join(srpmdir(), srpmname)
 
 
     def binary_package_paths(self):
@@ -202,5 +209,5 @@ class Spec(object):
             rpm.delMacro('VERSION')
             rpm.delMacro('RELEASE')
             rpm.delMacro('ARCH')
-            return os.path.join(RPMDIR, rpmname)
+            return os.path.join(rpmdir(), rpmname)
         return [rpm_name_from_header(pkg.header) for pkg in self.spec.packages]
