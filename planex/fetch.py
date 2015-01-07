@@ -44,6 +44,7 @@ def fetch_http(url, filename, retries, verbose):
     """
 
     while True:
+        retries -= 1
         try:
             if verbose:
                 print "Fetching %s to %s" % (url, filename)
@@ -53,11 +54,9 @@ def fetch_http(url, filename, retries, verbose):
                 return
 
         except pycurl.error as exn:
-            if retries > 0:
-                retries -= 1
-                if verbose:
-                    print "%s: retrying" % exn[1]
-            else:
+            if verbose:
+                print "%s" % exn[1]
+            if not retries > 0:
                 raise
 
 
