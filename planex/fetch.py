@@ -39,6 +39,14 @@ def curl_get(url_string, out_file):
         curl.close()
 
 
+def make_dir(path):
+    """
+    Ensure that path exists
+    """
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+
 def fetch_http(url, filename, retries):
     """
     Download the file at url and store it as filename
@@ -49,6 +57,7 @@ def fetch_http(url, filename, retries):
         try:
             logging.info("Fetching %s to %s", url, filename)
 
+            make_dir(os.path.dirname(filename))
             with open(filename, "wb") as out_file:
                 curl_get(url, out_file)
                 return
