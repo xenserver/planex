@@ -63,7 +63,7 @@ def fetch_http(url, filename, retries):
                 return
 
         except pycurl.error as exn:
-            logging.info(exn[1])
+            logging.info(exn.args[1])
             if not retries > 0:
                 raise
 
@@ -112,7 +112,8 @@ def main(argv):
 
     except pycurl.error as exn:
         # Curl download failed
-        sys.exit("%s: Failed to fetch %s: %s" % (sys.argv[0], url, exn[1]))
+        sys.exit("%s: Failed to fetch %s: %s" %
+                 (sys.argv[0], url, exn.args[1]))
 
     except KeyError as exn:
         # Source file doesn't exist in the spec
