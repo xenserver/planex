@@ -52,7 +52,7 @@ def load_mock_config(cfg):
     import mockbuild.util
     unprivUid = os.getuid()
     __VERSION__ = 1
-    PKGPYTHONDIR = mockbuild.__path__
+    PKGPYTHONDIR = mockbuild.__path__[0]
     config_opts = mockbuild.util.setup_default_config_opts(unprivUid,
         __VERSION__, PKGPYTHONDIR)
     config_opts['config_paths'] = []
