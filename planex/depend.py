@@ -124,8 +124,9 @@ def parse_cmdline():
         default="", help="distribution tag (used in RPM filenames)")
     parser.add_argument("-r", "--repos_path", metavar="DIR",
         default="repos", help='Local path to the repositories')
-    parser.add_argument("-b", "--build-type", metavar="DISTRO",
-        default="rpm", help='Build type (rpm or deb)')
+    parser.add_argument("-p", "--packaging", metavar="PACKAGING",
+         choices=["rpm", "deb"], default=build_type(),
+         help='Packaging to use (rpm or deb): default %s' % build_type())
     parser.add_argument("--no-package-name-check",
         action="store_true", help="Don't check that package name matches spec file name",
         default=False)
@@ -151,7 +152,7 @@ def main():
 
     for spec_path in args.specs:
         try:
-            if args.build_type == "deb":
+            if args.packaging == "deb":
                 os_type = platform.linux_distribution(full_distribution_name=False)[1].lower()
                 map_name_fn=lambda name: mappkgname.map_package(name, os_type)
                 spec = pkg.Spec(spec_path, target="deb", map_name=map_name_fn,
