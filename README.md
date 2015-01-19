@@ -31,7 +31,7 @@ make
 #### Ubuntu 14.04
 
 ```bash
-sudo apt-get -qy install python-rpm rpm
+sudo apt-get -qy install python-rpm python-setuptools python-argparse rpm
 ```
 
 #### CentOS 6
@@ -41,7 +41,7 @@ sudo apt-get -qy install python-rpm rpm
 ```bash
 wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
 rpm -Uvh epel-release-6-8.noarch.rpm
-yum -y install git rpm-python rpm-build mock
+yum -y install git rpm-python rpm-build mock python-setuptools python-argparse
 ```
  * Pip:
 ```bash
