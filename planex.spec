@@ -1,5 +1,5 @@
 %define name planex
-%define version 0.5.0
+%define version 0.6.0
 %define release 1
 
 Summary: RPM/deb build tool
@@ -44,6 +44,17 @@ and caching.
 %{python_sitelib}/planex
 
 %changelog
+* Wed Jan 21 2015 Euan Harris <euan.harris@citrix.com> - 0.6.0-1
+- planex-specdep is now known as planex-depend
+- planex-depend: By default, produce packages for the host system
+- planex-depend: Add a --topdir parameter to set rpmbuild working directory
+- planex-depend, planex-configure: Package name checking is now optional
+- planex-configure: SRPM building is now optional
+- planex-clone, planex-configure: Default configuration directory is now '.'
+- planex-cache: Support multiple cache locations
+- planex-depend: Add support for git:// and hg:// source URLs
+- Add Makefile.common, containing useful generic make rules
+
 * Fri Oct 31 2014 Jon Ludlam <jonathan.ludlam@citrix.com> - 0.5.0-1
 - Initial package
 
