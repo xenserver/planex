@@ -7,6 +7,6 @@ Standards-Version: 3.9.1
 
 Package: python-planex
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, yum (>= 3.4)
+Depends: ${misc:Depends}, ${python:Depends}, yum (>= 3.4), python-setuptools (>= 0.6b3)
 Description: UNKNOWN
 
