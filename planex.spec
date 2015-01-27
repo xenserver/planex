@@ -15,6 +15,7 @@ Requires: mock
 Requires: rpm-build
 Requires: createrepo
 Requires: python-argparse
+Requires: python-setuptools
 
 %description
 Planex is a tool for building RPMs and deb files. It manages interdependencies
