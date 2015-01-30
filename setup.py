@@ -7,6 +7,7 @@ setup(name='planex',
       package_data={
 	'planex':['Makefile.common']
 	},
+      data_files=[('/usr/share/planex',['planex/Makefile.common'])],
       entry_points={
           'console_scripts': [
               'planex-configure = planex.configure:_main',
