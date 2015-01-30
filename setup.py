@@ -10,6 +10,7 @@ setup(name='planex',
       data_files=[('/usr/share/planex',['planex/Makefile.rules'])],
       entry_points={
           'console_scripts': [
+              'planex-init = planex.init:main',
               'planex-configure = planex.configure:_main',
               'planex-build = planex.build:main',
               'planex-clone = planex.clone:main',
