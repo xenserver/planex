@@ -9,7 +9,6 @@ import hashlib
 import os
 import rpm
 import shutil
-import subprocess
 import sys
 import tempfile
 import yum
@@ -25,6 +24,7 @@ LOG_NONE = 0
 LOGLEVEL = LOG_INFO
 
 PLANEX_CACHE_SALT = "planex-cache-1"
+
 
 def log(level, message):
     """Conditional logging function"""
@@ -47,21 +47,21 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(description='Cache package building')
-    parser.add_argument('--debug',
-        action='store_true', default=False,
+    parser.add_argument(
+        '--debug', action='store_true', default=False,
         help='Print debugging information')
-    parser.add_argument('--cachedirs',
-        default='~/.planex-cache:/misc/cache/planex-cache',
+    parser.add_argument(
+        '--cachedirs', default='~/.planex-cache:/misc/cache/planex-cache',
         help='colon-separated cache search path')
 
     # Overridden mock arguments.  Help text taken directly from mock.
-    parser.add_argument('--configdir',
-        default="/etc/mock",
+    parser.add_argument(
+        '--configdir', default="/etc/mock",
         help='Change where config files are found')
-    parser.add_argument('--resultdir',
-        help='path for resulting files to be put')
-    parser.add_argument('-r', '--root',
-        default="default",
+    parser.add_argument(
+        '--resultdir', help='path for resulting files to be put')
+    parser.add_argument(
+        '-r', '--root', default="default",
         help='chroot name/config file name default: default')
     return parser.parse_known_args(argv)
 
@@ -77,6 +77,9 @@ RFC4880_HASHES = {
 
 
 def setup_yumbase(yumbase):
+    """
+    Set up the YUM database.
+    """
     # the following call creates a /var/tmp/yum-<username>-<random>
     # directory to use as a cache.   reuse=True makes yum check
     # for similarly-named directories and re-use them, which makes
@@ -87,7 +90,7 @@ def setup_yumbase(yumbase):
     yumbase.repos.enableRepo(PLANEX_REPO_NAME)
 
     yumbase.setCacheDir(force=True, reuse=True)
-    #yumbase.repos.populateSack(cacheonly=True)
+    # yumbase.repos.populateSack(cacheonly=True)
 
 
 def load_srpm_from_file(filename):
@@ -96,6 +99,7 @@ def load_srpm_from_file(filename):
     """
     with open(filename) as srpm:
         return rpm.ts().hdrFromFdno(srpm.fileno())
+
 
 def cache_locations(cachedirs, pkg_hash):
     """
@@ -147,7 +151,7 @@ def get_from_cache(cachedirs, pkg_hash, resultdir):
     print "possibilities: %s" + ",".join(possibilities)
     cache_dir = next(itertools.ifilter(os.path.isdir, possibilities), None)
     if cache_dir:
-	get_from_specified_cache(cache_dir, resultdir)
+        get_from_specified_cache(cache_dir, resultdir)
 
 
 def get_srpm_hash(srpm, yumbase, mock_config):
@@ -162,7 +166,7 @@ def get_srpm_hash(srpm, yumbase, mock_config):
 
     if srpm.filedigestalgo:
         log_debug("Hashes of SRPM contents (%s):" %
-            RFC4880_HASHES[srpm.filedigestalgo])
+                  RFC4880_HASHES[srpm.filedigestalgo])
 
     for name, digest in zip(srpm.filenames, srpm.filedigests):
         log_debug("  %s: %s" % (name, digest))
@@ -180,7 +184,7 @@ def get_srpm_hash(srpm, yumbase, mock_config):
                 yumbase.downloadHeader(pkg)
                 hdr = pkg.returnLocalHeader()
                 log_debug("  File hashes (%s):" %
-                    RFC4880_HASHES[hdr.filedigestalgo])
+                          RFC4880_HASHES[hdr.filedigestalgo])
                 for name, digest in zip(hdr.filenames, hdr.filedigests):
                     log_debug("    %s: %s" % (name, digest))
                     pkg_hash.update(digest)
@@ -230,8 +234,8 @@ def main(argv):
         mock_config = cfg.read()
     pkg_hash = get_srpm_hash(srpm, yumbase, mock_config)
 
-    cachedirs = [ os.path.expanduser(x) for x in
-        intercepted_args.cachedirs.split(':') ] 
+    cachedirs = [os.path.expanduser(x) for x
+                 in intercepted_args.cachedirs.split(':')]
 
     # Rebuild if not available in the cache
     if not in_cache(cachedirs, pkg_hash):
