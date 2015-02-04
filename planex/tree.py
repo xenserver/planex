@@ -23,7 +23,7 @@ class Tree(object):
         if permissions:
             if 'permissions' in node and \
                     node['permissions'] != permissions:
-                raise Exception("Trying to change permissions for " % filename)
+                raise Exception("Inconsistent permissions for '%s'" % filename)
 
             if permissions:
                 node['permissions'] = permissions
