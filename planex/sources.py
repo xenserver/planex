@@ -48,7 +48,7 @@ class SCM(object):
         matches = re.search("([0-9a-f]*)\/([^\/]*)", fragment)
         if matches:
             self.scmhash = matches.group(1)
-            self.version = matches.group(2)[len(self.repo_name)+1:-7]
+            self.version = matches.group(2)[len(self.repo_name) + 1:-7]
         else:
             self.scmhash = None
             self.version = None

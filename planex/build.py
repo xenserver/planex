@@ -175,7 +175,7 @@ def get_new_number(srpm, cache_dir):
     if os.path.exists(latest_path):
         latest = int(os.readlink(latest_path))
         os.remove(latest_path)
-        build_number = latest+1
+        build_number = latest + 1
     else:
         try:
             os.makedirs(os.path.join(CACHE_DIR, srpm))
@@ -238,10 +238,10 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
         pkgs = do_build(srpm, target, build_number, use_mock, xs_build_sys)
         if cache_dir:
             try:
-                os.makedirs(cache_dir+".tmp")
+                os.makedirs(cache_dir + ".tmp")
                 print "Archiving result in cache"
                 for pkg in pkgs:
-                    shutil.copy(pkg, cache_dir+".tmp")
+                    shutil.copy(pkg, cache_dir + ".tmp")
                 os.rename(cache_dir + ".tmp", cache_dir)
             except:
                 print bcolours.WARNING + \
