@@ -12,6 +12,7 @@ import yum
 
 dump_cmds = True
 
+
 class bcolours:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -34,7 +35,7 @@ def rewrite_url(url, destination=None):
     Rewrite url to point to destination
     """
     (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
-    if destination=="" or scheme in ["git", "hg"]:
+    if destination == "" or scheme in ["git", "hg"]:
         return url
 
     else:
@@ -53,8 +54,8 @@ def load_mock_config(cfg):
     unprivUid = os.getuid()
     __VERSION__ = 1
     PKGPYTHONDIR = mockbuild.__path__[0]
-    config_opts = mockbuild.util.setup_default_config_opts(unprivUid,
-        __VERSION__, PKGPYTHONDIR)
+    config_opts = mockbuild.util.setup_default_config_opts(
+        unprivUid, __VERSION__, PKGPYTHONDIR)
     config_opts['config_paths'] = []
     config_opts['config_paths'].append(cfg)
     execfile(cfg)
@@ -84,18 +85,19 @@ def run(cmd, check=True, env=None, inputtext=None):
     code (rc)
     """
     if dump_cmds:
-        print_col(bcolours.WARNING, "CMD: " + (" ".join(map(pipes.quote,cmd))))
+        print_col(bcolours.WARNING, "CMD: " +
+                  (" ".join(map(pipes.quote, cmd))))
 
-    if env == None:
+    if env is None:
         env = os.environ.copy()
 
-    proc = subprocess.Popen(cmd, env=env,
-        stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    [stdout,stderr] = proc.communicate(inputtext)
+    proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    [stdout, stderr] = proc.communicate(inputtext)
 
     if check and proc.returncode != 0:
         print_col(bcolours.FAIL, "ERROR: command failed")
-        print "Command was:\n\n  %s\n" % (" ".join(map(pipes.quote,cmd)))
+        print "Command was:\n\n  %s\n" % (" ".join(map(pipes.quote, cmd)))
         print "stdout"
         print "------"
         print stdout
@@ -103,5 +105,5 @@ def run(cmd, check=True, env=None, inputtext=None):
         print "------"
         print stderr
         raise Exception
-            
-    return {"stdout":stdout, "stderr":stderr, "rc":proc.returncode}
+
+    return {"stdout": stdout, "stderr": stderr, "rc": proc.returncode}
