@@ -23,6 +23,7 @@ GITHUB_MIRROR = "~/github_mirror"
 
 manifest = {}
 
+
 def name_from_spec(spec_path):
     """
     Returns the base name of the packages defined in the spec file at spec_path.
@@ -45,9 +46,9 @@ def check_spec_name(spec_path):
     """
     pkg_name = name_from_spec(spec_path)
     if re.sub(r".spec(.in)?$", "", os.path.basename(spec_path)) != pkg_name:
-        sys.stderr.write( "error: spec file name '%s' "
-                          "does not match package name '%s'\n" %
-                          (spec_path, pkg_name))
+        sys.stderr.write("error: spec file name '%s' "
+                         "does not match package name '%s'\n" %
+                         (spec_path, pkg_name))
         sys.exit(1)
 
 
@@ -69,7 +70,7 @@ def preprocess_spec(spec_in_path, spec_out_path, scmsources, source_mapping):
     """
     assert spec_in_path.endswith('.in')
 
-#    print "preprocess_spec: mapping=%s" % source_mapping
+    # print "preprocess_spec: mapping=%s" % source_mapping
     spec_in = open(spec_in_path)
     spec_contents = spec_in.readlines()
     spec_in.close()
@@ -81,21 +82,21 @@ def preprocess_spec(spec_in_path, spec_out_path, scmsources, source_mapping):
 
     subs = {}
 
-    for (index,source) in enumerate(scmsources):
+    for (index, source) in enumerate(scmsources):
         subs['source%d_version' % index] = source.version
         subs['source%d_hash' % index] = source.scmhash
 
     subs.update({
-	"version" : "+".join([source.version for source in scmsources]),
-        "release" : "1%{?extrarelease}" })
+        "version": "+".join([source.version for source in scmsources]),
+        "release": "1%{?extrarelease}"})
 
     for line in spec_contents:
         match = re.match(r'^([Ss]ource\d*:\s+)(.+)\n', line)
-# TODO: strip whitespace from match.group(2)
+        # TODO: strip whitespace from match.group(2)
         if match and match.group(2) in source_mapping:
-#            print "Got a source mapping"
+            # print "Got a source mapping"
             line = match.group(1) + source_mapping[match.group(2)] + "\n"
-            print "  " + spec_basename + ": mapping %s to %s" % (match.group(2), 
+            print "  " + spec_basename + ": mapping %s to %s" % (match.group(2),
                                         source_mapping[match.group(2)])
 
         match = re.match(r'^(%define planex_)([^\s]+)(.+)\n', line)
@@ -129,29 +130,32 @@ def prepare_srpm(spec_path, config):
     for source in allsources:
         sources.Source(source, config).archive()
 
+
 def get_hashes(ty):
-    spec_files = glob.glob(os.path.join(SPECS_DIR,"*"))
-    sources_files = glob.glob(os.path.join(SOURCES_DIR,"*"))
+    spec_files = glob.glob(os.path.join(SPECS_DIR, "*"))
+    sources_files = glob.glob(os.path.join(SOURCES_DIR, "*"))
     all_files = spec_files + sources_files
-    if all_files==[]:
-	return []
-    if ty=="md5":
+    if all_files == []:
+        return []
+    if ty == "md5":
         cmd = ["md5sum"] + all_files
-    elif ty=="sha256":
+    elif ty == "sha256":
         cmd = ["sha256sum"] + all_files
     else:
         print "Invalid hash type"
         raise Exception
     result = run(cmd)['stdout'].strip().split('\n')
+
     def fix(x):
         words = x.split()
         if len(words) == 2:
             fname = words[1].split("/")[-1]
-            return (fname,words[0])
+            return (fname, words[0])
         else:
             return None
     fixed = [fix(x) for x in result]
-    return dict(fixed)       
+    return dict(fixed)
+
 
 def ensure_existing_ok(hashes, spec_path):
     pkg_name = name_from_spec(spec_path)
@@ -160,27 +164,28 @@ def ensure_existing_ok(hashes, spec_path):
 
     for srpm in glob.glob(os.path.join(SRPMS_DIR, '%s-*.src.rpm' % pkg_name)):
         # Check it's for the right package:
-        cmd = ["rpm","-qp",srpm, "--qf", "%{name}"]
+        cmd = ["rpm", "-qp", srpm, "--qf", "%{name}"]
         result = run(cmd)['stdout'].strip().split('\n')
-        
+
         if result[0] == pkg_name:
-            cmd = ["rpm","--dump","-qp",srpm]
+            cmd = ["rpm", "--dump", "-qp", srpm]
             result = run(cmd)['stdout'].strip().split('\n')
             ok = True
             for line in result:
                 split = line.split()
                 fname = split[0]
-                thishash=split[3]
+                thishash = split[3]
                 if fname not in hashes or hashes[fname] != thishash:
                     ok = False
 
             if not ok:
-                print_col(bcolours.WARNING,"WARNING: Removing SRPM '%s' (hash mismatch with desired)" % srpm)
+                print_col(bcolours.WARNING, "WARNING: Removing SRPM '%s' (hash mismatch with desired)" % srpm)
                 os.remove(srpm)
             else:
                 one_correct = True
 
     return one_correct
+
 
 def build_srpm(hashes, spec_path):
     """
@@ -198,6 +203,7 @@ def build_srpm(hashes, spec_path):
         return 1
     else:
         return 0
+
 
 def prepare_buildroot():
     """Create a clean rpmbuild directory structure"""
@@ -220,12 +226,14 @@ def copy_patches_to_buildroot(config):
     for patch in glob.glob(os.path.join(patches_dir, '*')):
         shutil.copy(patch, SOURCES_DIR)
 
+
 def is_scm(uri):
-   if uri.startswith("git://"):
-	return True
-   if uri.startswith("hg://"):
-	return True
-   return False
+    if uri.startswith("git://"):
+        return True
+    if uri.startswith("hg://"):
+        return True
+    return False
+
 
 def copy_specs_to_buildroot(config):
     """Pull in spec files, preprocessing if necessary"""
@@ -233,21 +241,22 @@ def copy_specs_to_buildroot(config):
     specs = glob.glob(os.path.join(config_dir, config.specs_path, "*.spec"))
     spec_ins = glob.glob(os.path.join(config_dir, config.specs_path, "*.spec.in"))
     for spec_path in specs + spec_ins:
-        #check_spec_name(spec_path)
+        # check_spec_name(spec_path)
         basename = spec_path.split("/")[-1]
         if spec_path.endswith('.in'):
-            print_col(bcolours.OKGREEN,"Configuring and fetching sources for '%s'" % basename)
+            print_col(bcolours.OKGREEN, "Configuring and fetching sources for '%s'" % basename)
             scmsources = [sources.Source(source, config) for source in sources_from_spec(spec_path, config)
                           if (is_scm(source))]
             mapping = {}
             for source in scmsources:
                 source.pin()
-                manifest[source.repo_name]=source.scmhash
-                mapping[source.orig_url]=source.extendedurl
+                manifest[source.repo_name] = source.scmhash
+                mapping[source.orig_url] = source.extendedurl
             preprocess_spec(spec_path, SPECS_DIR, scmsources, mapping)
         else:
             print_col(bcolours.OKGREEN, "Fetching sources for '%s'" % basename)
             shutil.copy(spec_path, SPECS_DIR)
+
 
 def build_srpms(config):
     """Build SRPMs for all SPECs"""
@@ -257,15 +266,16 @@ def build_srpms(config):
     hashes = get_hashes(HASHFN)
     print "OK"
     specs = glob.glob(SPECS_GLOB)
-    n=0
+    n = 0
     for spec_path in specs:
         prepare_srpm(spec_path, config)
-        n+=build_srpm(hashes, spec_path)
-    print_col(bcolours.OKGREEN,"Rebuilt %d out of %d SRPMS" % (n,len(specs)))
+        n += build_srpm(hashes, spec_path)
+    print_col(bcolours.OKGREEN, "Rebuilt %d out of %d SRPMS" % (n, len(specs)))
+
 
 def dump_manifest():
     print "---------------------------------------"
-    print_col(bcolours.OKGREEN,"MANIFEST")
+    print_col(bcolours.OKGREEN, "MANIFEST")
     sources = manifest.keys()
     sources.sort()
     for source in sources:
@@ -276,15 +286,16 @@ def dump_manifest():
             basename = basename[:-3]
         print basename.rjust(40), manifest[source]
 
+
 def sort_mockconfig(config):
     config_dir = config.config_dir
     if not os.path.exists(MOCK_DIR):
         print_col(bcolours.OKGREEN, "Creating mock configuration for current working directory")
 
-        yum_config = load_mock_config(os.path.join(config_dir,'mock','default.cfg'))
+        yum_config = load_mock_config(os.path.join(config_dir, 'mock', 'default.cfg'))
         yumbase = get_yumbase(yum_config)
         if yumbase.repos.findRepos(PLANEX_REPO_NAME) == []:
-            print_col(bcolours.FAIL,"Planex repository not found")
+            print_col(bcolours.FAIL, "Planex repository not found")
             print """
 Please add a repository stanza similar to:
 
@@ -301,18 +312,19 @@ metadata_expire=0
         os.makedirs(MOCK_DIR)
 
         # Copy in all the files from config_dir
-        mock_files = glob.glob(os.path.join(config_dir,'mock','*'))
+        mock_files = glob.glob(os.path.join(config_dir, 'mock', '*'))
 
         for f in mock_files:
             basename = f.split('/')[-1]
-            dest_fname = os.path.join(MOCK_DIR,basename)
-            print "  copying file '%s' to '%s'" % (f,dest_fname)
-            shutil.copyfile(f,dest_fname)
-            planex_build_root = os.path.join(os.getcwd(),BUILD_ROOT_DIR)
-            with open(dest_fname,'w') as dst:
+            dest_fname = os.path.join(MOCK_DIR, basename)
+            print "  copying file '%s' to '%s'" % (f, dest_fname)
+            shutil.copyfile(f, dest_fname)
+            planex_build_root = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
+            with open(dest_fname, 'w') as dst:
                 with open(f) as src:
                     for line in src:
                         dst.write(re.sub(r"@PLANEX_BUILD_ROOT@", planex_build_root, line))
+
 
 def sort_makefile():
     name = "Makefile"
@@ -324,17 +336,18 @@ def sort_makefile():
         with open(name) as m:
             line = m.readline()
             if m != firstline:
-                print_col(bcolours.OKGREEN,"Not overwriting existing Makefile")
+                print_col(bcolours.OKGREEN, "Not overwriting existing Makefile")
                 return
     except:
         pass
 
-    with open(name,'w') as m:
+    with open(name, 'w') as m:
         m.write(firstline)
         m.write("DIST := .el6\n")
         m.write("all : rpms\n")
-        m.write(makefile_common) 
- 
+        m.write(makefile_common)
+
+
 def main(argv):
     """
     Main function.  Process all the specfiles in the directory
@@ -351,8 +364,9 @@ def main(argv):
             build_srpms(config)
         dump_manifest()
     except exceptions.NoRepository:
-        print_col(bcolours.FAIL,"No repository found: have you run 'planex-clone'?")
+        print_col(bcolours.FAIL, "No repository found: have you run 'planex-clone'?")
         sys.exit(1)
+
 
 def parse_cmdline(argv=None):
     """
@@ -365,14 +379,14 @@ def parse_cmdline(argv=None):
     to build RPMs. The following directories will be created in the
     curent directory:
 
-        planex-build-root/{RPMS,SRPMS,SPECS,mock}
+        planex-build-root/{RPMS, SRPMS, SPECS, mock}
 
     The configuration directory should contain a template mock
     configuration directory, a set of SPEC files and/or SPEC file
     templates. The files in the mock template will be processed and
     the following substitions made:
 
-        @PLANEX_BUILD_ROOT@ -> the full path of the planex-build-root 
+        @PLANEX_BUILD_ROOT@ -> the full path of the planex-build-root
                                directory.
 
     The SPEC file templates (.spec.in) are processed in the following way.
@@ -385,16 +399,16 @@ def parse_cmdline(argv=None):
         %source{n}_hash    -> SCM hash from the nth repository
         %planex_version    -> combined version
         %planex_release    -> 1%{?extrarelease}
-    """,formatter_class=argparse.RawDescriptionHelpFormatter)
+    """, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument(
-        '--mirror_path', help='Rewrite URLs to point to this directory', 
+        '--mirror_path', help='Rewrite URLs to point to this directory',
         default="")
     parser.add_argument(
         '--repos_mirror_path', help='Path to a local repository mirror directory. '
         'This should be a file path where for a git url '
         '"git://host.com/some/path.git" the mirror '
-        'should contain <mirror_path>/host.com/some/path.git', 
+        'should contain <mirror_path>/host.com/some/path.git',
         default="")
     parser.add_argument(
         '--repos_path', help='Local path to the repositories',
@@ -413,7 +427,7 @@ def parse_cmdline(argv=None):
         action="store_true", help="Don't check that package name matches spec file name",
         default=False)
     parser.add_argument('--config_dir', help='Configuration directory',
-	default=".")
+        default=".")
     return parser.parse_args(argv)
 
 
