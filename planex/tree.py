@@ -18,17 +18,16 @@ class Tree(object):
         Append contents to filename in the in-memory filesystem.
         """
         node = self.tree.get(filename, {})
+
         if contents:
             node['contents'] = node.get('contents', '') + contents
+
         if permissions:
             if 'permissions' in node and \
                     node['permissions'] != permissions:
                 raise Exception("Inconsistent permissions for '%s'" % filename)
+            node['permissions'] = permissions
 
-            if permissions:
-                node['permissions'] = permissions
-            else:
-                node['permissions'] = 0o644
         self.tree[filename] = node
 
     def apply(self, basepath):
