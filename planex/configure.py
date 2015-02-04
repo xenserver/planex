@@ -11,10 +11,12 @@ import urlparse
 import re
 import glob
 import shutil
-from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR, MOCK_DIR, RPMS_DIR,
-                            SPECS_GLOB, HASHFN, PLANEX_REPO_NAME)
+from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
+                            MOCK_DIR, RPMS_DIR, SPECS_GLOB, HASHFN,
+                            PLANEX_REPO_NAME)
 import planex.spec
-from planex.util import (bcolours, print_col, run, dump_cmds, rewrite_url, load_mock_config, get_yumbase)
+from planex.util import (bcolours, print_col, run, dump_cmds, rewrite_url,
+                         load_mock_config, get_yumbase)
 from planex import sources
 from pkg_resources import resource_string
 from planex import exceptions
@@ -26,9 +28,9 @@ manifest = {}
 
 def name_from_spec(spec_path):
     """
-    Returns the base name of the packages defined in the spec file at spec_path.
-    Ideally we would do this using the Python RPM library, but the version in
-    CentOS 5 doesn't expose it.
+    Returns the base name of the packages defined in the spec file at
+    spec_path.  Ideally we would do this using the Python RPM library,
+    but the version in CentOS 5 doesn't expose it.
     """
     spec = open(spec_path)
     lines = spec.readlines()
@@ -58,7 +60,8 @@ def sources_from_spec(spec_path, config):
 
     Returns a list of source URLs with RPM macros expanded.
     """
-    spec = planex.spec.Spec(spec_path, check_package_name=not config.no_package_name_check)
+    name_check = not config.no_package_name_check
+    spec = planex.spec.Spec(spec_path, check_package_name=name_check)
     return spec.source_urls()
 
 
@@ -96,12 +99,13 @@ def preprocess_spec(spec_in_path, spec_out_path, scmsources, source_mapping):
         if match and match.group(2) in source_mapping:
             # print "Got a source mapping"
             line = match.group(1) + source_mapping[match.group(2)] + "\n"
-            print "  " + spec_basename + ": mapping %s to %s" % (match.group(2),
-                                        source_mapping[match.group(2)])
+            print "  " + spec_basename + ": mapping %s to %s" % \
+                (match.group(2), source_mapping[match.group(2)])
 
         match = re.match(r'^(%define planex_)([^\s]+)(.+)\n', line)
         if match:
-            line = match.group(1) + match.group(2) + " " + subs[match.group(2)] + "\n"
+            line = match.group(1) + match.group(2) + " " + \
+                subs[match.group(2)] + "\n"
 
         spec_out.write(line)
 
@@ -179,7 +183,9 @@ def ensure_existing_ok(hashes, spec_path):
                     ok = False
 
             if not ok:
-                print_col(bcolours.WARNING, "WARNING: Removing SRPM '%s' (hash mismatch with desired)" % srpm)
+                print_col(bcolours.WARNING,
+                          "WARNING: Removing SRPM '%s' "
+                          "(hash mismatch with desired)" % srpm)
                 os.remove(srpm)
             else:
                 one_correct = True
@@ -239,13 +245,16 @@ def copy_specs_to_buildroot(config):
     """Pull in spec files, preprocessing if necessary"""
     config_dir = config.config_dir
     specs = glob.glob(os.path.join(config_dir, config.specs_path, "*.spec"))
-    spec_ins = glob.glob(os.path.join(config_dir, config.specs_path, "*.spec.in"))
+    spec_ins = glob.glob(os.path.join(config_dir, config.specs_path,
+                                      "*.spec.in"))
     for spec_path in specs + spec_ins:
         # check_spec_name(spec_path)
         basename = spec_path.split("/")[-1]
         if spec_path.endswith('.in'):
-            print_col(bcolours.OKGREEN, "Configuring and fetching sources for '%s'" % basename)
-            scmsources = [sources.Source(source, config) for source in sources_from_spec(spec_path, config)
+            print_col(bcolours.OKGREEN,
+                      "Configuring and fetching sources for '%s'" % basename)
+            scmsources = [sources.Source(source, config) for source
+                          in sources_from_spec(spec_path, config)
                           if (is_scm(source))]
             mapping = {}
             for source in scmsources:
@@ -260,8 +269,10 @@ def copy_specs_to_buildroot(config):
 
 def build_srpms(config):
     """Build SRPMs for all SPECs"""
-    print_col(bcolours.OKGREEN, "Building/checking SRPMS for all files in SPECSDIR")
-    print "  Getting %s hashes for source to check against existing SRPMS..." % HASHFN,
+    print_col(bcolours.OKGREEN,
+              "Building/checking SRPMS for all files in SPECSDIR")
+    print "  Getting %s hashes for source to check against existing \
+        SRPMS..." % HASHFN,
     sys.stdout.flush()
     hashes = get_hashes(HASHFN)
     print "OK"
@@ -290,9 +301,11 @@ def dump_manifest():
 def sort_mockconfig(config):
     config_dir = config.config_dir
     if not os.path.exists(MOCK_DIR):
-        print_col(bcolours.OKGREEN, "Creating mock configuration for current working directory")
+        print_col(bcolours.OKGREEN,
+                  "Creating mock configuration for current working directory")
 
-        yum_config = load_mock_config(os.path.join(config_dir, 'mock', 'default.cfg'))
+        yum_config = load_mock_config(os.path.join(config_dir,
+                                                   'mock', 'default.cfg'))
         yumbase = get_yumbase(yum_config)
         if yumbase.repos.findRepos(PLANEX_REPO_NAME) == []:
             print_col(bcolours.FAIL, "Planex repository not found")
@@ -323,7 +336,8 @@ metadata_expire=0
             with open(dest_fname, 'w') as dst:
                 with open(f) as src:
                     for line in src:
-                        dst.write(re.sub(r"@PLANEX_BUILD_ROOT@", planex_build_root, line))
+                        dst.write(re.sub(r"@PLANEX_BUILD_ROOT@",
+                                         planex_build_root, line))
 
 
 def sort_makefile():
@@ -336,7 +350,8 @@ def sort_makefile():
         with open(name) as m:
             line = m.readline()
             if m != firstline:
-                print_col(bcolours.OKGREEN, "Not overwriting existing Makefile")
+                print_col(bcolours.OKGREEN,
+                          "Not overwriting existing Makefile")
                 return
     except:
         pass
@@ -364,7 +379,8 @@ def main(argv):
             build_srpms(config)
         dump_manifest()
     except exceptions.NoRepository:
-        print_col(bcolours.FAIL, "No repository found: have you run 'planex-clone'?")
+        print_col(bcolours.FAIL,
+                  "No repository found: have you run 'planex-clone'?")
         sys.exit(1)
 
 
@@ -402,32 +418,36 @@ def parse_cmdline(argv=None):
     """, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument(
-        '--mirror_path', help='Rewrite URLs to point to this directory',
-        default="")
+        '--mirror_path', default="",
+        help='Rewrite URLs to point to this directory')
     parser.add_argument(
-        '--repos_mirror_path', help='Path to a local repository mirror directory. '
-        'This should be a file path where for a git url '
-        '"git://host.com/some/path.git" the mirror '
-        'should contain <mirror_path>/host.com/some/path.git',
-        default="")
+        '--repos_mirror_path', default="",
+        help='Path to a local repository mirror directory. '
+             'This should be a file path where for a git url '
+             '"git://host.com/some/path.git" the mirror '
+             'should contain <mirror_path>/host.com/some/path.git')
     parser.add_argument(
-        '--repos_path', help='Local path to the repositories',
-        default="repos")
+        '--repos_path', default="repos",
+        help='Local path to the repositories')
     parser.add_argument(
-        '--sources_path', help='Path (relative to config_dir) to the SOURCES directory containing patches '
-        'and extra sources for the RPMs',
-        default="SOURCES")
+        '--sources_path', default="SOURCES",
+        help='Path (relative to config_dir) to the SOURCES directory '
+             'containing patches and extra sources for the RPMs')
     parser.add_argument(
-        '--specs_path', help='Path (relative to config_dir) to the SPECS directory containing spec '
-        'files to be preprocessed as well as those simply to be built.',
-        default="SPECS")
-    parser.add_argument('--build_srpms', help='Build SRPMs',
-        action="store_true", default=False)
-    parser.add_argument("--no-package-name-check",
-        action="store_true", help="Don't check that package name matches spec file name",
-        default=False)
-    parser.add_argument('--config_dir', help='Configuration directory',
-        default=".")
+        '--specs_path', default="SPECS",
+        help='Path (relative to config_dir) to the SPECS directory '
+             'containing spec files to be preprocessed as well as '
+             'those simply to be built.')
+    parser.add_argument(
+        '--build_srpms', action="store_true", default=False,
+        help='Build SRPMs')
+    parser.add_argument(
+        "--no-package-name-check",
+        action="store_true", default=False,
+        help="Don't check that package name matches spec file name")
+    parser.add_argument(
+        '--config_dir', default=".",
+        help='Configuration directory')
     return parser.parse_args(argv)
 
 
