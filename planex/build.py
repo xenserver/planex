@@ -175,7 +175,7 @@ def get_new_number(srpm, cache_dir):
     if os.path.exists(latest_path):
         latest = int(os.readlink(latest_path))
         os.remove(latest_path)
-        build_number = latest+1
+        build_number = latest + 1
     else:
         try:
             os.makedirs(os.path.join(CACHE_DIR, srpm))
