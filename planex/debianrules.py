@@ -23,7 +23,7 @@ def rules_from_spec(spec, specpath):
 
 def ocaml_rules_preamble(_spec, tree):
     # TODO: should only include if we have packed up ocaml files
-    rule  = "#!/usr/bin/make -f\n"
+    rule = "#!/usr/bin/make -f\n"
     rule += "\n"
     rule += "#include /usr/share/cdbs/1/rules/debhelper.mk\n"
     rule += "#include /usr/share/cdbs/1/class/makefile.mk\n"
@@ -55,22 +55,22 @@ def rules_configure_from_spec(_spec, tree):
 
 def rules_build_from_spec(spec, tree):
     # RPM's build rule is just a script which is run at the appropriate time.
-    # debian/rules is a Makefile.   Makefile recipes aren't shell scripts - each
-    # line is run independently, so exports don't survive from line to line and
-    # multi-line constructions such as if statements don't work.
-    # To work around this, we put these recipes in helper scripts in the debian/
-    # directory.
+    # debian/rules is a Makefile.   Makefile recipes aren't shell scripts -
+    # each line is run independently, so exports don't survive from line to
+    # line and multi-line constructions such as if statements don't work.
+    # To work around this, we put these recipes in helper scripts in the
+    # debian/ directory.
 
     if not spec.build:
         return {}
 
-    rule =  ".PHONY: override_dh_auto_build\n"
+    rule = ".PHONY: override_dh_auto_build\n"
     rule += "override_dh_auto_build:\n"
     rule += "\tdebian/build.sh\n"
     rule += "\n"
 
     helper = "#!/bin/sh\n"
-    helper += "unset CFLAGS\n" #XXX HACK for ocaml-oclock
+    helper += "unset CFLAGS\n"  # XXX HACK for ocaml-oclock
     helper += spec.build.replace("$RPM_BUILD_ROOT", "${DESTDIR}")
 
     tree.append('debian/rules', rule)
@@ -78,32 +78,32 @@ def rules_build_from_spec(spec, tree):
 
 
 def rules_install_from_spec(spec, tree):
-    rule =  ".PHONY: override_dh_auto_install\n"
+    rule = ".PHONY: override_dh_auto_install\n"
     rule += "override_dh_auto_install:\n"
     rule += "\tdebian/install.sh\n"
     rule += "\n"
 
-    helper = "#!/bin/sh\n" 
+    helper = "#!/bin/sh\n"
     helper += spec.install.replace("$RPM_BUILD_ROOT", "${DESTDIR}")
 
     tree.append('debian/rules', rule)
     tree.append('debian/install.sh', helper, permissions=0o755)
 
+
 def rules_dh_install_from_spec(spec, tree, specpath):
-    rule  =  ".PHONY: override_dh_install\n"
+    rule = ".PHONY: override_dh_install\n"
     rule += "override_dh_install:\n"
     rule += "\tdh_install\n"
 
     pkgname = mappkgname.map_package_name(spec.sourceHeader)
     files = rpmextra.files_from_spec(pkgname, specpath)
-    if files.has_key( pkgname + "-%exclude" ):
+    if (pkgname + "-%exclude") in files:
         for pat in files[pkgname + "-%exclude"]:
             path = "\trm -f debian/%s/%s\n" % (pkgname, rpm.expandMacro(pat))
             rule += os.path.normpath(path)
     rule += "\n"
 
     tree.append('debian/rules', rule)
-
 
 
 def rules_clean_from_spec(spec, tree):
@@ -113,7 +113,8 @@ def rules_clean_from_spec(spec, tree):
     rule += re.sub("^", "\t", spec.clean.strip(), flags=re.MULTILINE)
     rule += "\n\n"
 
-    helper = "#!/bin/sh\n" + spec.clean.replace("$RPM_BUILD_ROOT", "${DESTDIR}")
+    helper = "#!/bin/sh\n" + spec.clean.replace("$RPM_BUILD_ROOT",
+                                                "${DESTDIR}")
 
     tree.append('debian/rules', rule)
     tree.append('debian/clean.sh', helper, permissions=0o755)
@@ -121,7 +122,7 @@ def rules_clean_from_spec(spec, tree):
 
 def rules_test_from_spec(_spec, tree):
     # XXX HACK for ocaml-oclock - don't try to run the tests when building
-    rule  = ".PHONY: override_dh_auto_test\n"
+    rule = ".PHONY: override_dh_auto_test\n"
     rule += "override_dh_auto_test:\n"
 
     tree.append('debian/rules', rule)
@@ -129,9 +130,8 @@ def rules_test_from_spec(_spec, tree):
 
 def python_setuptools_cfg(_spec, tree):
     # Configuration file for python setuptools, which defaults to installing
-    # in /usr/local/lib instead of /usr/lib 
-    content = "[install]\n" 
+    # in /usr/local/lib instead of /usr/lib
+    content = "[install]\n"
     content += "install-layout=deb\n"
 
     tree.append('setup.cfg', content)
-
