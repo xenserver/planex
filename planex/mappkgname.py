@@ -3,24 +3,24 @@
 import platform
 
 """Maps an RPM package name to the equivalent DEB.
-   The MAPPING is static, but in future will be 
+   The MAPPING is static, but in future will be
    made dynamically by querying the package databases."""
 
 TARGET_SPECIFIC_MAPPING = {
     'debian:jessie/sid': {
-            'kernel': ['linux-image-amd64'],
-            'kernel-firmware': ['firmware-linux-free'],
-            "xen-libs": ["libxen-4.4"],
-            },
+        'kernel': ['linux-image-amd64'],
+        'kernel-firmware': ['firmware-linux-free'],
+        "xen-libs": ["libxen-4.4"],
+    },
     'ubuntu:14.04': {
-            "xen-libs": ["libxen-4.4"],
-            },
+        "xen-libs": ["libxen-4.4"],
+    },
     'linaro:14.04': {
-            "xen-libs": ["libxen-4.4"],
-            },
-    }
+        "xen-libs": ["libxen-4.4"],
+    },
+}
 
-MAPPING = { 
+MAPPING = {
     # Our packages
     "ocaml-biniou": ["libbiniou-ocaml"],
     "ocaml-cmdliner": ["libcmdliner-ocaml"],
@@ -107,8 +107,8 @@ MAPPING = {
     "libvirt": ["libvirt0", "libvirt-bin"],
     "xen-libs": ["libxen-4.2"],
     "ncurses": ["libncurses5"],
-    "chkconfig": [], 
-    "initscripts": [], 
+    "chkconfig": [],
+    "initscripts": [],
     "PyPAM": ["python-pam"],
     "pam": ["libpam0g"],
     "tetex-latex": ["texlive-base"],
@@ -150,6 +150,7 @@ SECONDARY_MAPPING = {
     "qemu-system-x86-dev": ["qemu-system-x86"],
 }
 
+
 def map_package(name, target=None):
     """map an rpm to a corresponding deb, based on file contents"""
     is_devel = False
@@ -159,11 +160,11 @@ def map_package(name, target=None):
         target = "%s:%s" % (dist[0].lower(), dist[1].lower())
 
     # RPM 4.6 adds architecture constraints to dependencies.  Drop them.
-    if name.endswith( "(x86-64)" ):
-        name = name[ :-len("(x86-64)") ]
-    if name.endswith( "-devel" ):
+    if name.endswith("(x86-64)"):
+        name = name[:-len("(x86-64)")]
+    if name.endswith("-devel"):
         is_devel = True
-        name = name[ :-len("-devel") ]
+        name = name[:-len("-devel")]
 
     default = [name]
     mapped = MAPPING.get(name, default)
@@ -186,24 +187,24 @@ def map_package_name(hdr, target=None):
     # Debian adds a -dev suffix to development packages,
     # whereas Fedora uses -devel
     is_devel = False
-    if name.endswith( "-devel" ):
+    if name.endswith("-devel"):
         is_devel = True
-        name = name[ :-len("-devel") ]
+        name = name[:-len("-devel")]
 
     # Debian prefixes library packag names with 'lib'
-    #if "Libraries" in hdr['group'] or "library" in hdr['summary'].lower():
-    #    name = "lib" + name
-    name = name.replace( name, map_package(name, target)[0] )
+    # if "Libraries" in hdr['group'] or "library" in hdr['summary'].lower():
+    #     name = "lib" + name
+    name = name.replace(name, map_package(name, target)[0])
 
     if is_devel:
         name += "-dev"
 
-    # hack for type-conv.   dh_ocaml insists that there must be a 
+    # hack for type-conv.   dh_ocaml insists that there must be a
     # -dev package for anything with ocaml or camlp4 in the name...
     if name == "libtype-conv-camlp4":
         name = "libtype-conv-camlp4-dev"
     return name
 
-def map_section(_rpm_name):
-    return "ocaml" # XXXXX
 
+def map_section(_rpm_name):
+    return "ocaml"  # XXXXX
