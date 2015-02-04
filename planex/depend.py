@@ -118,7 +118,7 @@ def buildrequires_for_rpm(spec, provides_to_rpm):
     rpmpath = spec.binary_package_paths()[0]
     for buildreq in spec.buildrequires():
         # Some buildrequires come from the system repository
-        if provides_to_rpm.has_key(buildreq):
+        if buildreq in provides_to_rpm:
             buildreqrpm = provides_to_rpm[buildreq]
             print "%s: %s" % (rpmpath, buildreqrpm)
 
@@ -179,7 +179,8 @@ def main():
             if args.packaging == "deb":
                 os_type = platform.linux_distribution(
                     full_distribution_name=False)[1].lower()
-                map_name_fn = lambda name: mappkgname.map_package(name, os_type)
+                map_name_fn = lambda name: mappkgname.map_package(name,
+                                                                  os_type)
                 spec = pkg.Spec(spec_path, target="deb", map_name=map_name_fn,
                                 check_package_name=check_package_names,
                                 topdir=args.topdir)
