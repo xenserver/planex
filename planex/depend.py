@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-# see http://docs.fedoraproject.org/en-US/Fedora_Draft_Documentation/0.1/html/RPM_Guide/ch16s04.html
+"""
+planex-depend: Generate Makefile-format dependencies from spec files
+"""
 
 import argparse
 import os
@@ -11,7 +13,11 @@ import urlparse
 import mappkgname
 from planex import sources
 
+
 def build_type():
+    """
+    Discover appropriate build type for local host
+    """
     debian_like = ["ubuntu", "debian", "linaro"]
     rhel_like = ["fedora", "redhat", "centos"]
 
@@ -24,20 +30,19 @@ def build_type():
         return "rpm"
 
 
-# Rules to build SRPM from SPEC
 def build_srpm_from_spec(spec):
+    """
+    Generate rules to build SRPM from spec
+    """
     srpmpath = spec.source_package_path()
     print '%s: %s %s' % (srpmpath, spec.specpath(),
                          " ".join(spec.source_paths()))
 
 
-
-# Rules to download sources
-
-# Assumes each RPM only needs one download - we have some multi-source
-# packages but in all cases the additional sources are patches provided
-# in the Git repository
 def download_rpm_sources(spec, args):
+    """
+    Generate rules to download sources
+    """
     print "# spec.source_urls: " + ','.join(spec.source_urls())
     print "# spec.source_paths: " + ','.join(spec.source_paths())
     for (url, path) in zip(spec.source_urls(), spec.source_paths()):
@@ -72,15 +77,17 @@ def download_rpm_sources(spec, args):
                 print '\t@%s' % (' '.join(cmd))
 
 
-# Rules to build RPMS from SRPMS (uses information from the SPECs to
-# get packages)
 def build_rpm_from_srpm(spec):
+    """
+    Generate rules to build RPMS from SRPMS.
+    Extracts binary package names from the spec file.
+    """
     # We only generate a rule for the first binary RPM produced by the
     # specfile.  If we generate multiple rules (one for the base package,
     # one for -devel and so on), make will interpret these as completely
     # separate targets which must be built separately.   At best, this means
-    # that the same package will be built more than once; at worst, in a 
-    # concurrent build, there is a risk that the targets might not be rebuilt 
+    # that the same package will be built more than once; at worst, in a
+    # concurrent build, there is a risk that the targets might not be rebuilt
     # correctly.
     #
     # Make does understand the concept of multiple targets being built by
@@ -93,6 +100,10 @@ def build_rpm_from_srpm(spec):
 
 
 def package_to_rpm_map(specs):
+    """
+    Generate a mapping from RPM package names to the RPM files
+    which provide them.
+    """
     provides_to_rpm = {}
     for spec in specs:
         for provided in spec.provides():
@@ -101,6 +112,9 @@ def package_to_rpm_map(specs):
 
 
 def buildrequires_for_rpm(spec, provides_to_rpm):
+    """
+    Generate build dependency rules between binary RPMs
+    """
     rpmpath = spec.binary_package_paths()[0]
     for buildreq in spec.buildrequires():
         # Some buildrequires come from the system repository
@@ -113,54 +127,65 @@ def parse_cmdline():
     """
     Parse command line options
     """
-    parser = argparse.ArgumentParser(description=
-        "Generate Makefile dependencies from RPM Spec files")
+    parser = argparse.ArgumentParser(
+        description="Generate Makefile dependencies from RPM Spec files")
     parser.add_argument("specs", metavar="SPEC", nargs="+", help="spec file")
-    parser.add_argument("-i", "--ignore", metavar="PKG", action="append",
-        default=[], help="package name to ignore")
-    parser.add_argument("-I", "--ignore-from", metavar="FILE", action="append",
-        default=[], help="file of package names to be ignored")
-    parser.add_argument("-d", "--dist", metavar="DIST",
-        default="", help="distribution tag (used in RPM filenames)")
-    parser.add_argument("-r", "--repos_path", metavar="DIR",
-        default="repos", help='Local path to the repositories')
-    parser.add_argument("-p", "--packaging", metavar="PACKAGING",
-         choices=["rpm", "deb"], default=build_type(),
-         help='Packaging to use (rpm or deb): default %s' % build_type())
-    parser.add_argument("--no-package-name-check",
-        action="store_true", help="Don't check that package name matches spec file name",
-        default=False)
-    parser.add_argument("-t", "--topdir", metavar="DIR",
-        default=None, help='Set rpmbuild toplevel directory')
+    parser.add_argument(
+        "-i", "--ignore", metavar="PKG", action="append", default=[],
+        help="package name to ignore")
+    parser.add_argument(
+        "-I", "--ignore-from", metavar="FILE", action="append", default=[],
+        help="file of package names to be ignored")
+    parser.add_argument(
+        "-d", "--dist", metavar="DIST", default="",
+        help="distribution tag (used in RPM filenames)")
+    parser.add_argument(
+        "-r", "--repos_path", metavar="DIR", default="repos",
+        help='Local path to the repositories')
+    parser.add_argument(
+        "-p", "--packaging", metavar="PACKAGING",
+        choices=["rpm", "deb"], default=build_type(),
+        help='Packaging to use (rpm or deb): default %s' % build_type())
+    parser.add_argument(
+        "--no-package-name-check", action="store_true", default=False,
+        help="Don't check that package name matches spec file name")
+    parser.add_argument(
+        "-t", "--topdir", metavar="DIR", default=None,
+        help='Set rpmbuild toplevel directory')
     return parser.parse_args()
 
 
 def main():
+    """
+    Entry point
+    """
     args = parse_cmdline()
+    check_package_names = not args.no_package_name_check
     specs = {}
-   
+
     pkgs_to_ignore = args.ignore
     for ignore_from in args.ignore_from:
         try:
-            with open(ignore_from) as f:
-                for name in f.readlines():
+            with open(ignore_from) as ignore_file:
+                for name in ignore_file.readlines():
                     pkgs_to_ignore.append(name.strip())
         except:
             pass
     for i in pkgs_to_ignore:
-      print "# Will ignore: %s" % i
+        print "# Will ignore: %s" % i
 
     for spec_path in args.specs:
         try:
             if args.packaging == "deb":
-                os_type = platform.linux_distribution(full_distribution_name=False)[1].lower()
-                map_name_fn=lambda name: mappkgname.map_package(name, os_type)
+                os_type = platform.linux_distribution(
+                    full_distribution_name=False)[1].lower()
+                map_name_fn = lambda name: mappkgname.map_package(name, os_type)
                 spec = pkg.Spec(spec_path, target="deb", map_name=map_name_fn,
-                                check_package_name=not args.no_package_name_check,
+                                check_package_name=check_package_names,
                                 topdir=args.topdir)
             else:
                 spec = pkg.Spec(spec_path, target="rpm", dist=args.dist,
-                                check_package_name=not args.no_package_name_check,
+                                check_package_name=check_package_names,
                                 topdir=args.topdir)
             pkg_name = spec.name()
             if pkg_name in pkgs_to_ignore:
