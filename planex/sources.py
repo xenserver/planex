@@ -6,6 +6,7 @@ from planex import exceptions
 from planex.globals import SOURCES_DIR
 from planex.util import run
 
+
 class SCM(object):
     repos = "repos"
 
@@ -16,14 +17,14 @@ class SCM(object):
 
         (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
         urlparts = url.split('#')
-        repo_url = "%s://%s%s" % (scheme, host, path) # Strip of fragment
+        repo_url = "%s://%s%s" % (scheme, host, path)  # Strip off fragment
         self.repo_name = path.split('/')[-1]
 
         def absolutize(path):
             if os.path.isabs(path):
                 return path
             else:
-                return os.path.join(os.getcwd(),path)
+                return os.path.join(os.getcwd(), path)
 
         if "repos_mirror_path" in config:
             self.repos_mirror_path = absolutize(config.repos_mirror_path)
@@ -31,7 +32,7 @@ class SCM(object):
             self.repos_mirror_path = "/nonexistant"
 
         self.repos_path = absolutize(config.repos_path)
-        
+
         def strip_ext(ext):
             if self.repo_name.endswith(ext):
                 self.repo_name = self.repo_name[:-len(ext)]
@@ -44,14 +45,14 @@ class SCM(object):
         self.repo_url = repo_url
         self.fragment = fragment
 
-        matches=re.search("([0-9a-f]*)\/([^\/]*)",fragment)
+        matches = re.search("([0-9a-f]*)\/([^\/]*)", fragment)
         if matches:
             self.scmhash = matches.group(1)
             self.version = matches.group(2)[len(self.repo_name)+1:-7]
         else:
             self.scmhash = None
             self.version = None
- 
+
     def set_hash_and_vsn(self, scmhash, version):
         self.scmhash = scmhash
         self.version = version
@@ -62,12 +63,12 @@ class SCM(object):
 
     @property
     def tarballprefix(self):
-        assert(self.version != None)
+        assert(self.version is not None)
         return "%s-%s" % (self.repo_name, self.version)
 
     @property
     def archivename(self):
-        assert(self.version != None)
+        assert(self.version is not None)
         return "%s.tar.gz" % (self.tarballprefix)
 
     @property
@@ -77,7 +78,7 @@ class SCM(object):
     def archive(self, sources_dir=SOURCES_DIR):
         for cmd in self.archive_commands(sources_dir):
             run(cmd)
-        
+
 
 class GitSource(SCM):
     def __init__(self, url, config):
@@ -94,18 +95,19 @@ class GitSource(SCM):
 
     @staticmethod
     def handles(ty):
-        return ty=="git"
+        return ty == "git"
 
     def clone_commands(self):
-        
+
         dst = self.localpath
         dst_dotgit = os.path.join(dst, ".git")
 
         # For a repo e.g. git://github.com/foo/bar.git
         # Check for a mirror of the form mirrorpath/github.com/foo/bar.git
         (_, host, urlpath, _, _, _) = urlparse.urlparse(self.repo_url)
-        
-        mirrorpath = os.path.join(self.repos_mirror_path, host, urlpath.strip("/"))
+
+        mirrorpath = os.path.join(self.repos_mirror_path, host,
+                                  urlpath.strip("/"))
 
         if os.path.exists(mirrorpath):
             clone_cmd = [
@@ -173,10 +175,10 @@ class GitSource(SCM):
         cmd = ["git", "--git-dir=%s" % dotgitdir,
                "describe", "--tags", scmhash]
 
-        description = run(cmd,check=False)['stdout'].strip()
+        description = run(cmd, check=False)['stdout'].strip()
 
-        # if there are no tags, get the number of commits, which should 
-        # always increase 
+        # if there are no tags, get the number of commits, which should
+        # always increase
         if description == "":
             cmd = ["git", "--git-dir=%s" % dotgitdir,
                    "log", scmhash, "--oneline"]
@@ -187,17 +189,18 @@ class GitSource(SCM):
         matchlen = len(match.group())
         self.version = description[matchlen:].replace('-', '+')
 
-    def archive_commands(self, sources_dir=SOURCES_DIR):    
+    def archive_commands(self, sources_dir=SOURCES_DIR):
         # If it already exists, we're done.
         dotgitdir = os.path.join(self.localpath, ".git")
 
         # archive name always ends in .gz - strip it off
         tarball_name = self.archivename[:-3]
 
-        return [ ["git", "--git-dir=%s" % dotgitdir, "archive",
-                  "--prefix=%s/" % self.tarballprefix, self.scmhash, "-o",
-                  "%s/%s" % (sources_dir, tarball_name)],
-                 ["gzip", "--no-name", "-f", "%s/%s" % (sources_dir, tarball_name)] ]
+        return [["git", "--git-dir=%s" % dotgitdir, "archive",
+                 "--prefix=%s/" % self.tarballprefix, self.scmhash, "-o",
+                 "%s/%s" % (sources_dir, tarball_name)],
+                ["gzip", "--no-name", "-f", "%s/%s" %
+                 (sources_dir, tarball_name)]]
 
 
 class HgSource(SCM):
@@ -209,7 +212,7 @@ class HgSource(SCM):
 
     @staticmethod
     def handles(ty):
-        return ty=="hg"
+        return ty == "hg"
 
     @property
     def localpath(self):
@@ -244,16 +247,16 @@ class HgSource(SCM):
 
         self.version = str(description)
 
-    def archive_commands(self, sources_dir=SOURCES_DIR):    
+    def archive_commands(self, sources_dir=SOURCES_DIR):
         # If it already exists, we're done.
         if os.path.exists(os.path.join(sources_dir, self.archivename)):
             print "File's already here!"
             return []
-        
+
         print "File's not here!"
-        return [["hg", "-R", self.localpath, "archive", "-t", "tgz", "-p", 
-               "%s/" % self.tarballprefix, 
-               "%s/%s" % (sources_dir, self.archivename)]]
+        return [["hg", "-R", self.localpath, "archive", "-t", "tgz", "-p",
+                 "%s/" % self.tarballprefix,
+                 "%s/%s" % (sources_dir, self.archivename)]]
 
 
 class FileSource(SCM):
@@ -277,6 +280,7 @@ class FileSource(SCM):
             return []
         return [["curl", "-k", "-L", "-o", final_path, self.orig_url]]
 
+
 class OtherSource(SCM):
     @staticmethod
     def handles(ty):
@@ -288,9 +292,10 @@ class OtherSource(SCM):
     def archive(self, sources_dir=SOURCES_DIR):
         return
 
+
 def Source(url, repomirror):
     ty = url.split(":")[0]
-    for cls in SCM.__subclasses__(): #pylint: disable-msg=E1101
+    for cls in SCM.__subclasses__():  # pylint: disable=E1101
         if cls.handles(ty):
             return cls(url, repomirror)
     return OtherSource(url, repomirror)

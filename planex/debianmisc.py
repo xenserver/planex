@@ -5,15 +5,16 @@ import os
 import re
 import rpmextra
 
+
 def conffiles_from_spec(spec, specpath):
     # Configuration files, not to be overwritten on upgrade.
     # Files in /etc are automatically marked as config files,
-    # so we only need to list files here if they are in a 
+    # so we only need to list files here if they are in a
     # different place.
     res = Tree()
     pkgname = mappkgname.map_package_name(spec.sourceHeader)
     files = rpmextra.files_from_spec(pkgname, specpath)
-    if files.has_key( pkgname + "-%config" ):
+    if (pkgname + "-%config") in files:
         for filename in files[pkgname + "-%config"]:
             res.append('debian/conffiles', "%s\n" % filename)
     return res
@@ -23,7 +24,7 @@ def filelists_from_spec(spec, specpath):
     res = Tree()
     for pkg in spec.packages:
         name = "%s.install.in" % mappkgname.map_package_name(pkg.header)
-        res.append("debian/%s" % name, 
+        res.append("debian/%s" % name,
                    files_from_pkg(spec.sourceHeader['name'], pkg, specpath))
     return res
 
@@ -35,16 +36,16 @@ def files_from_pkg(basename, pkg, specpath):
     files = rpmextra.files_from_spec(basename, specpath)
     for filename in files.get(pkg.header['name'], []):
         # Debian packages must not contain compiled Python files.
-        # Instead, the python2 helper arranges to compile these 
+        # Instead, the python2 helper arranges to compile these
         # files when they are installed.
-	if os.path.splitext(filename)[1] in [".pyc", ".pyo"]:
+        if os.path.splitext(filename)[1] in [".pyc", ".pyo"]:
             continue
 
         rpm.addMacro("_libdir", "usr/lib")
         rpm.addMacro("_bindir", "usr/bin")
 
         # deb just wants relative paths
-        src = rpm.expandMacro(filename).lstrip("/")  
+        src = rpm.expandMacro(filename).lstrip("/")
         rpm.delMacro("_bindir")
         rpm.delMacro("_libdir")
         rpm.addMacro("_libdir", "/usr/lib")
@@ -53,7 +54,7 @@ def files_from_pkg(basename, pkg, specpath):
 
         # destination paths should be directories, not files.
         # if the file is foo and the path is /usr/bin/foo, the
-        # package will end up install /usr/bin/foo/foo 
+        # package will end up install /usr/bin/foo/foo
         if not dst.endswith("/"):
             dst = os.path.dirname(dst)
         rpm.delMacro("_bindir")
@@ -67,7 +68,7 @@ def files_from_pkg(basename, pkg, specpath):
 
 def patches_from_spec(spec, src_dir):
     res = Tree()
-    patches = [(seq, name) for (name, seq, typ) in spec.sources 
+    patches = [(seq, name) for (name, seq, typ) in spec.sources
                if typ == 2]
     patches = [name for (seq, name) in sorted(patches)]
     for patch in patches:
@@ -85,23 +86,27 @@ def compat_from_spec(_spec):
     res.append("debian/compat", "8")
     return res
 
+
 def format_from_spec(_spec, isnative):
     res = Tree()
-    fmt = "native" if isnative else "quilt" 
+    fmt = "native" if isnative else "quilt"
     res.append("debian/source/format", "3.0 (%s)\n" % fmt)
     return res
+
 
 def copyright_from_spec(_spec):
     res = Tree()
     res.append("debian/copyright", "FIXME")
     return res
 
+
 def principal_source_file(spec):
-    return os.path.basename([name for (name, seq, filetype) 
-                             in spec.sources 
+    return os.path.basename([name for (name, seq, filetype)
+                             in spec.sources
                              if seq == 0 and filetype == 1][0])
+
 
 def is_native(_spec):
     tarball = principal_source_file(_spec)
     match = re.match("^(.+)((\.tar\.(gz|bz2|lzma|xz)|\.tbz)$)", tarball)
-    return match == None
+    return match is None

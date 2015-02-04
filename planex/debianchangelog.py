@@ -3,13 +3,14 @@ import mappkgname
 import re
 import time
 
+
 def changelog_from_spec(spec, isnative):
     res = Tree()
 
     hdr = spec.sourceHeader
     log = ""
-    for (name, timestamp, text) in zip(hdr['changelogname'], 
-                                       hdr['changelogtime'], 
+    for (name, timestamp, text) in zip(hdr['changelogname'],
+                                       hdr['changelogtime'],
                                        hdr['changelogtext']):
 
         # A Debian package's version is defined by the version of the
@@ -17,9 +18,9 @@ def changelog_from_spec(spec, isnative):
         # Most spec files have changelog entries starting "First Last
         # <first@foo.com> - version" - this seems to be the standard
         # for Red Hat spec files.
-        # Some of our changelos only have "First Last <first@foo.com>".   
-        # For these, we use the version from the spec. 
-        match = re.match( "^(.+) - (\S+)$", name )
+        # Some of our changelos only have "First Last <first@foo.com>".
+        # For these, we use the version from the spec.
+        match = re.match("^(.+) - (\S+)$", name)
         if match:
             author = match.group(1)
             version = match.group(2)
@@ -37,16 +38,15 @@ def changelog_from_spec(spec, isnative):
         log += "%s (%s) UNRELEASED; urgency=low\n" % (package_name, version)
         log += "\n"
 
-        text = re.sub( "^-", "*", text, flags=re.MULTILINE )
-        text = re.sub( "^", "  ", text, flags=re.MULTILINE )
+        text = re.sub("^-", "*", text, flags=re.MULTILINE)
+        text = re.sub("^", "  ", text, flags=re.MULTILINE)
         log += "%s\n" % text
         log += "\n"
 
-        date_string =  time.strftime("%a, %d %b %Y %H:%M:%S %z", 
-                                     time.gmtime(int(timestamp)))
+        date_string = time.strftime("%a, %d %b %Y %H:%M:%S %z",
+                                    time.gmtime(int(timestamp)))
         log += " -- %s  %s\n" % (author, date_string)
         log += "\n"
 
     res.append('debian/changelog', log)
     return res
-

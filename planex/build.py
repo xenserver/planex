@@ -13,8 +13,8 @@ import rpm
 import hashlib
 import time
 
-from planex.globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR, MOCK_DIR,
-                            SPECS_GLOB)
+from planex.globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
+                            MOCK_DIR, SPECS_GLOB)
 
 from planex.util import (bcolours, print_col, run, dump_cmds)
 
@@ -22,6 +22,7 @@ TMP_RPM_PATH = "/tmp/RPMS"
 RPM_TOP_DIR = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
 CACHE_DIR = "rpmcache"
 DEFAULT_ARCH = "x86_64"
+
 
 def doexec(args, inputtext=None, check=True):
     """Execute a subprocess, then return its return code, stdout and stderr"""
@@ -41,9 +42,9 @@ def get_srpm_info(srpm):
     info = {}
     info['deps'] = spec.sourceHeader["requires"]
     info['arch'] = DEFAULT_ARCH
-    info['packages'] = [{'name':p.header['name']} for p in spec.packages]
+    info['packages'] = [{'name': p.header['name']} for p in spec.packages]
     info['srcrpm'] = srpm
-    content_file = open(myspecfile,'r')
+    content_file = open(myspecfile, 'r')
     info['spec'] = content_file.read()
     content_file.close()
     return info
@@ -168,7 +169,7 @@ def need_to_build(srpm_infos, external, deps, srpm):
 
 
 def get_new_number(srpm, cache_dir):
-    if cache_dir == None:
+    if cache_dir is None:
         return 1
     latest_path = os.path.join(CACHE_DIR, srpm, "latest")
     if os.path.exists(latest_path):
@@ -189,34 +190,36 @@ def get_new_number(srpm, cache_dir):
     num_file.close()
     return build_number
 
+
 def createrepo():
     run(["createrepo", "--update", RPMS_DIR])
 
+
 def do_build(srpm, target, build_number, use_mock, xs_build_sys):
     if xs_build_sys:
-	mock = ["/usr/bin/mock"]
+        mock = ["/usr/bin/mock"]
     else:
-	mock = ["planex-cache", "--debug"]
+        mock = ["planex-cache", "--debug"]
     if use_mock:
-        cmd = mock + ["--configdir=%s" % MOCK_DIR, 
-               "--resultdir=%s" % TMP_RPM_PATH, "--rebuild",
-               "--target", target,
-#               "--enable-plugin=tmpfs",
-               "--define", "extrarelease .%d" % build_number,
-               "-v"]
+        cmd = mock + ["--configdir=%s" % MOCK_DIR,
+                      "--resultdir=%s" % TMP_RPM_PATH, "--rebuild",
+                      "--target", target,
+                      # "--enable-plugin=tmpfs",
+                      "--define", "extrarelease .%d" % build_number,
+                      "-v"]
         if not xs_build_sys:
-            cmd = cmd + [ "--disable-plugin=package_state" ]
+            cmd = cmd + ["--disable-plugin=package_state"]
     else:
         cmd = ["rpmbuild", "--rebuild", "-v",
                "--target", target, "--define",
                "_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm"]
 
-    res=run(cmd + [srpm])
+    res = run(cmd + [srpm])
 
     print "stdout: %s" % res['stdout']
     srpms = glob.glob(os.path.join(TMP_RPM_PATH, "*.src.rpm"))
     for srpm in srpms:
-        print_col(bcolours.WARNING,"Removing SRPM %s" % srpm)        
+        print_col(bcolours.WARNING, "Removing SRPM %s" % srpm)
         os.unlink(srpm)
 
     return glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
@@ -228,7 +231,8 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
     if(need_to_build(srpm_infos, external, deps, srpm)):
         target = extract_target(srpm_infos, srpm)
         build_number = get_new_number(srpm, cache_dir)
-        print_col(bcolours.OKGREEN, "CACHE MISS: Building %s (%d)" % (srpm, build_number))
+        print_col(bcolours.OKGREEN,
+                  "CACHE MISS: Building %s (%d)" % (srpm, build_number))
         createrepo()
 
         pkgs = do_build(srpm, target, build_number, use_mock, xs_build_sys)
@@ -238,17 +242,18 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
                 print "Archiving result in cache"
                 for pkg in pkgs:
                     shutil.copy(pkg, cache_dir+".tmp")
-                os.rename(cache_dir+".tmp",cache_dir)
+                os.rename(cache_dir + ".tmp", cache_dir)
             except:
-                print bcolours.WARNING + "FAILED TO PUT BUILD RESULTS INTO CACHE"
+                print bcolours.WARNING + \
+                    "FAILED TO PUT BUILD RESULTS INTO CACHE"
 
     else:
-        print_col(bcolours.OKGREEN,"CACHE HIT: Not building %s" % srpm)
+        print_col(bcolours.OKGREEN, "CACHE HIT: Not building %s" % srpm)
         pkgs = glob.glob(os.path.join(cache_dir, "*.rpm"))
         for pkg in pkgs:
             shutil.copy(pkg, TMP_RPM_PATH)
-        mytime=time.time()
-        os.utime(cache_dir,(mytime,mytime))
+        mytime = time.time()
+        os.utime(cache_dir, (mytime, mytime))
         pkgs = glob.glob(os.path.join(TMP_RPM_PATH, "*.rpm"))
 
     if not use_mock:
@@ -260,22 +265,26 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
     for pkg in pkgs:
         shutil.move(pkg, RPMS_DIR)
 
+
 def parse_cmdline(argv=None):
     """
     Parse command line options
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--no-mock', help="Don't use mock", action='store_true')
+        '--no-mock', action='store_true',
+        help="Don't use mock")
     parser.add_argument(
-        '--xs-build-sys', help='Assume XenServer build system',
-        action='store_true')
-    parser.add_argument('--i686', help='Build for i686',
-        action='store_true')
-    parser.add_argument('--external-dependencies',
-        help='External dependencies to include in the package hash',
-        metavar="file", nargs="+", default=[])
-    parser.add_argument('--cache-dir',
+        '--xs-build-sys', action='store_true',
+        help='Assume XenServer build system')
+    parser.add_argument(
+        '--i686', action='store_true',
+        help='Build for i686')
+    parser.add_argument(
+        '--external-dependencies', metavar="file", nargs="+", default=[],
+        help='External dependencies to include in the package hash')
+    parser.add_argument(
+        '--cache-dir',
         help='Root directory of the RPM cache',
         metavar="directory", default=None)
     return parser.parse_args(argv)
@@ -316,7 +325,8 @@ def main():
 
     for batch in order:
         for srpm in batch:
-            build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys)
+            build_srpm(srpm, srpm_infos, external, deps, use_mock,
+                       xs_build_sys)
 
     createrepo()
 
