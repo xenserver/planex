@@ -14,28 +14,28 @@ def files_from_spec(basename, specpath):
     # XXX shouldn't be parsing this by hand.   will need to handle conditionals
     # within and surrounding files and packages sections."""
 
-    otherparts = [ 
-        "%package", 
-        "%prep", 
-        "%build", 
-        "%install", 
-        "%check", 
-        "%clean", 
-        "%preun", 
-        "%postun", 
-        "%pretrans", 
-        "%posttrans", 
-        "%pre", 
-        "%post", 
-        "%changelog", 
-        "%description", 
-        "%triggerpostun", 
-        "%triggerprein", 
-        "%triggerun", 
-        "%triggerin", 
-        "%trigger", 
-        "%verifyscript", 
-        "%sepolicy", 
+    otherparts = [
+        "%package",
+        "%prep",
+        "%build",
+        "%install",
+        "%check",
+        "%clean",
+        "%preun",
+        "%postun",
+        "%pretrans",
+        "%posttrans",
+        "%pre",
+        "%post",
+        "%changelog",
+        "%description",
+        "%triggerpostun",
+        "%triggerprein",
+        "%triggerun",
+        "%triggerin",
+        "%trigger",
+        "%verifyscript",
+        "%sepolicy",
     ]
 
     files = {}
@@ -50,7 +50,7 @@ def files_from_spec(basename, specpath):
                 if len(tokens) > 1:
                     section = basename + "-" + tokens[1]
                 continue
-                
+
             if tokens and tokens[0] in otherparts:
                 in_files = False
 
@@ -75,12 +75,12 @@ def files_from_spec(basename, specpath):
                 if tokens[0].lower().startswith("%config"):
                     # dh_install automatically considers files in /etc
                     # to be config files so we don't have to do anything
-                    # special for them.  The Debian packaging policy says 
-                    # that all configuration files must be installed in /etc, 
-                    # so we can rewrite _sysconfigdir to /etc.   The spec file 
-                    # documentation says that # a %config directive can only 
-                    # apply to a single file, so there should only be one filename
-                    # to consider.
+                    # special for them.  The Debian packaging policy says
+                    # that all configuration files must be installed in /etc,
+                    # so we can rewrite _sysconfigdir to /etc.   The spec file
+                    # documentation says that # a %config directive can only
+                    # apply to a single file, so there should only be one
+                    # filename to consider.
                     configsection = section + "-%config"
                     tokens[1] = tokens[1].replace("%{_sysconfdir}", "/etc")
                     if tokens[1].startswith("/etc"):
@@ -92,4 +92,3 @@ def files_from_spec(basename, specpath):
                 if line.strip():
                     files[section] = files.get(section, []) + [line.strip()]
         return files
-            
