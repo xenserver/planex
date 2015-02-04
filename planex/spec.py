@@ -18,14 +18,18 @@ import debianmisc
 def rpmdir():
     return rpm.expandMacro('%_rpmdir')
 
+
 def srpmdir():
     return rpm.expandMacro('%_srcrpmdir')
+
 
 def specdir():
     return rpm.expandMacro('%_specdir')
 
+
 def sourcedir():
     return rpm.expandMacro('%_sourcedir')
+
 
 def flatten(lst):
     """Flatten a list of lists"""
@@ -90,10 +94,12 @@ class Spec(object):
         rpm.addMacro('dist', self.dist)
         self.spec = rpm.ts().parseSpec(path)
 
-        if check_package_name and os.path.basename(path).split(".")[0] != self.name():
-            raise SpecNameMismatch(
-                "spec file name '%s' does not match package name '%s'" %
-                (path, self.name()))
+        if check_package_name:
+            file_basename = os.path.basename(path).split(".")[0]
+            if file_basename != self.name():
+                raise SpecNameMismatch(
+                    "spec file name '%s' does not match package name '%s'" %
+                    (path, self.name()))
 
         if target == "rpm":
             self.rpmfilenamepat = rpm.expandMacro('%_build_name_fmt')
@@ -101,44 +107,36 @@ class Spec(object):
             self.map_arch = identity
 
         else:
-            sep = '.' if debianmisc.is_native(self.spec) else '-'
-            if debianmisc.is_native(self.spec):
-                self.rpmfilenamepat = "%{NAME}_%{VERSION}.%{RELEASE}_%{ARCH}.deb"
-                self.srpmfilenamepat = "%{NAME}_%{VERSION}.%{RELEASE}.dsc"
-            else:
-                self.rpmfilenamepat = "%{NAME}_%{VERSION}-%{RELEASE}_%{ARCH}.deb"
-                self.srpmfilenamepat = "%{NAME}_%{VERSION}-%{RELEASE}.dsc"
+            separator = '.' if debianmisc.is_native(self.spec) else '-'
+            basename = "%{NAME}_%{VERSION}" + separator
+            self.rpmfilenamepat = basename + "%{RELEASE}_%{ARCH}.deb"
+            self.srpmfilenamepat = basename + "%{RELEASE}.dsc"
             self.map_arch = map_arch_deb
 
     def specpath(self):
         """Return the path to the spec file"""
         return self.path
 
-
     def provides(self):
         """Return a list of package names provided by this spec"""
         provides = flatten([pkg.header['provides'] + [pkg.header['name']]
-                          for pkg in self.spec.packages])
+                            for pkg in self.spec.packages])
 
         # RPM 4.6 adds architecture constraints to dependencies.  Drop them.
         provides = [re.sub(r'\(x86-64\)$', '', pkg) for pkg in provides]
         return set(flatten([self.map_package_name(p) for p in provides]))
 
-
     def name(self):
         """Return the package name"""
         return self.spec.sourceHeader['name']
-
 
     def version(self):
         """Return the package version"""
         return self.spec.sourceHeader['version']
 
-
     def source_urls(self):
         """Return the URLs from which the sources can be downloaded"""
         return [source for (source, _, _) in reversed(self.spec.sources)]
-
 
     def source_paths(self):
         """Return the filesystem paths to source files"""
@@ -148,7 +146,8 @@ class Spec(object):
 
             # Source comes from a remote HTTP server
             if url.scheme in ["http", "https"]:
-                sources.append(os.path.join(sourcedir(), os.path.basename(url.path)))
+                sources.append(os.path.join(sourcedir(),
+                                            os.path.basename(url.path)))
 
             # Source comes from a local file or directory
             if url.scheme in ["file", "git", "hg"]:
@@ -161,15 +160,13 @@ class Spec(object):
 
         return sources
 
-
     # RPM build dependencies.   The 'requires' key for the *source* RPM is
     # actually the 'buildrequires' key from the spec
     def buildrequires(self):
         """Return the set of packages needed to build this spec
            (BuildRequires)"""
         return set(flatten([self.map_package_name(r) for r
-                           in self.spec.sourceHeader['requires']]))
-
+                            in self.spec.sourceHeader['requires']]))
 
     def source_package_path(self):
         """Return the path of the source package which building this
@@ -193,7 +190,6 @@ class Spec(object):
         rpm.delMacro('ARCH')
 
         return os.path.join(srpmdir(), srpmname)
-
 
     def binary_package_paths(self):
         """Return a list of binary packages built by this spec"""
