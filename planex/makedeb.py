@@ -9,8 +9,8 @@ import subprocess
 import sys
 import tempfile
 
-SCRIPTDIR=os.path.dirname(os.path.abspath(__file__))
-LIBDIR=os.path.normpath(os.path.join(SCRIPTDIR, "../lib"))
+SCRIPTDIR = os.path.dirname(os.path.abspath(__file__))
+LIBDIR = os.path.normpath(os.path.join(SCRIPTDIR, "../lib"))
 sys.path.append(LIBDIR)
 
 import debianchangelog
@@ -27,7 +27,7 @@ import rpmextra
 #   Should be building signed debs
 
 
-# By default, RPM expects everything to be in $HOME/rpmbuild.  
+# By default, RPM expects everything to be in $HOME/rpmbuild.
 # We want it to run in the current directory.
 rpm.addMacro('_topdir', os.getcwd())
 
@@ -42,7 +42,7 @@ rpm.addMacro("_builddir", TMPDIR)
 BUILD_DIR = rpm.expandMacro('%_builddir')
 
 
-# Fedora puts executables run by other programs in /usr/libexec, but 
+# Fedora puts executables run by other programs in /usr/libexec, but
 # Debian puts them in /usr/lib, which apparently follows the FHS:
 # http://www.debian.org/doc/manuals/maint-guide/advanced.en.html#ftn.idp2018768
 rpm.addMacro('_libexecdir', "/usr/lib")
@@ -94,17 +94,17 @@ def prepare_build_dir(spec, build_subdir):
     # creates before applying patches.
     # $TOPDIR should be an absolute path to the top RPM build
     # directory, not a relative path, so that references to SOURCES
-    # expand to reachable paths inside the source tree (getting the 
+    # expand to reachable paths inside the source tree (getting the
     # tarball from ../SOURCES works in the outer BUILD dir, but getting
     # patches from ../SOURCES doesn't work when we have cd'ed into the
     # source tree.
 
     unpack_dir = os.path.join(BUILD_DIR, build_subdir)
-    subprocess.call(spec.prep.replace("$RPM_BUILD_ROOT", unpack_dir), 
+    subprocess.call(spec.prep.replace("$RPM_BUILD_ROOT", unpack_dir),
                     shell=True)
     # could also just do: RPMBUILD_PREP = 1<<0; spec._doBuild()
 
-    
+
 def rename_source(spec, pkgname, pkgversion):
     # Debian source package name should probably match the tarball name
     origfilename = debianmisc.principal_source_file(spec)
@@ -116,9 +116,9 @@ def rename_source(spec, pkgname, pkgversion):
     if not match:
         print "error: could not parse filename %s" % filename
     _, ext = match.groups()[:2]
-    base_filename = "%s_%s.orig%s" % (mappkgname.map_package(pkgname)[0], 
+    base_filename = "%s_%s.orig%s" % (mappkgname.map_package(pkgname)[0],
                                       pkgversion, ext)
-    shutil.copy(os.path.join(SRC_DIR, origfilename), 
+    shutil.copy(os.path.join(SRC_DIR, origfilename),
                 os.path.join(BUILD_DIR, base_filename))
 
 
@@ -130,10 +130,10 @@ def main():
     if "-noclean" in sys.argv:
         clean = False
 
-    # subdirectory of builddir in which the tarball is unpacked;  
+    # subdirectory of builddir in which the tarball is unpacked;
     # set by RPM after processing the spec file
     # if the source file isn't a tarball this won't be set!
-    build_subdir = rpm.expandMacro("%buildsubdir")  
+    build_subdir = rpm.expandMacro("%buildsubdir")
     prepare_build_dir(spec, build_subdir)
 
     if os.path.isdir(os.path.join(BUILD_DIR, build_subdir, "debian")):
@@ -141,16 +141,16 @@ def main():
 
     # a package with no original tarball is built as a 'native debian package'
     native = debianmisc.is_native(spec)
-        
+
     if not native:
         # copy over the source, run the prep rule to unpack it, then
         # rename it as deb expects this should be based on the rewritten
         # (or not) source name in the debian package - build the debian
         # dir first and then rename the tarball as needed
-        rename_source(spec, spec.sourceHeader['name'], 
-                      spec.sourceHeader['version']) 
+        rename_source(spec, spec.sourceHeader['name'],
+                      spec.sourceHeader['version'])
 
-    debian_dir_from_spec(spec, os.path.join(BUILD_DIR, build_subdir), 
+    debian_dir_from_spec(spec, os.path.join(BUILD_DIR, build_subdir),
                          sys.argv[1], native)
 
     cmd = "cd %s\ndpkg-source -b --auto-commit %s" % (BUILD_DIR, build_subdir)
@@ -169,7 +169,9 @@ def main():
     else:
         print "makedeb: dpkg input files in %s" % TMPDIR
 
-    # At this point we have a debian source package (at least 3 files) in SRPMS.
+    # At this point we have a debian source package (at least 3 files) in
+    # SRPMS.
+    #
     # To build:
     #    pbuilder --create --distribution raring --architecture amd64 \
     #       --debootstrap qemu-debootstrap --mirror http://ports.ubuntu.com \
@@ -183,4 +185,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
