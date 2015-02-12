@@ -46,10 +46,10 @@ class TestParseArgsOrExit(unittest.TestCase):
         self.assertRaises(SystemExit, clone.parse_args_or_exit, [])
 
     def test_repos_path_set(self):
-        args = clone.parse_args_or_exit(MANDATORY_ARGS + ['--repos_path','/foo'])
+        args = clone.parse_args_or_exit(MANDATORY_ARGS +
+                                        ['--repos_path', '/foo'])
         self.assertEquals('/foo', args.repos_path)
 
     def test_repos_path_unset(self):
         args = clone.parse_args_or_exit(MANDATORY_ARGS)
         self.assertEquals('repos', args.repos_path)
-                                
