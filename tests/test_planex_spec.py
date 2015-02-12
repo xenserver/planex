@@ -3,9 +3,7 @@
 #   run 'nosetests' in the root of the repository
 
 import unittest
-
 import platform
-
 import planex.spec
 
 
@@ -49,24 +47,28 @@ class RpmTests(unittest.TestCase):
         self.assertEqual(self.spec.version(), "0.9.8")
 
     def test_provides(self):
-        self.assertEqual(self.spec.provides(),
+        self.assertEqual(
+            self.spec.provides(),
             set(["ocaml-cohttp", "ocaml-cohttp-devel"]))
 
     def test_source_urls(self):
-        self.assertEqual(self.spec.source_urls(),
+        self.assertEqual(
+            self.spec.source_urls(),
             ["https://github.com/mirage/ocaml-cohttp/archive/"
-                 "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
+             "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
              "file:///code/ocaml-cohttp-extra#ocaml-cohttp-extra-0.9.8.tar.gz",
              "ocaml-cohttp-init"])
 
     def test_source_paths(self):
-        self.assertEqual(self.spec.source_paths(),
+        self.assertEqual(
+            self.spec.source_paths(),
             ["./SOURCES/ocaml-cohttp-0.9.8.tar.gz",
              "./SOURCES/ocaml-cohttp-extra-0.9.8.tar.gz",
              "./SOURCES/ocaml-cohttp-init"])
 
     def test_buildrequires(self):
-        self.assertEqual(self.spec.buildrequires(),
+        self.assertEqual(
+            self.spec.buildrequires(),
             set(["ocaml", "ocaml-findlib", "ocaml-re-devel",
                  "ocaml-uri-devel", "ocaml-cstruct-devel",
                  "ocaml-lwt-devel", "ocaml-ounit-devel",
@@ -74,7 +76,8 @@ class RpmTests(unittest.TestCase):
                  "openssl", "openssl-devel"]))
 
     def test_source_package_path(self):
-        self.assertEqual(self.spec.source_package_path(),
+        self.assertEqual(
+            self.spec.source_package_path(),
             "./SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm")
 
     def test_binary_package_paths(self):
@@ -86,7 +89,8 @@ class RpmTests(unittest.TestCase):
                 path.format(machine=machine) for path in
                 sorted([
                     "./RPMS/{machine}/ocaml-cohttp-0.9.8-1.el6.{machine}.rpm",
-                    "./RPMS/{machine}/ocaml-cohttp-devel-0.9.8-1.el6.{machine}.rpm"])
+                    "./RPMS/{machine}/" +
+                    "ocaml-cohttp-devel-0.9.8-1.el6.{machine}.rpm"])
             ]
         )
 
@@ -111,8 +115,8 @@ class DebTests(unittest.TestCase):
                        "openssl-devel": ["libssl-dev"]}
             return mapping[name]
 
-        self.spec = planex.spec.Spec("./tests/data/ocaml-cohttp.spec", 
-                                     target="deb", 
+        self.spec = planex.spec.Spec("./tests/data/ocaml-cohttp.spec",
+                                     target="deb",
                                      map_name=map_rpm_to_deb)
 
     def test_name(self):
@@ -125,24 +129,28 @@ class DebTests(unittest.TestCase):
         self.assertEqual(self.spec.version(), "0.9.8")
 
     def test_provides(self):
-        self.assertEqual(self.spec.provides(),
+        self.assertEqual(
+            self.spec.provides(),
             set(["libcohttp-ocaml", "libcohttp-ocaml-dev"]))
 
     def test_source_urls(self):
-        self.assertEqual(self.spec.source_urls(),
-            ["https://github.com/mirage/ocaml-cohttp/archive/"
-                 "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
+        self.assertEqual(
+            self.spec.source_urls(),
+            ["https://github.com/mirage/ocaml-cohttp/archive/" +
+             "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
              "file:///code/ocaml-cohttp-extra#ocaml-cohttp-extra-0.9.8.tar.gz",
              "ocaml-cohttp-init"])
 
     def test_source_paths(self):
-        self.assertEqual(self.spec.source_paths(),
+        self.assertEqual(
+            self.spec.source_paths(),
             ["./SOURCES/ocaml-cohttp-0.9.8.tar.gz",
              "./SOURCES/ocaml-cohttp-extra-0.9.8.tar.gz",
              "./SOURCES/ocaml-cohttp-init"])
 
     def test_buildrequires(self):
-        self.assertEqual(self.spec.buildrequires(),
+        self.assertEqual(
+            self.spec.buildrequires(),
             set(["ocaml-nox", "ocaml-native-compilers",
                  "ocaml-findlib", "libre-ocaml-dev",
                  "liburi-ocaml-dev", "libcstruct-ocaml-dev",
@@ -151,17 +159,15 @@ class DebTests(unittest.TestCase):
                  "libssl-dev"]))
 
     def test_source_package_path(self):
-        self.assertEqual(self.spec.source_package_path(),
+        self.assertEqual(
+            self.spec.source_package_path(),
             "./SRPMS/libcohttp-ocaml_0.9.8-1.dsc")
 
     def test_binary_package_paths(self):
         machine = get_deb_machine()
 
-        self.assertEqual(sorted(self.spec.binary_package_paths()),
-            [
-                path.format(machine=machine) for path in
-                    sorted(["./RPMS/libcohttp-ocaml_0.9.8-1_{machine}.deb",
-                     "./RPMS/libcohttp-ocaml-dev_0.9.8-1_{machine}.deb"])
-            ]
-        )
-
+        self.assertEqual(
+            sorted(self.spec.binary_package_paths()),
+            [path.format(machine=machine) for path
+             in sorted(["./RPMS/libcohttp-ocaml_0.9.8-1_{machine}.deb",
+                        "./RPMS/libcohttp-ocaml-dev_0.9.8-1_{machine}.deb"])])
