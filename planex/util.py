@@ -34,7 +34,7 @@ def rewrite_url(url, destination=None):
     """
     Rewrite url to point to destination
     """
-    (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
+    (scheme, _, path, _, _, fragment) = urlparse.urlparse(url)
     if destination == "" or scheme in ["git", "hg"]:
         return url
 

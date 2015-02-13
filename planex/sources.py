@@ -16,7 +16,6 @@ class SCM(object):
                 urlparse.uses_fragment.append(protocol)
 
         (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
-        urlparts = url.split('#')
         repo_url = "%s://%s%s" % (scheme, host, path)  # Strip off fragment
         self.repo_name = path.split('/')[-1]
 
