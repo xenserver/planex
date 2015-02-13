@@ -97,7 +97,7 @@ def rules_dh_install_from_spec(spec, tree, specpath):
 
     pkgname = mappkgname.map_package_name(spec.sourceHeader)
     files = rpmextra.files_from_spec(pkgname, specpath)
-    if (pkgname + "-%exclude") in files:
+    if pkgname + "-%exclude" in files:
         for pat in files[pkgname + "-%exclude"]:
             path = "\trm -f debian/%s/%s\n" % (pkgname, rpm.expandMacro(pat))
             rule += os.path.normpath(path)

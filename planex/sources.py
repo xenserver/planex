@@ -62,12 +62,12 @@ class SCM(object):
 
     @property
     def tarballprefix(self):
-        assert(self.version is not None)
+        assert self.version is not None
         return "%s-%s" % (self.repo_name, self.version)
 
     @property
     def archivename(self):
-        assert(self.version is not None)
+        assert self.version is not None
         return "%s.tar.gz" % (self.tarballprefix)
 
     @property

@@ -118,7 +118,7 @@ def prepare_srpm(spec_path, config):
     at spec_path.
     """
     # check the .spec file exists, or .spec.in if we're processing the spec
-    if not(os.path.exists(spec_path)):
+    if not os.path.exists(spec_path):
         print "%s doesn't exist" % spec_path
         sys.exit(1)
 
@@ -255,7 +255,7 @@ def copy_specs_to_buildroot(config):
                       "Configuring and fetching sources for '%s'" % basename)
             scmsources = [sources.Source(source, config) for source
                           in sources_from_spec(spec_path, config)
-                          if (is_scm(source))]
+                          if is_scm(source)]
             mapping = {}
             for source in scmsources:
                 source.pin()

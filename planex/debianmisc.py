@@ -14,7 +14,7 @@ def conffiles_from_spec(spec, specpath):
     res = Tree()
     pkgname = mappkgname.map_package_name(spec.sourceHeader)
     files = rpmextra.files_from_spec(pkgname, specpath)
-    if (pkgname + "-%config") in files:
+    if pkgname + "-%config" in files:
         for filename in files[pkgname + "-%config"]:
             res.append('debian/conffiles', "%s\n" % filename)
     return res
