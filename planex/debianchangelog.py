@@ -1,5 +1,5 @@
-from tree import Tree
-import mappkgname
+from planex.tree import Tree
+from planex import mappkgname
 import re
 import time
 

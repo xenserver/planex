@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
 import rpm
-import rpmextra
+from planex import rpmextra
 import os
 import re
-import mappkgname
-from tree import Tree
+from planex import mappkgname
+from planex.tree import Tree
 
 
 def rules_from_spec(spec, specpath):

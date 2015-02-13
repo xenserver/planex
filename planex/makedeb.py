@@ -8,12 +8,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import debianchangelog
-import debiancontrol
-import debianmisc
-import debianrules
-import mappkgname
-import rpmextra
+from planex import debianchangelog
+from planex import debiancontrol
+from planex import debianmisc
+from planex import debianrules
+from planex import mappkgname
+from planex import rpmextra
 
 # BUGS:
 #   Hack to disable CFLAGS for ocaml-oclock

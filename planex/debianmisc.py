@@ -1,9 +1,9 @@
 import rpm
-from tree import Tree
-import mappkgname
+from planex.tree import Tree
+from planex import mappkgname
 import os
 import re
-import rpmextra
+from planex import rpmextra
 
 
 def conffiles_from_spec(spec, specpath):

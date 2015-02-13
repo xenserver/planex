@@ -6,11 +6,11 @@ planex-depend: Generate Makefile-format dependencies from spec files
 
 import argparse
 import os
-import spec as pkg
+import planex.spec as pkg
 import platform
 import sys
 import urlparse
-import mappkgname
+from planex import mappkgname
 from planex import sources
 
 

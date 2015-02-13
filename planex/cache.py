@@ -12,7 +12,7 @@ import shutil
 import sys
 import tempfile
 import yum
-import util
+from planex import util
 import itertools
 
 from planex.globals import PLANEX_REPO_NAME
