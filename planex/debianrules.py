@@ -21,7 +21,7 @@ def rules_from_spec(spec, specpath):
     return res
 
 
-def ocaml_rules_preamble(_spec, tree):
+def ocaml_rules_preamble(_, tree):
     # TODO: should only include if we have packed up ocaml files
     rule = "#!/usr/bin/make -f\n"
     rule += "\n"
@@ -39,7 +39,7 @@ def ocaml_rules_preamble(_spec, tree):
     tree.append('debian/rules', rule)
 
 
-def rules_configure_from_spec(_spec, tree):
+def rules_configure_from_spec(_, tree):
     # RPM doesn't have a configure target - everything happens in the
     # build target.  Nevertheless we must override the auto_configure target
     # because some OASIS packages have configure scripts.    If debhelper
@@ -120,7 +120,7 @@ def rules_clean_from_spec(spec, tree):
     tree.append('debian/clean.sh', helper, permissions=0o755)
 
 
-def rules_test_from_spec(_spec, tree):
+def rules_test_from_spec(_, tree):
     # XXX HACK for ocaml-oclock - don't try to run the tests when building
     rule = ".PHONY: override_dh_auto_test\n"
     rule += "override_dh_auto_test:\n"
@@ -128,7 +128,7 @@ def rules_test_from_spec(_spec, tree):
     tree.append('debian/rules', rule)
 
 
-def python_setuptools_cfg(_spec, tree):
+def python_setuptools_cfg(_, tree):
     # Configuration file for python setuptools, which defaults to installing
     # in /usr/local/lib instead of /usr/lib
     content = "[install]\n"
