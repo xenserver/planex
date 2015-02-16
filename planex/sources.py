@@ -74,6 +74,9 @@ class SCM(object):
     def extendedurl(self):
         return "%s#%s/%s" % (self.repo_url, self.scmhash, self.archivename)
 
+    def archive_commands(self, sources_dir=SOURCES_DIR):
+        raise NotImplementedError()
+
     def archive(self, sources_dir=SOURCES_DIR):
         for cmd in self.archive_commands(sources_dir):
             run(cmd)
@@ -286,6 +289,9 @@ class OtherSource(SCM):
         return False
 
     def clone_commands(self):
+        return []
+
+    def archive_commands(self, sources_dir=SOURCES_DIR):
         return []
 
     def archive(self, sources_dir=SOURCES_DIR):
