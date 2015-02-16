@@ -147,8 +147,8 @@ def get_external_hash(external_deps):
     external_deps.sort()
     external_hash = hashlib.md5()
     for dep in external_deps:
-        with open(dep, "rb") as f:
-            for block in iter(lambda: f.read(1024), ""):
+        with open(dep, "rb") as dep_file:
+            for block in iter(lambda: dep_file.read(1024), ""):
                 external_hash.update(block)
     return external_hash.hexdigest()
 
