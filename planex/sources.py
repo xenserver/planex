@@ -81,6 +81,9 @@ class SCM(object):
         for cmd in self.archive_commands(sources_dir):
             run(cmd)
 
+    def clone_commands(self):
+        raise NotImplementedError()
+
 
 class GitSource(SCM):
     def __init__(self, url, config):
