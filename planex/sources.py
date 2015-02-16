@@ -288,7 +288,7 @@ class FileSource(SCM):
 
 class OtherSource(SCM):
     @staticmethod
-    def handles(scheme):
+    def handles(_):
         return False
 
     def clone_commands(self):
