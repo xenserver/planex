@@ -132,7 +132,7 @@ def prepare_srpm(spec_path, config):
 
     allsources = [rewrite_url(url, config.mirror_path) for url in allsources]
     for source in allsources:
-        sources.Source(source, config).archive()
+        sources.source(source, config).archive()
 
 
 def get_hashes(ty):
@@ -253,7 +253,7 @@ def copy_specs_to_buildroot(config):
         if spec_path.endswith('.in'):
             print_col(bcolours.OKGREEN,
                       "Configuring and fetching sources for '%s'" % basename)
-            scmsources = [sources.Source(source, config) for source
+            scmsources = [sources.source(source, config) for source
                           in sources_from_spec(spec_path, config)
                           if is_scm(source)]
             mapping = {}

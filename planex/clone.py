@@ -75,7 +75,7 @@ def main():
         executor = executors.RealExecutor()
 
     for template in templates:
-        srcs = [sources.Source(url, config) for url in template.source_urls()]
+        srcs = [sources.source(url, config) for url in template.source_urls()]
 
         commands_list = [src.clone_commands() for src in srcs]
 

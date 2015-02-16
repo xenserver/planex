@@ -292,7 +292,7 @@ class OtherSource(SCM):
         return
 
 
-def Source(url, repomirror):
+def source(url, repomirror):
     scheme = url.split(":")[0]
     for cls in SCM.__subclasses__():  # pylint: disable=E1101
         if cls.handles(scheme):
