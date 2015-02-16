@@ -13,9 +13,6 @@ from planex import sources
 from planex import executors
 
 
-log = logging.getLogger(__name__)
-
-
 def parse_args_or_exit(argv=None):
     """
     Parse command line options
@@ -58,7 +55,8 @@ def main():
     """
     config = parse_args_or_exit()
 
-    logging.basicConfig(level=logging.ERROR if config.quiet else logging.DEBUG)
+    logging.basicConfig(format='%(message)s',
+                        level=logging.ERROR if config.quiet else logging.DEBUG)
 
     specs_path = os.path.join(config.config_dir,
                               config.specs_path, "*.spec.in")
@@ -79,15 +77,15 @@ def main():
 
         commands_list = [src.clone_commands() for src in srcs]
 
-        log.info(commands_list)
+        logging.info(commands_list)
         results_list = [[executor.run(command) for command in commands]
                         for commands in commands_list]
 
         for results in results_list:
             for result in results:
                 if result.return_code != 0:
-                    log.warning("FAILED: %s", commands)
+                    logging.warning("FAILED: %s", commands)
                 if result.stdout:
-                    log.warning("STDOUT: %s", result.stdout)
+                    logging.warning("STDOUT: %s", result.stdout)
                 if result.stderr:
-                    log.warning("STDERR: %s", result.stderr)
+                    logging.warning("STDERR: %s", result.stderr)
