@@ -7,7 +7,6 @@ Builds SRPMs for the tarballs or Git repositories in <component-specs-dir>.
 import argparse
 import sys
 import os.path
-import urlparse
 import re
 import glob
 import shutil
@@ -15,7 +14,7 @@ from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
                             MOCK_DIR, RPMS_DIR, SPECS_GLOB, HASHFN,
                             PLANEX_REPO_NAME)
 import planex.spec
-from planex.util import (bcolours, print_col, run, dump_cmds, rewrite_url,
+from planex.util import (bcolours, print_col, run, rewrite_url,
                          load_mock_config, get_yumbase)
 import planex.sources
 from pkg_resources import resource_string
@@ -368,7 +367,7 @@ def main(argv):
     Main function.  Process all the specfiles in the directory
     given by config_dir.
     """
-    config = parse_cmdline()
+    config = parse_cmdline(argv)
     try:
         sort_makefile()
         prepare_buildroot()
@@ -453,7 +452,7 @@ def parse_cmdline(argv=None):
 
 def _main():
     """Entry point for setuptools CLI wrapper"""
-    main(sys.argv)
+    main(sys.argv[1:])
 
 
 if __name__ == "__main__":
