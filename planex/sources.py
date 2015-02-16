@@ -40,7 +40,7 @@ class SCM(object):
         strip_ext(".hg")
 
         self.orig_url = url
-        self.ty = scheme
+        self.scheme = scheme
         self.repo_url = repo_url
         self.fragment = fragment
 
@@ -93,8 +93,8 @@ class GitSource(SCM):
                 self.pin()
 
     @staticmethod
-    def handles(ty):
-        return ty == "git"
+    def handles(scheme):
+        return scheme == "git"
 
     def clone_commands(self):
 
@@ -210,8 +210,8 @@ class HgSource(SCM):
             self.pin()
 
     @staticmethod
-    def handles(ty):
-        return ty == "hg"
+    def handles(scheme):
+        return scheme == "hg"
 
     @property
     def localpath(self):
@@ -267,8 +267,8 @@ class FileSource(SCM):
         return self.orig_url.split("/")[-1]
 
     @staticmethod
-    def handles(ty):
-        return ty in ["file", "http", "https", "ftp"]
+    def handles(scheme):
+        return scheme in ["file", "http", "https", "ftp"]
 
     def clone_commands(self):
         return []
@@ -282,7 +282,7 @@ class FileSource(SCM):
 
 class OtherSource(SCM):
     @staticmethod
-    def handles(ty):
+    def handles(scheme):
         return False
 
     def clone_commands(self):
@@ -293,8 +293,8 @@ class OtherSource(SCM):
 
 
 def Source(url, repomirror):
-    ty = url.split(":")[0]
+    scheme = url.split(":")[0]
     for cls in SCM.__subclasses__():  # pylint: disable=E1101
-        if cls.handles(ty):
+        if cls.handles(scheme):
             return cls(url, repomirror)
     return OtherSource(url, repomirror)
