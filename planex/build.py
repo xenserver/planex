@@ -3,11 +3,9 @@
 # Build a bunch of SRPMs
 
 import argparse
-import getopt
 import sys
 import os
 import glob
-import subprocess
 import shutil
 import rpm
 import hashlib
@@ -16,7 +14,7 @@ import time
 from planex.globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
                             MOCK_DIR, SPECS_GLOB)
 
-from planex.util import (bcolours, print_col, run, dump_cmds)
+from planex.util import (bcolours, print_col, run)
 
 TMP_RPM_PATH = "/tmp/RPMS"
 RPM_TOP_DIR = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
