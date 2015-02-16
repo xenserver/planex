@@ -17,7 +17,7 @@ from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
 import planex.spec
 from planex.util import (bcolours, print_col, run, dump_cmds, rewrite_url,
                          load_mock_config, get_yumbase)
-from planex import sources
+import planex.sources
 from pkg_resources import resource_string
 from planex import exceptions
 
@@ -132,7 +132,7 @@ def prepare_srpm(spec_path, config):
 
     allsources = [rewrite_url(url, config.mirror_path) for url in allsources]
     for source in allsources:
-        sources.source(source, config).archive()
+        planex.sources.source(source, config).archive()
 
 
 def get_hashes(ty):
@@ -253,7 +253,7 @@ def copy_specs_to_buildroot(config):
         if spec_path.endswith('.in'):
             print_col(bcolours.OKGREEN,
                       "Configuring and fetching sources for '%s'" % basename)
-            scmsources = [sources.source(source, config) for source
+            scmsources = [planex.sources.source(source, config) for source
                           in sources_from_spec(spec_path, config)
                           if is_scm(source)]
             mapping = {}
