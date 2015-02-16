@@ -108,5 +108,5 @@ def principal_source_file(spec):
 
 def is_native(_spec):
     tarball = principal_source_file(_spec)
-    match = re.match("^(.+)((\.tar\.(gz|bz2|lzma|xz)|\.tbz)$)", tarball)
+    match = re.match(r"^(.+)((\.tar\.(gz|bz2|lzma|xz)|\.tbz)$)", tarball)
     return match is None

@@ -107,7 +107,7 @@ def rename_source(spec, pkgname, pkgversion):
         filename = origfilename[:-len(".tbz")] + ".tar.bz2"
     else:
         filename = origfilename
-    match = re.match("^(.+)(\.tar\.(gz|bz2|lzma|xz))", filename)
+    match = re.match(r"^(.+)(\.tar\.(gz|bz2|lzma|xz))", filename)
     if not match:
         print "error: could not parse filename %s" % filename
     _, ext = match.groups()[:2]
