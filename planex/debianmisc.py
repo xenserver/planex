@@ -81,20 +81,20 @@ def patches_from_spec(spec, src_dir):
     return res
 
 
-def compat_from_spec(_spec):
+def compat_from_spec(_):
     res = Tree()
     res.append("debian/compat", "8")
     return res
 
 
-def format_from_spec(_spec, isnative):
+def format_from_spec(_, isnative):
     res = Tree()
     fmt = "native" if isnative else "quilt"
     res.append("debian/source/format", "3.0 (%s)\n" % fmt)
     return res
 
 
-def copyright_from_spec(_spec):
+def copyright_from_spec(_):
     res = Tree()
     res.append("debian/copyright", "FIXME")
     return res
