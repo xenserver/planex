@@ -179,8 +179,8 @@ def main():
             if args.packaging == "deb":
                 os_type = platform.linux_distribution(
                     full_distribution_name=False)[1].lower()
-                map_name_fn = lambda name: mappkgname.map_package(name,
-                                                                  os_type)
+                def map_name_fn(name):
+                    return mappkgname.map_package(name, os_type)
                 spec = pkg.Spec(spec_path, target="deb", map_name=map_name_fn,
                                 check_package_name=check_package_names,
                                 topdir=args.topdir)
