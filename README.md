@@ -1,4 +1,4 @@
-# Planex
+# Planex [![Build Status](https://travis-ci.org/xenserver/planex.svg?branch=master)](https://travis-ci.org/xenserver/planex)
 
 Scripts and libraries to build rpms
 
