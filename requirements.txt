@@ -1,1 +1,3 @@
+pep8
+pylint
 fs
