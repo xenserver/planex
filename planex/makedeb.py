@@ -8,11 +8,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-
-SCRIPTDIR = os.path.dirname(os.path.abspath(__file__))
-LIBDIR = os.path.normpath(os.path.join(SCRIPTDIR, "../lib"))
-sys.path.append(LIBDIR)
-
 import debianchangelog
 import debiancontrol
 import debianmisc
