@@ -169,7 +169,7 @@ def main():
             with open(ignore_from) as ignore_file:
                 for name in ignore_file.readlines():
                     pkgs_to_ignore.append(name.strip())
-        except:
+        except IOError:
             pass
     for i in pkgs_to_ignore:
         print "# Will ignore: %s" % i

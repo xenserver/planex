@@ -241,7 +241,7 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
                 for pkg in pkgs:
                     shutil.copy(pkg, cache_dir + ".tmp")
                 os.rename(cache_dir + ".tmp", cache_dir)
-            except:
+            except (OSError, IOError):
                 print bcolours.WARNING + \
                     "FAILED TO PUT BUILD RESULTS INTO CACHE"
 
