@@ -14,32 +14,10 @@ import tempfile
 import yum
 from planex import util
 import itertools
-
+import logging
 from planex.globals import PLANEX_REPO_NAME
 
-LOG_DEBUG = 5
-LOG_INFO = 1
-LOG_NONE = 0
-
-LOGLEVEL = LOG_INFO
-
 PLANEX_CACHE_SALT = "planex-cache-1"
-
-
-def log(level, message):
-    """Conditional logging function"""
-    if level <= LOGLEVEL:
-        print message
-
-
-def log_debug(message):
-    """Wrapper for debug logging"""
-    log(LOG_DEBUG, message)
-
-
-def log_info(message):
-    """Wrapper for info-level logging"""
-    log(LOG_INFO, message)
 
 
 def parse_args_or_exit(argv=None):
@@ -127,7 +105,7 @@ def add_to_cache(cachedirs, pkg_hash, build_dir):
 
     cache_output_dir = os.path.join(cache_dir, "output")
     shutil.move(build_dir, cache_output_dir)
-    log_debug("moved to %s" % cache_output_dir)
+    logging.debug("moved to %s", cache_output_dir)
 
 
 def get_from_specified_cache(cache_dir, resultdir):
@@ -165,34 +143,34 @@ def get_srpm_hash(srpm, yumbase, mock_config):
     pkg_hash.update(mock_config)
 
     if srpm.filedigestalgo:
-        log_debug("Hashes of SRPM contents (%s):" %
-                  RFC4880_HASHES[srpm.filedigestalgo])
+        logging.debug("Hashes of SRPM contents (%s):",
+                      RFC4880_HASHES[srpm.filedigestalgo])
 
     for name, digest in zip(srpm.filenames, srpm.filedigests):
-        log_debug("  %s: %s" % (name, digest))
+        logging.debug("  %s: %s", name, digest)
         pkg_hash.update(digest)
 
-    log_debug("Build-time requirements:")
+    logging.debug("Build-time requirements:")
     for req in sorted(srpm.requires):
         try:
             pkgs = yumbase.pkgSack.returnNewestByNameArch(patterns=[req])
             for pkg in pkgs:
                 algo, checksum, _ = pkg.returnChecksums()[0]
-                log_debug("  %s: %s (%s: %s)" % (req, pkg, algo, checksum))
+                logging.debug("  %s: %s (%s: %s)", req, pkg, algo, checksum)
                 pkg_hash.update(checksum)
 
                 yumbase.downloadHeader(pkg)
                 hdr = pkg.returnLocalHeader()
-                log_debug("  File hashes (%s):" %
-                          RFC4880_HASHES[hdr.filedigestalgo])
+                logging.debug("  File hashes (%s):",
+                              RFC4880_HASHES[hdr.filedigestalgo])
                 for name, digest in zip(hdr.filenames, hdr.filedigests):
-                    log_debug("    %s: %s" % (name, digest))
+                    logging.debug("    %s: %s", name, digest)
                     pkg_hash.update(digest)
 
         except yum.Errors.PackageSackError as pse:
-            log_debug("  %s" % pse)
+            logging.debug("  %s", pse)
 
-    log_debug("Package hash: %s" % pkg_hash.hexdigest())
+    logging.debug("Package hash: %s", pkg_hash.hexdigest())
     return pkg_hash.hexdigest()
 
 
@@ -202,7 +180,7 @@ def build_package(configdir, root, passthrough_args):
     are intercepted and rewritten, for instance --resultdir.
     """
     working_directory = tempfile.mkdtemp(prefix="planex-cache")
-    log_debug("Mock working directory: %s" % working_directory)
+    logging.debug("Mock working directory: %s", working_directory)
 
     cmd = ["sudo", "mock", "--configdir=%s" % configdir,
            "--root=%s" % root,
@@ -217,14 +195,14 @@ def main(argv):
     Main function.  Parse spec file and iterate over its sources, downloading
     them as appropriate.
     """
-    global LOGLEVEL
-
     intercepted_args, passthrough_args = parse_args_or_exit(argv)
     config = os.path.join(intercepted_args.configdir,
                           intercepted_args.root + ".cfg")
 
+    loglevel = logging.INFO
     if intercepted_args.debug:
-        LOGLEVEL = LOG_DEBUG
+        loglevel = logging.DEBUG
+    logging.basicConfig(format='%(message)s', level=loglevel)
 
     yum_config = util.load_mock_config(config)
     yumbase = util.get_yumbase(yum_config)
@@ -239,7 +217,7 @@ def main(argv):
 
     # Rebuild if not available in the cache
     if not in_cache(cachedirs, pkg_hash):
-        log_debug("Cache miss - rebuilding")
+        logging.debug("Cache miss - rebuilding")
         build_output = build_package(intercepted_args.configdir,
                                      intercepted_args.root, passthrough_args)
         add_to_cache(cachedirs, pkg_hash, build_output)
