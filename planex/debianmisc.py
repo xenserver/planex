@@ -1,9 +1,9 @@
 import rpm
-from tree import Tree
-import mappkgname
+from planex.tree import Tree
+from planex import mappkgname
 import os
 import re
-import rpmextra
+from planex import rpmextra
 
 
 def conffiles_from_spec(spec, specpath):
@@ -14,7 +14,7 @@ def conffiles_from_spec(spec, specpath):
     res = Tree()
     pkgname = mappkgname.map_package_name(spec.sourceHeader)
     files = rpmextra.files_from_spec(pkgname, specpath)
-    if (pkgname + "-%config") in files:
+    if pkgname + "-%config" in files:
         for filename in files[pkgname + "-%config"]:
             res.append('debian/conffiles', "%s\n" % filename)
     return res
@@ -81,20 +81,20 @@ def patches_from_spec(spec, src_dir):
     return res
 
 
-def compat_from_spec(_spec):
+def compat_from_spec(_):
     res = Tree()
     res.append("debian/compat", "8")
     return res
 
 
-def format_from_spec(_spec, isnative):
+def format_from_spec(_, isnative):
     res = Tree()
     fmt = "native" if isnative else "quilt"
     res.append("debian/source/format", "3.0 (%s)\n" % fmt)
     return res
 
 
-def copyright_from_spec(_spec):
+def copyright_from_spec(_):
     res = Tree()
     res.append("debian/copyright", "FIXME")
     return res
@@ -108,5 +108,5 @@ def principal_source_file(spec):
 
 def is_native(_spec):
     tarball = principal_source_file(_spec)
-    match = re.match("^(.+)((\.tar\.(gz|bz2|lzma|xz)|\.tbz)$)", tarball)
+    match = re.match(r"^(.+)((\.tar\.(gz|bz2|lzma|xz)|\.tbz)$)", tarball)
     return match is None

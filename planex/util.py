@@ -10,7 +10,7 @@ import sys
 import tempfile
 import yum
 
-dump_cmds = True
+DUMP_CMDS = True
 
 
 class bcolours:
@@ -34,7 +34,7 @@ def rewrite_url(url, destination=None):
     """
     Rewrite url to point to destination
     """
-    (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
+    (scheme, _, path, _, _, fragment) = urlparse.urlparse(url)
     if destination == "" or scheme in ["git", "hg"]:
         return url
 
@@ -51,11 +51,11 @@ def load_mock_config(cfg):
     """
 
     import mockbuild.util
-    unprivUid = os.getuid()
-    __VERSION__ = 1
-    PKGPYTHONDIR = mockbuild.__path__[0]
+    unpriv_uid = os.getuid()
+    version = 1
+    pkgpythondir = mockbuild.__path__[0]
     config_opts = mockbuild.util.setup_default_config_opts(
-        unprivUid, __VERSION__, PKGPYTHONDIR)
+        unpriv_uid, version, pkgpythondir)
     config_opts['config_paths'] = []
     config_opts['config_paths'].append(cfg)
     execfile(cfg)
@@ -84,7 +84,7 @@ def run(cmd, check=True, env=None, inputtext=None):
     code unless check=False. Returns a dictionary of stdout, stderr and return
     code (rc)
     """
-    if dump_cmds:
+    if DUMP_CMDS:
         print_col(bcolours.WARNING, "CMD: " +
                   (" ".join(map(pipes.quote, cmd))))
 

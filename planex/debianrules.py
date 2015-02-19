@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
 import rpm
-import rpmextra
+from planex import rpmextra
 import os
 import re
-import mappkgname
-from tree import Tree
+from planex import mappkgname
+from planex.tree import Tree
 
 
 def rules_from_spec(spec, specpath):
@@ -21,7 +21,7 @@ def rules_from_spec(spec, specpath):
     return res
 
 
-def ocaml_rules_preamble(_spec, tree):
+def ocaml_rules_preamble(_, tree):
     # TODO: should only include if we have packed up ocaml files
     rule = "#!/usr/bin/make -f\n"
     rule += "\n"
@@ -39,7 +39,7 @@ def ocaml_rules_preamble(_spec, tree):
     tree.append('debian/rules', rule)
 
 
-def rules_configure_from_spec(_spec, tree):
+def rules_configure_from_spec(_, tree):
     # RPM doesn't have a configure target - everything happens in the
     # build target.  Nevertheless we must override the auto_configure target
     # because some OASIS packages have configure scripts.    If debhelper
@@ -97,7 +97,7 @@ def rules_dh_install_from_spec(spec, tree, specpath):
 
     pkgname = mappkgname.map_package_name(spec.sourceHeader)
     files = rpmextra.files_from_spec(pkgname, specpath)
-    if (pkgname + "-%exclude") in files:
+    if pkgname + "-%exclude" in files:
         for pat in files[pkgname + "-%exclude"]:
             path = "\trm -f debian/%s/%s\n" % (pkgname, rpm.expandMacro(pat))
             rule += os.path.normpath(path)
@@ -120,7 +120,7 @@ def rules_clean_from_spec(spec, tree):
     tree.append('debian/clean.sh', helper, permissions=0o755)
 
 
-def rules_test_from_spec(_spec, tree):
+def rules_test_from_spec(_, tree):
     # XXX HACK for ocaml-oclock - don't try to run the tests when building
     rule = ".PHONY: override_dh_auto_test\n"
     rule += "override_dh_auto_test:\n"
@@ -128,7 +128,7 @@ def rules_test_from_spec(_spec, tree):
     tree.append('debian/rules', rule)
 
 
-def python_setuptools_cfg(_spec, tree):
+def python_setuptools_cfg(_, tree):
     # Configuration file for python setuptools, which defaults to installing
     # in /usr/local/lib instead of /usr/lib
     content = "[install]\n"

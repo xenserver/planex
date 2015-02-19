@@ -16,7 +16,6 @@ class SCM(object):
                 urlparse.uses_fragment.append(protocol)
 
         (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
-        urlparts = url.split('#')
         repo_url = "%s://%s%s" % (scheme, host, path)  # Strip off fragment
         self.repo_name = path.split('/')[-1]
 
@@ -41,11 +40,11 @@ class SCM(object):
         strip_ext(".hg")
 
         self.orig_url = url
-        self.ty = scheme
+        self.scheme = scheme
         self.repo_url = repo_url
         self.fragment = fragment
 
-        matches = re.search("([0-9a-f]*)\/([^\/]*)", fragment)
+        matches = re.search(r"([0-9a-f]*)/([^/]*)", fragment)
         if matches:
             self.scmhash = matches.group(1)
             self.version = matches.group(2)[len(self.repo_name) + 1:-7]
@@ -63,21 +62,27 @@ class SCM(object):
 
     @property
     def tarballprefix(self):
-        assert(self.version is not None)
+        assert self.version is not None
         return "%s-%s" % (self.repo_name, self.version)
 
     @property
     def archivename(self):
-        assert(self.version is not None)
+        assert self.version is not None
         return "%s.tar.gz" % (self.tarballprefix)
 
     @property
     def extendedurl(self):
         return "%s#%s/%s" % (self.repo_url, self.scmhash, self.archivename)
 
+    def archive_commands(self, sources_dir=SOURCES_DIR):
+        raise NotImplementedError()
+
     def archive(self, sources_dir=SOURCES_DIR):
         for cmd in self.archive_commands(sources_dir):
             run(cmd)
+
+    def clone_commands(self):
+        raise NotImplementedError()
 
 
 class GitSource(SCM):
@@ -94,8 +99,8 @@ class GitSource(SCM):
                 self.pin()
 
     @staticmethod
-    def handles(ty):
-        return ty == "git"
+    def handles(scheme):
+        return scheme == "git"
 
     def clone_commands(self):
 
@@ -211,8 +216,8 @@ class HgSource(SCM):
             self.pin()
 
     @staticmethod
-    def handles(ty):
-        return ty == "hg"
+    def handles(scheme):
+        return scheme == "hg"
 
     @property
     def localpath(self):
@@ -268,8 +273,8 @@ class FileSource(SCM):
         return self.orig_url.split("/")[-1]
 
     @staticmethod
-    def handles(ty):
-        return ty in ["file", "http", "https", "ftp"]
+    def handles(scheme):
+        return scheme in ["file", "http", "https", "ftp"]
 
     def clone_commands(self):
         return []
@@ -283,19 +288,22 @@ class FileSource(SCM):
 
 class OtherSource(SCM):
     @staticmethod
-    def handles(ty):
+    def handles(_):
         return False
 
     def clone_commands(self):
+        return []
+
+    def archive_commands(self, sources_dir=SOURCES_DIR):
         return []
 
     def archive(self, sources_dir=SOURCES_DIR):
         return
 
 
-def Source(url, repomirror):
-    ty = url.split(":")[0]
+def source(url, repomirror):
+    scheme = url.split(":")[0]
     for cls in SCM.__subclasses__():  # pylint: disable=E1101
-        if cls.handles(ty):
+        if cls.handles(scheme):
             return cls(url, repomirror)
     return OtherSource(url, repomirror)

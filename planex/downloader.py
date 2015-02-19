@@ -10,12 +10,12 @@ import time
 def guess_file_type(path):
     # If we have python2.7:
     # line = subprocess.check_output(["file", path])
-    p = subprocess.Popen(["file", path], stdout=subprocess.PIPE)
-    line = p.stdout.read()
-    p.communicate()
-    if p.returncode != 0:
+    proc = subprocess.Popen(["file", path], stdout=subprocess.PIPE)
+    line = proc.stdout.read()
+    proc.communicate()
+    if proc.returncode != 0:
         print >>sys.stderr, "file %s: failed with exit code %d" % \
-            (path, p.returncode)
+            (path, proc.returncode)
         exit(1)
     # file: description
     if len(line) < (len(path) + 2):
@@ -26,15 +26,15 @@ def guess_file_type(path):
 
 
 def looks_like_an_archive(path):
-    ty = guess_file_type(path)
-    if ty.startswith("ASCII") or ty.startswith("HTML"):
+    guess = guess_file_type(path)
+    if guess.startswith("ASCII") or guess.startswith("HTML"):
         return False
-    if ty.startswith("gzip") or ty.startswith("bzip"):
+    if guess.startswith("gzip") or guess.startswith("bzip"):
         return True
-    if ty.startswith("PDF"):
+    if guess.startswith("PDF"):
         return True
     print >>sys.stderr, \
-        "%s has an unrecognised file type: %s" % (path, ty)
+        "%s has an unrecognised file type: %s" % (path, guess)
     print >>sys.stderr, \
         "Please extend %s:looks_like_an_archive to include this case."
     exit(1)
@@ -94,9 +94,9 @@ def main():
     if url.netloc == "github.com" and path[-3] == "archive":
         ext = None
         possible_exts = [".tar", ".tar.gz", ".zip", ".tbz", "tar.bz2"]
-        for e in possible_exts:
-            if url.path.endswith(e):
-                ext = e
+        for poss_ext in possible_exts:
+            if url.path.endswith(poss_ext):
+                ext = poss_ext
                 break
         if not ext:
             print >>sys.stderr, \
@@ -110,4 +110,4 @@ def main():
 
 
 if __name__ == "__main__":
-        main()
+    main()

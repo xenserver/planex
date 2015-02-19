@@ -7,7 +7,6 @@ Builds SRPMs for the tarballs or Git repositories in <component-specs-dir>.
 import argparse
 import sys
 import os.path
-import urlparse
 import re
 import glob
 import shutil
@@ -15,15 +14,15 @@ from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
                             MOCK_DIR, RPMS_DIR, SPECS_GLOB, HASHFN,
                             PLANEX_REPO_NAME)
 import planex.spec
-from planex.util import (bcolours, print_col, run, dump_cmds, rewrite_url,
+from planex.util import (bcolours, print_col, run, rewrite_url,
                          load_mock_config, get_yumbase)
-from planex import sources
+import planex.sources
 from pkg_resources import resource_string
 from planex import exceptions
 
 GITHUB_MIRROR = "~/github_mirror"
 
-manifest = {}
+MANIFEST = {}
 
 
 def name_from_spec(spec_path):
@@ -118,7 +117,7 @@ def prepare_srpm(spec_path, config):
     at spec_path.
     """
     # check the .spec file exists, or .spec.in if we're processing the spec
-    if not(os.path.exists(spec_path)):
+    if not os.path.exists(spec_path):
         print "%s doesn't exist" % spec_path
         sys.exit(1)
 
@@ -132,32 +131,32 @@ def prepare_srpm(spec_path, config):
 
     allsources = [rewrite_url(url, config.mirror_path) for url in allsources]
     for source in allsources:
-        sources.Source(source, config).archive()
+        planex.sources.source(source, config).archive()
 
 
-def get_hashes(ty):
+def get_hashes(hash_alg):
     spec_files = glob.glob(os.path.join(SPECS_DIR, "*"))
     sources_files = glob.glob(os.path.join(SOURCES_DIR, "*"))
     all_files = spec_files + sources_files
     if all_files == []:
         return []
-    if ty == "md5":
+    if hash_alg == "md5":
         cmd = ["md5sum"] + all_files
-    elif ty == "sha256":
+    elif hash_alg == "sha256":
         cmd = ["sha256sum"] + all_files
     else:
         print "Invalid hash type"
         raise Exception
-    result = run(cmd)['stdout'].strip().split('\n')
+    results = run(cmd)['stdout'].strip().split('\n')
 
-    def fix(x):
-        words = x.split()
+    def fix(output):
+        words = output.split()
         if len(words) == 2:
             fname = words[1].split("/")[-1]
             return (fname, words[0])
         else:
             return None
-    fixed = [fix(x) for x in result]
+    fixed = [fix(result) for result in results]
     return dict(fixed)
 
 
@@ -174,15 +173,15 @@ def ensure_existing_ok(hashes, spec_path):
         if result[0] == pkg_name:
             cmd = ["rpm", "--dump", "-qp", srpm]
             result = run(cmd)['stdout'].strip().split('\n')
-            ok = True
+            is_ok = True
             for line in result:
                 split = line.split()
                 fname = split[0]
                 thishash = split[3]
                 if fname not in hashes or hashes[fname] != thishash:
-                    ok = False
+                    is_ok = False
 
-            if not ok:
+            if not is_ok:
                 print_col(bcolours.WARNING,
                           "WARNING: Removing SRPM '%s' "
                           "(hash mismatch with desired)" % srpm)
@@ -253,13 +252,13 @@ def copy_specs_to_buildroot(config):
         if spec_path.endswith('.in'):
             print_col(bcolours.OKGREEN,
                       "Configuring and fetching sources for '%s'" % basename)
-            scmsources = [sources.Source(source, config) for source
+            scmsources = [planex.sources.source(source, config) for source
                           in sources_from_spec(spec_path, config)
-                          if (is_scm(source))]
+                          if is_scm(source)]
             mapping = {}
             for source in scmsources:
                 source.pin()
-                manifest[source.repo_name] = source.scmhash
+                MANIFEST[source.repo_name] = source.scmhash
                 mapping[source.orig_url] = source.extendedurl
             preprocess_spec(spec_path, SPECS_DIR, scmsources, mapping)
         else:
@@ -277,17 +276,18 @@ def build_srpms(config):
     hashes = get_hashes(HASHFN)
     print "OK"
     specs = glob.glob(SPECS_GLOB)
-    n = 0
+    num_built = 0
     for spec_path in specs:
         prepare_srpm(spec_path, config)
-        n += build_srpm(hashes, spec_path)
-    print_col(bcolours.OKGREEN, "Rebuilt %d out of %d SRPMS" % (n, len(specs)))
+        num_built += build_srpm(hashes, spec_path)
+    print_col(bcolours.OKGREEN,
+              "Rebuilt %d out of %d SRPMS" % (num_built, len(specs)))
 
 
 def dump_manifest():
     print "---------------------------------------"
     print_col(bcolours.OKGREEN, "MANIFEST")
-    sources = manifest.keys()
+    sources = MANIFEST.keys()
     sources.sort()
     for source in sources:
         basename = source.split("/")[-1]
@@ -295,7 +295,7 @@ def dump_manifest():
             basename = basename[:-4]
         if basename.endswith(".hg"):
             basename = basename[:-3]
-        print basename.rjust(40), manifest[source]
+        print basename.rjust(40), MANIFEST[source]
 
 
 def sort_mockconfig(config):
@@ -327,14 +327,14 @@ metadata_expire=0
         # Copy in all the files from config_dir
         mock_files = glob.glob(os.path.join(config_dir, 'mock', '*'))
 
-        for f in mock_files:
-            basename = f.split('/')[-1]
+        for mock_file in mock_files:
+            basename = mock_file.split('/')[-1]
             dest_fname = os.path.join(MOCK_DIR, basename)
-            print "  copying file '%s' to '%s'" % (f, dest_fname)
-            shutil.copyfile(f, dest_fname)
+            print "  copying file '%s' to '%s'" % (mock_file, dest_fname)
+            shutil.copyfile(mock_file, dest_fname)
             planex_build_root = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
             with open(dest_fname, 'w') as dst:
-                with open(f) as src:
+                with open(mock_file) as src:
                     for line in src:
                         dst.write(re.sub(r"@PLANEX_BUILD_ROOT@",
                                          planex_build_root, line))
@@ -344,23 +344,23 @@ def sort_makefile():
     name = "Makefile"
     makefile_common = resource_string(__name__, 'Makefile.common')
     firstline = "# Autogenerated by planex. Do not edit!\n"
-# If there's a makefile already there, check it was written by us
+    # If there's a makefile already there, check it was written by us
     try:
-        s = os.stat(name)
-        with open(name) as m:
-            line = m.readline()
-            if m != firstline:
+        with open(name) as makefile:
+            line = makefile.readline()
+            if line != firstline:
                 print_col(bcolours.OKGREEN,
                           "Not overwriting existing Makefile")
                 return
-    except:
+    except IOError:
+        # Makefile does not exist
         pass
 
-    with open(name, 'w') as m:
-        m.write(firstline)
-        m.write("DIST := .el6\n")
-        m.write("all : rpms\n")
-        m.write(makefile_common)
+    with open(name, 'w') as makefile:
+        makefile.write(firstline)
+        makefile.write("DIST := .el6\n")
+        makefile.write("all : rpms\n")
+        makefile.write(makefile_common)
 
 
 def main(argv):
@@ -368,7 +368,7 @@ def main(argv):
     Main function.  Process all the specfiles in the directory
     given by config_dir.
     """
-    config = parse_cmdline()
+    config = parse_cmdline(argv)
     try:
         sort_makefile()
         prepare_buildroot()
@@ -453,7 +453,7 @@ def parse_cmdline(argv=None):
 
 def _main():
     """Entry point for setuptools CLI wrapper"""
-    main(sys.argv)
+    main(sys.argv[1:])
 
 
 if __name__ == "__main__":

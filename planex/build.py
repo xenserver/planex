@@ -3,11 +3,9 @@
 # Build a bunch of SRPMs
 
 import argparse
-import getopt
 import sys
 import os
 import glob
-import subprocess
 import shutil
 import rpm
 import hashlib
@@ -16,7 +14,7 @@ import time
 from planex.globals import (BUILD_ROOT_DIR, SRPMS_DIR, RPMS_DIR, BUILD_DIR,
                             MOCK_DIR, SPECS_GLOB)
 
-from planex.util import (bcolours, print_col, run, dump_cmds)
+from planex.util import (bcolours, print_col, run)
 
 TMP_RPM_PATH = "/tmp/RPMS"
 RPM_TOP_DIR = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
@@ -147,8 +145,8 @@ def get_external_hash(external_deps):
     external_deps.sort()
     external_hash = hashlib.md5()
     for dep in external_deps:
-        with open(dep, "rb") as f:
-            for block in iter(lambda: f.read(1024), ""):
+        with open(dep, "rb") as dep_file:
+            for block in iter(lambda: dep_file.read(1024), ""):
                 external_hash.update(block)
     return external_hash.hexdigest()
 
@@ -165,7 +163,7 @@ def need_to_build(srpm_infos, external, deps, srpm):
     dst_dir = get_cache_dir(srpm_infos, external, deps, srpm)
     if not dst_dir:
         return True
-    return (not os.path.exists(dst_dir))
+    return not os.path.exists(dst_dir)
 
 
 def get_new_number(srpm, cache_dir):
@@ -228,7 +226,7 @@ def do_build(srpm, target, build_number, use_mock, xs_build_sys):
 def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
     cache_dir = get_cache_dir(srpm_infos, external, deps, srpm)
 
-    if(need_to_build(srpm_infos, external, deps, srpm)):
+    if need_to_build(srpm_infos, external, deps, srpm):
         target = extract_target(srpm_infos, srpm)
         build_number = get_new_number(srpm, cache_dir)
         print_col(bcolours.OKGREEN,
@@ -243,7 +241,7 @@ def build_srpm(srpm, srpm_infos, external, deps, use_mock, xs_build_sys):
                 for pkg in pkgs:
                     shutil.copy(pkg, cache_dir + ".tmp")
                 os.rename(cache_dir + ".tmp", cache_dir)
-            except:
+            except (OSError, IOError):
                 print bcolours.WARNING + \
                     "FAILED TO PUT BUILD RESULTS INTO CACHE"
 

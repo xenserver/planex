@@ -1,5 +1,5 @@
-from tree import Tree
-import mappkgname
+from planex.tree import Tree
+from planex import mappkgname
 import re
 import time
 
@@ -15,12 +15,12 @@ def changelog_from_spec(spec, isnative):
 
         # A Debian package's version is defined by the version of the
         # first entry in the changelog, so we must get this right.
-        # Most spec files have changelog entries starting "First Last
-        # <first@foo.com> - version" - this seems to be the standard
-        # for Red Hat spec files.
-        # Some of our changelos only have "First Last <first@foo.com>".
+        # Most spec files have changelog entries starting:
+        #   "First Last # <first@foo.com> - version"
+        # This seems to be the standard for Red Hat spec files.
+        # Some of our changelogs only have "First Last <first@foo.com>".
         # For these, we use the version from the spec.
-        match = re.match("^(.+) - (\S+)$", name)
+        match = re.match(r"^(.+) - (\S+)$", name)
         if match:
             author = match.group(1)
             version = match.group(2)

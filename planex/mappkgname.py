@@ -1,10 +1,12 @@
 #!/usr/bin/python
 
-import platform
+"""
+Map an RPM package name to the equivalent DEB.
+The MAPPING is static, but in future will be
+made dynamically by querying the package databases.
+"""
 
-"""Maps an RPM package name to the equivalent DEB.
-   The MAPPING is static, but in future will be
-   made dynamically by querying the package databases."""
+import platform
 
 TARGET_SPECIFIC_MAPPING = {
     'debian:jessie/sid': {
@@ -206,5 +208,5 @@ def map_package_name(hdr, target=None):
     return name
 
 
-def map_section(_rpm_name):
+def map_section(_):
     return "ocaml"  # XXXXX

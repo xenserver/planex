@@ -6,11 +6,11 @@ planex-depend: Generate Makefile-format dependencies from spec files
 
 import argparse
 import os
-import spec as pkg
+import planex.spec as pkg
 import platform
 import sys
 import urlparse
-import mappkgname
+from planex import mappkgname
 from planex import sources
 
 
@@ -71,7 +71,7 @@ def download_rpm_sources(spec, args):
 
         if source.scheme in ["git", "hg"]:
             print '%s: %s' % (path, spec.specpath())
-            cmds = sources.Source(url, args).archive_commands()
+            cmds = sources.source(url, args).archive_commands()
             print '\t@echo [ARCHIVER] $@'
             for cmd in cmds:
                 print '\t@%s' % (' '.join(cmd))
@@ -169,7 +169,7 @@ def main():
             with open(ignore_from) as ignore_file:
                 for name in ignore_file.readlines():
                     pkgs_to_ignore.append(name.strip())
-        except:
+        except IOError:
             pass
     for i in pkgs_to_ignore:
         print "# Will ignore: %s" % i

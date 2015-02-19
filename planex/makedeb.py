@@ -8,12 +8,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import debianchangelog
-import debiancontrol
-import debianmisc
-import debianrules
-import mappkgname
-import rpmextra
+from planex import debianchangelog
+from planex import debiancontrol
+from planex import debianmisc
+from planex import debianrules
+from planex import mappkgname
+from planex import rpmextra
 
 # BUGS:
 #   Hack to disable CFLAGS for ocaml-oclock
@@ -107,7 +107,7 @@ def rename_source(spec, pkgname, pkgversion):
         filename = origfilename[:-len(".tbz")] + ".tar.bz2"
     else:
         filename = origfilename
-    match = re.match("^(.+)(\.tar\.(gz|bz2|lzma|xz))", filename)
+    match = re.match(r"^(.+)(\.tar\.(gz|bz2|lzma|xz))", filename)
     if not match:
         print "error: could not parse filename %s" % filename
     _, ext = match.groups()[:2]
