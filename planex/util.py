@@ -50,7 +50,7 @@ def load_mock_config(cfg):
     From /usr/sbin/mock
     """
 
-    import mockbuild.util
+    import mockbuild.util  # pylint: disable=F0401
     unpriv_uid = os.getuid()
     version = 1
     pkgpythondir = mockbuild.__path__[0]
