@@ -70,7 +70,7 @@ the two SRPMs for dumb and dumber:
     dumb-0.1-1.src.rpm  dumber-0.0.1-1.src.rpm
 
 
-At this point, we can now execute 'planex-build' which will build
+At this point, we can now execute 'make' which will build
 the two RPMs. Note that because 'dumber' depends upon 'dumb', 'dumb'
 will be built first.
 
@@ -84,7 +84,7 @@ planex just requires that you create the directory:
     mkdir rpmcache
 
 
-Run planex-build again, and then again. The last time it is run,
+Run make again, and then again. The last time it is run,
 it will just copy files from the cache rather than actually build them.
 
 Make a change
@@ -104,7 +104,7 @@ then build:
 
 
     planex-configure --config-dir=<planex-repository-location>/planex-demo
-    planex-build
+    make
 
 
 

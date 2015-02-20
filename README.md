@@ -64,10 +64,12 @@ sudo python setup.py install
 This will install the planex binaries:
 
 * `planex-configure`
-* `planex-build`
 * `planex-clone`
-* `planex-specdep`
+* `planex-cache`
+* `planex-depend`
 * and a few others
+
+It will also install a generic Makefile containing package build rules for Debian- and RPM-based systems. 
 
 ## Testing
 
