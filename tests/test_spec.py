@@ -24,7 +24,7 @@ class RpmTests(unittest.TestCase):
         # 'setUp' breaks Pylint's naming rules
         # pylint: disable=C0103
         self.spec = planex.spec.Spec("tests/data/ocaml-cohttp.spec",
-                                     dist=".el6")
+                                     dist=".el6", topdir=".")
 
     def test_good_filename_preprocessor(self):
         planex.spec.Spec("tests/data/ocaml-cohttp.spec.in")
@@ -116,7 +116,7 @@ class DebTests(unittest.TestCase):
             return mapping[name]
 
         self.spec = planex.spec.Spec("./tests/data/ocaml-cohttp.spec",
-                                     target="deb",
+                                     target="deb", topdir=".",
                                      map_name=map_rpm_to_deb)
 
     def test_name(self):
