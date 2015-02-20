@@ -7,3 +7,4 @@ before_install:
 script: 
   - pep8 planex tests
   - pylint planex
+  - nosetests
