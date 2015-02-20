@@ -37,7 +37,6 @@ and caching.
 %{_bindir}/planex-cache
 %{_bindir}/planex-clone
 %{_bindir}/planex-configure
-%{_bindir}/planex-downloader
 %{_bindir}/planex-fetch
 %{_bindir}/planex-makedeb
 %{_bindir}/planex-depend
