@@ -32,12 +32,11 @@ class SCM(object):
 
         self.repos_path = absolutize(config.repos_path)
 
-        def strip_ext(ext):
-            if self.repo_name.endswith(ext):
-                self.repo_name = self.repo_name[:-len(ext)]
+        def remove_extensions(path, exts):
+            result, ext = os.path.splitext(path)
+            return result if ext in exts else path
 
-        strip_ext(".git")
-        strip_ext(".hg")
+        self.repo_name = remove_extensions(self.repo_name, [".git", ".hg"])
 
         self.orig_url = url
         self.scheme = scheme
