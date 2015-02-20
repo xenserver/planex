@@ -6,4 +6,4 @@ before_install:
   - sudo apt-get -q -y install yum python-rpm
 script: 
   - pep8 planex tests
-  - pylint -rn -d missing-docstring -d fixme planex
+  - pylint planex
