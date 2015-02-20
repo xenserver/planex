@@ -14,7 +14,7 @@ from planex.globals import (BUILD_ROOT_DIR, SPECS_DIR, SOURCES_DIR, SRPMS_DIR,
                             MOCK_DIR, RPMS_DIR, SPECS_GLOB, HASHFN,
                             PLANEX_REPO_NAME)
 import planex.spec
-from planex.util import (bcolours, print_col, run, rewrite_url,
+from planex.util import (BColours, print_col, run, rewrite_url,
                          load_mock_config, get_yumbase)
 import planex.sources
 from pkg_resources import resource_string
@@ -182,7 +182,7 @@ def ensure_existing_ok(hashes, spec_path):
                     is_ok = False
 
             if not is_ok:
-                print_col(bcolours.WARNING,
+                print_col(BColours.WARNING,
                           "WARNING: Removing SRPM '%s' "
                           "(hash mismatch with desired)" % srpm)
                 os.remove(srpm)
@@ -249,7 +249,7 @@ def copy_specs_to_buildroot(config):
     for spec_path in specs + spec_ins:
         basename = os.path.basename(spec_path)
         if spec_path.endswith('.in'):
-            print_col(bcolours.OKGREEN,
+            print_col(BColours.OKGREEN,
                       "Configuring and fetching sources for '%s'" % basename)
             scmsources = [planex.sources.source(source, config) for source
                           in sources_from_spec(spec_path, config)
@@ -261,13 +261,13 @@ def copy_specs_to_buildroot(config):
                 mapping[source.orig_url] = source.extendedurl
             preprocess_spec(spec_path, SPECS_DIR, scmsources, mapping)
         else:
-            print_col(bcolours.OKGREEN, "Fetching sources for '%s'" % basename)
+            print_col(BColours.OKGREEN, "Fetching sources for '%s'" % basename)
             shutil.copy(spec_path, SPECS_DIR)
 
 
 def build_srpms(config):
     """Build SRPMs for all SPECs"""
-    print_col(bcolours.OKGREEN,
+    print_col(BColours.OKGREEN,
               "Building/checking SRPMS for all files in SPECSDIR")
     print "  Getting %s hashes for source to check against existing \
         SRPMS..." % HASHFN,
@@ -279,13 +279,13 @@ def build_srpms(config):
     for spec_path in specs:
         prepare_srpm(spec_path, config)
         num_built += build_srpm(hashes, spec_path)
-    print_col(bcolours.OKGREEN,
+    print_col(BColours.OKGREEN,
               "Rebuilt %d out of %d SRPMS" % (num_built, len(specs)))
 
 
 def dump_manifest():
     print "---------------------------------------"
-    print_col(bcolours.OKGREEN, "MANIFEST")
+    print_col(BColours.OKGREEN, "MANIFEST")
     sources = MANIFEST.keys()
     sources.sort()
     for source in sources:
@@ -300,14 +300,14 @@ def dump_manifest():
 def sort_mockconfig(config):
     config_dir = config.config_dir
     if not os.path.exists(MOCK_DIR):
-        print_col(bcolours.OKGREEN,
+        print_col(BColours.OKGREEN,
                   "Creating mock configuration for current working directory")
 
         yum_config = load_mock_config(os.path.join(config_dir,
                                                    'mock', 'default.cfg'))
         yumbase = get_yumbase(yum_config)
         if yumbase.repos.findRepos(PLANEX_REPO_NAME) == []:
-            print_col(bcolours.FAIL, "Planex repository not found")
+            print_col(BColours.FAIL, "Planex repository not found")
             print """
 Please add a repository stanza similar to:
 
@@ -347,7 +347,7 @@ def sort_makefile():
         with open(name) as makefile:
             line = makefile.readline()
             if line != firstline:
-                print_col(bcolours.OKGREEN,
+                print_col(BColours.OKGREEN,
                           "Not overwriting existing Makefile")
                 return
     except IOError:
@@ -377,7 +377,7 @@ def main(argv):
             build_srpms(config)
         dump_manifest()
     except exceptions.NoRepository:
-        print_col(bcolours.FAIL,
+        print_col(BColours.FAIL,
                   "No repository found: have you run 'planex-clone'?")
         sys.exit(1)
 
