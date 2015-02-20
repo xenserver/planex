@@ -43,19 +43,12 @@ def download_rpm_sources(spec, args):
     """
     Generate rules to download sources
     """
-    print "# spec.source_urls: " + ','.join(spec.source_urls())
-    print "# spec.source_paths: " + ','.join(spec.source_paths())
     for (url, path) in zip(spec.source_urls(), spec.source_paths()):
         source = urlparse.urlparse(url)
-
-        print "# source.scheme: " + source.scheme
-        print "# url: " + url
 
         # Source comes from a remote HTTP server
         if source.scheme in ["http", "https"]:
             print '%s: %s' % (path, spec.specpath())
-            print '\t@echo [DOWNLOADER] $@'
-            print '\t@planex-downloader %s %s' % (url, path)
 
         # Source comes from a local file or directory
         if source.scheme == "file":
