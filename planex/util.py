@@ -86,7 +86,7 @@ def run(cmd, check=True, env=None, inputtext=None):
     """
     if DUMP_CMDS:
         print_col(BColours.WARNING, "CMD: " +
-                  (" ".join(map(pipes.quote, cmd))))
+                  (" ".join([pipes.quote(word) for word in cmd])))
 
     if env is None:
         env = os.environ.copy()
@@ -97,7 +97,8 @@ def run(cmd, check=True, env=None, inputtext=None):
 
     if check and proc.returncode != 0:
         print_col(BColours.FAIL, "ERROR: command failed")
-        print "Command was:\n\n  %s\n" % (" ".join(map(pipes.quote, cmd)))
+        print "Command was:\n\n  %s\n" % (" ".join([pipes.quote(word)
+                                                    for word in cmd]))
         print "stdout"
         print "------"
         print stdout
