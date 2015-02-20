@@ -247,7 +247,6 @@ def copy_specs_to_buildroot(config):
     spec_ins = glob.glob(os.path.join(config_dir, config.specs_path,
                                       "*.spec.in"))
     for spec_path in specs + spec_ins:
-        # check_spec_name(spec_path)
         basename = os.path.basename(spec_path)
         if spec_path.endswith('.in'):
             print_col(bcolours.OKGREEN,
