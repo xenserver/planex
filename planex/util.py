@@ -13,7 +13,7 @@ import yum
 DUMP_CMDS = True
 
 
-class bcolours:
+class BColours(object):
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -24,7 +24,7 @@ class bcolours:
 
 def print_col(col, msg):
     if sys.stdout.isatty():
-        print col, msg, bcolours.ENDC
+        print col, msg, BColours.ENDC
     else:
         print msg
     sys.stdout.flush()
@@ -50,7 +50,7 @@ def load_mock_config(cfg):
     From /usr/sbin/mock
     """
 
-    import mockbuild.util
+    import mockbuild.util  # pylint: disable=F0401
     unpriv_uid = os.getuid()
     version = 1
     pkgpythondir = mockbuild.__path__[0]
@@ -85,8 +85,8 @@ def run(cmd, check=True, env=None, inputtext=None):
     code (rc)
     """
     if DUMP_CMDS:
-        print_col(bcolours.WARNING, "CMD: " +
-                  (" ".join(map(pipes.quote, cmd))))
+        print_col(BColours.WARNING, "CMD: " +
+                  (" ".join([pipes.quote(word) for word in cmd])))
 
     if env is None:
         env = os.environ.copy()
@@ -96,8 +96,9 @@ def run(cmd, check=True, env=None, inputtext=None):
     [stdout, stderr] = proc.communicate(inputtext)
 
     if check and proc.returncode != 0:
-        print_col(bcolours.FAIL, "ERROR: command failed")
-        print "Command was:\n\n  %s\n" % (" ".join(map(pipes.quote, cmd)))
+        print_col(BColours.FAIL, "ERROR: command failed")
+        print "Command was:\n\n  %s\n" % (" ".join([pipes.quote(word)
+                                                    for word in cmd]))
         print "stdout"
         print "------"
         print stdout
