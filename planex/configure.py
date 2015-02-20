@@ -80,7 +80,7 @@ def preprocess_spec(spec_in_path, spec_out_path, scmsources, source_mapping):
     output_filename = os.path.basename(spec_in_path)[:-len(".in")]
     spec_out = open(os.path.join(spec_out_path, output_filename), "w")
 
-    spec_basename = spec_in_path.split("/")[-1]
+    spec_basename = os.path.basename(spec_in_path)
 
     subs = {}
 
@@ -248,7 +248,7 @@ def copy_specs_to_buildroot(config):
                                       "*.spec.in"))
     for spec_path in specs + spec_ins:
         # check_spec_name(spec_path)
-        basename = spec_path.split("/")[-1]
+        basename = os.path.basename(spec_path)
         if spec_path.endswith('.in'):
             print_col(bcolours.OKGREEN,
                       "Configuring and fetching sources for '%s'" % basename)
@@ -290,7 +290,7 @@ def dump_manifest():
     sources = MANIFEST.keys()
     sources.sort()
     for source in sources:
-        basename = source.split("/")[-1]
+        basename = os.path.basename(source)
         if basename.endswith(".git"):
             basename = basename[:-4]
         if basename.endswith(".hg"):
@@ -328,7 +328,7 @@ metadata_expire=0
         mock_files = glob.glob(os.path.join(config_dir, 'mock', '*'))
 
         for mock_file in mock_files:
-            basename = mock_file.split('/')[-1]
+            basename = os.path.basename(mock_file)
             dest_fname = os.path.join(MOCK_DIR, basename)
             print "  copying file '%s' to '%s'" % (mock_file, dest_fname)
             shutil.copyfile(mock_file, dest_fname)

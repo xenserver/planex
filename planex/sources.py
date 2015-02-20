@@ -17,7 +17,7 @@ class SCM(object):
 
         (scheme, host, path, _, _, fragment) = urlparse.urlparse(url)
         repo_url = "%s://%s%s" % (scheme, host, path)  # Strip off fragment
-        self.repo_name = path.split('/')[-1]
+        self.repo_name = os.path.basename(path)
 
         def absolutize(path):
             if os.path.isabs(path):
@@ -302,7 +302,7 @@ class OtherSource(SCM):
 
 
 def source(url, repomirror):
-    scheme = url.split(":")[0]
+    scheme = urlparse.urlparse(url).scheme
     for cls in SCM.__subclasses__():  # pylint: disable=E1101
         if cls.handles(scheme):
             return cls(url, repomirror)

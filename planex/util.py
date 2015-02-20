@@ -39,7 +39,7 @@ def rewrite_url(url, destination=None):
         return url
 
     else:
-        basename = path.split("/")[-1]
+        basename = os.path.basename(path)
         return destination + basename + fragment
 
 
