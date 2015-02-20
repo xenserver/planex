@@ -331,7 +331,6 @@ metadata_expire=0
             basename = os.path.basename(mock_file)
             dest_fname = os.path.join(MOCK_DIR, basename)
             print "  copying file '%s' to '%s'" % (mock_file, dest_fname)
-            shutil.copyfile(mock_file, dest_fname)
             planex_build_root = os.path.join(os.getcwd(), BUILD_ROOT_DIR)
             with open(dest_fname, 'w') as dst:
                 with open(mock_file) as src:
