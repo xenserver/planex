@@ -12,7 +12,6 @@ setup(name='planex',
           'console_scripts': [
               'planex-init = planex.init:main',
               'planex-configure = planex.configure:_main',
-              'planex-build = planex.build:main',
               'planex-clone = planex.clone:main',
               'planex-cache = planex.cache:_main',
               'planex-downloader = planex.downloader:main',

@@ -34,7 +34,6 @@ and caching.
 %doc README.md
 %doc LICENSE
 %doc CHANGES
-%{_bindir}/planex-build
 %{_bindir}/planex-cache
 %{_bindir}/planex-clone
 %{_bindir}/planex-configure
