@@ -3,24 +3,38 @@
 #   run 'nosetests' in the root of the repository
 
 import unittest
-import pkg
+import platform
+import planex.spec
+
+
+def get_rpm_machine():
+    if platform.machine() == 'x86_64':
+        return 'x86_64'
+    return 'i386'
+
+
+def get_deb_machine():
+    if platform.machine() == 'x86_64':
+        return 'amd64'
+    return 'i386'
 
 
 class RpmTests(unittest.TestCase):
     def setUp(self):
         # 'setUp' breaks Pylint's naming rules
         # pylint: disable=C0103
-        self.spec = pkg.Spec("tests/data/ocaml-cohttp.spec", dist=".el6")
+        self.spec = planex.spec.Spec("tests/data/ocaml-cohttp.spec",
+                                     dist=".el6", topdir=".")
 
     def test_good_filename_preprocessor(self):
-        pkg.Spec("tests/data/ocaml-cohttp.spec.in")
+        planex.spec.Spec("tests/data/ocaml-cohttp.spec.in")
 
     def test_bad_filename(self):
-        self.assertRaises(pkg.SpecNameMismatch, pkg.Spec,
+        self.assertRaises(planex.spec.SpecNameMismatch, planex.spec.Spec,
                           "tests/data/bad-name.spec")
 
     def test_bad_filename_preprocessor(self):
-        self.assertRaises(pkg.SpecNameMismatch, pkg.Spec,
+        self.assertRaises(planex.spec.SpecNameMismatch, planex.spec.Spec,
                           "tests/data/bad-name.spec.in")
 
     def test_name(self):
@@ -40,17 +54,17 @@ class RpmTests(unittest.TestCase):
     def test_source_urls(self):
         self.assertEqual(
             self.spec.source_urls(),
-            ["ocaml-cohttp-init",
+            ["https://github.com/mirage/ocaml-cohttp/archive/"
+             "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
              "file:///code/ocaml-cohttp-extra#ocaml-cohttp-extra-0.9.8.tar.gz",
-             "https://github.com/mirage/ocaml-cohttp/archive/"
-             "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz"])
+             "ocaml-cohttp-init"])
 
     def test_source_paths(self):
         self.assertEqual(
             self.spec.source_paths(),
-            ["./SOURCES/ocaml-cohttp-init",
+            ["./SOURCES/ocaml-cohttp-0.9.8.tar.gz",
              "./SOURCES/ocaml-cohttp-extra-0.9.8.tar.gz",
-             "./SOURCES/ocaml-cohttp-0.9.8.tar.gz"])
+             "./SOURCES/ocaml-cohttp-init"])
 
     def test_buildrequires(self):
         self.assertEqual(
@@ -67,11 +81,18 @@ class RpmTests(unittest.TestCase):
             "./SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm")
 
     def test_binary_package_paths(self):
+        machine = get_rpm_machine()
+
         self.assertEqual(
             sorted(self.spec.binary_package_paths()),
-            sorted(["./RPMS/x86_64/ocaml-cohttp-0.9.8-1.el6.x86_64.rpm",
-                    "./RPMS/x86_64/" +
-                    "ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm"]))
+            [
+                path.format(machine=machine) for path in
+                sorted([
+                    "./RPMS/{machine}/ocaml-cohttp-0.9.8-1.el6.{machine}.rpm",
+                    "./RPMS/{machine}/" +
+                    "ocaml-cohttp-devel-0.9.8-1.el6.{machine}.rpm"])
+            ]
+        )
 
 
 class DebTests(unittest.TestCase):
@@ -94,8 +115,9 @@ class DebTests(unittest.TestCase):
                        "openssl-devel": ["libssl-dev"]}
             return mapping[name]
 
-        self.spec = pkg.Spec("./tests/data/ocaml-cohttp.spec", target="deb",
-                             map_name=map_rpm_to_deb)
+        self.spec = planex.spec.Spec("./tests/data/ocaml-cohttp.spec",
+                                     target="deb", topdir=".",
+                                     map_name=map_rpm_to_deb)
 
     def test_name(self):
         self.assertEqual(self.spec.name(), "ocaml-cohttp")
@@ -114,17 +136,17 @@ class DebTests(unittest.TestCase):
     def test_source_urls(self):
         self.assertEqual(
             self.spec.source_urls(),
-            ["ocaml-cohttp-init",
+            ["https://github.com/mirage/ocaml-cohttp/archive/" +
+             "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
              "file:///code/ocaml-cohttp-extra#ocaml-cohttp-extra-0.9.8.tar.gz",
-             "https://github.com/mirage/ocaml-cohttp/archive/" +
-             "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz"])
+             "ocaml-cohttp-init"])
 
     def test_source_paths(self):
         self.assertEqual(
             self.spec.source_paths(),
-            ["./SOURCES/ocaml-cohttp-init",
+            ["./SOURCES/ocaml-cohttp-0.9.8.tar.gz",
              "./SOURCES/ocaml-cohttp-extra-0.9.8.tar.gz",
-             "./SOURCES/ocaml-cohttp-0.9.8.tar.gz"])
+             "./SOURCES/ocaml-cohttp-init"])
 
     def test_buildrequires(self):
         self.assertEqual(
@@ -142,7 +164,10 @@ class DebTests(unittest.TestCase):
             "./SRPMS/libcohttp-ocaml_0.9.8-1.dsc")
 
     def test_binary_package_paths(self):
+        machine = get_deb_machine()
+
         self.assertEqual(
             sorted(self.spec.binary_package_paths()),
-            sorted(["./RPMS/libcohttp-ocaml_0.9.8-1_amd64.deb",
-                    "./RPMS/libcohttp-ocaml-dev_0.9.8-1_amd64.deb"]))
+            [path.format(machine=machine) for path
+             in sorted(["./RPMS/libcohttp-ocaml_0.9.8-1_{machine}.deb",
+                        "./RPMS/libcohttp-ocaml-dev_0.9.8-1_{machine}.deb"])])

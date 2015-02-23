@@ -24,7 +24,7 @@ class BasicTests(unittest.TestCase):
     def setUp(self):
         # 'setUp' breaks Pylint's naming rules
         # pylint: disable=C0103
-        self.config = configure.parse_cmdline(['config_dir'])
+        self.config = configure.parse_cmdline(['--config_dir', 'blah'])
         self.cohttp_url = "https://github.com/mirage/ocaml-cohttp" \
             "/archive/ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz"
 
@@ -47,7 +47,8 @@ class BasicTests(unittest.TestCase):
             pass
 
     def test_sources_from_spec(self):
-        res = configure.sources_from_spec(path_to("ocaml-cohttp.spec"))
+        res = configure.sources_from_spec(path_to("ocaml-cohttp.spec"),
+                                          self.config)
         self.assertEqual(res,
                          [self.cohttp_url,
                           "file:///code/ocaml-cohttp-extra#" +

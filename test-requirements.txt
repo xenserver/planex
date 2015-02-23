@@ -3,4 +3,3 @@ coverage
 nose
 mock
 argparse
-fs

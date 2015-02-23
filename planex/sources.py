@@ -43,7 +43,7 @@ class SCM(object):
         self.repo_url = repo_url
         self.fragment = fragment
 
-        matches = re.search(r"([0-9a-f]*)/([^/]*)", fragment)
+        matches = re.search(r"^([0-9a-f]*)/([^/]*)$", fragment)
         if matches:
             self.scmhash = matches.group(1)
             self.version = matches.group(2)[len(self.repo_name) + 1:-7]
@@ -196,6 +196,9 @@ class GitSource(SCM):
     def archive_commands(self, sources_dir=SOURCES_DIR):
         # If it already exists, we're done.
         dotgitdir = os.path.join(self.localpath, ".git")
+
+        if os.path.exists(os.path.join(sources_dir, self.archivename)):
+            return []
 
         # archive name always ends in .gz - strip it off
         tarball_name = self.archivename[:-3]
