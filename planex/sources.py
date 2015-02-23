@@ -197,6 +197,9 @@ class GitSource(SCM):
         # If it already exists, we're done.
         dotgitdir = os.path.join(self.localpath, ".git")
 
+        if os.path.exists(os.path.join(sources_dir, self.archivename)):
+            return []
+
         # archive name always ends in .gz - strip it off
         tarball_name = self.archivename[:-3]
 
