@@ -10,6 +10,7 @@ import planex.spec as pkg
 import platform
 import sys
 import urlparse
+import glob
 from planex import mappkgname
 from planex import sources
 
@@ -118,6 +119,8 @@ def parse_cmdline():
         "-I", "--ignore-from", metavar="FILE", action="append", default=[],
         help="file of package names to be ignored")
     parser.add_argument(
+        "-P", "--pins-dir", help="Directory containing pin overlays")
+    parser.add_argument(
         "-d", "--dist", metavar="DIST", default="",
         help="distribution tag (used in RPM filenames)")
     parser.add_argument(
@@ -155,6 +158,20 @@ def main():
     for i in pkgs_to_ignore:
         print "# Will ignore: %s" % i
 
+    pins = {}
+    if args.pins_dir:
+        pins_glob = os.path.join(args.pins_dir, "*.spec")
+        pin_paths = glob.glob(pins_glob)
+        if pin_paths and args.packaging == "deb":
+            sys.stderr.write("error: Pinning not supported for debian target")
+            sys.exit(1)
+        for pin_path in pin_paths:
+            spec = pkg.Spec(pin_path, target="rpm", dist=args.dist,
+                            check_package_name=check_package_names,
+                            topdir=args.topdir)
+            spec.specpath = lambda: pin_path
+            pins[os.path.basename(pin_path)] = spec
+
     for spec_path in args.specs:
         try:
             if args.packaging == "deb":
@@ -176,7 +193,13 @@ def main():
             if pkg_name in pkgs_to_ignore:
                 continue
 
-            specs[os.path.basename(spec_path)] = spec
+            spec_name = os.path.basename(spec_path)
+            if spec_name in pins:
+                print "# Pinning '%s' to '%s'" % (pkg_name,
+                                                  pins[spec_name].specpath())
+                specs[spec_name] = pins[spec_name]
+            else:
+                specs[spec_name] = spec
 
         except pkg.SpecNameMismatch as exn:
             sys.stderr.write("error: %s\n" % exn.message)
