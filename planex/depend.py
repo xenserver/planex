@@ -46,21 +46,9 @@ def download_rpm_sources(spec, args):
     for (url, path) in zip(spec.source_urls(), spec.source_paths()):
         source = urlparse.urlparse(url)
 
-        # Source comes from a remote HTTP server
-        if source.scheme in ["http", "https"]:
+        # Source can be fetched by curl
+        if source.scheme in ["http", "https", "file"]:
             print '%s: %s' % (path, spec.specpath())
-
-        # Source comes from a local file or directory
-        if source.scheme == "file":
-            print '%s: %s $(shell find %s)' % (
-                path, spec.specpath(), source.path)
-
-            # Assume that the directory name is already what's expected by the
-            # spec file, and prefix it with the version number in the tarball
-            print '\t@echo [GIT] $@'
-            dirname = "%s-%s" % (os.path.basename(source.path), spec.version())
-            print '\t@git --git-dir=%s/.git '\
-                'archive --prefix %s/ -o $@ HEAD' % (source.path, dirname)
 
         if source.scheme in ["git", "hg"]:
             print '%s: %s' % (path, spec.specpath())
