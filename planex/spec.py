@@ -145,12 +145,12 @@ class Spec(object):
             url = urlparse.urlparse(source)
 
             # Source comes from a remote HTTP server
-            if url.scheme in ["http", "https"]:
+            if url.scheme in ["http", "https", "file"]:
                 sources.append(os.path.join(sourcedir(),
                                             os.path.basename(url.path)))
 
             # Source comes from a local file or directory
-            if url.scheme in ["file", "git", "hg"]:
+            if url.scheme in ["git", "hg"]:
                 sources.append(
                     os.path.join(sourcedir(), os.path.basename(url.fragment)))
 
