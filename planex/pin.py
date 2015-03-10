@@ -62,8 +62,11 @@ def pinned_spec_of_spec(spec_path, pin_version, source_path):
         match = re.match(r'^([Ss]ource\d*:\s+)(.+)\n', line)
         if match:
             line = match.group(1) + source_url + "\n"
-        # replace the use of the version macro in the spec contents
-        line = line.replace("%{version}", pin_version)
+        # replace the version
+        match = re.match(r'^([Vv]ersion\d*:\s+)(.+)\n', line)
+        if match:
+            print "replacing %s with %s" % (match.group(2), pin_version)
+            line = match.group(1) + pin_version + "\n"
         pinned_spec.append(line)
 
     return "".join(pinned_spec)
