@@ -73,18 +73,13 @@ def fetch_http(url, filename, retries):
                 raise
 
 
-def url_for_source(spec, source):
+def all_sources(spec):
     """
-    Find the URL corresponding to source in the spec file
+    Get all source URLs defined in the spec file
     """
-    spec = planex.spec.Spec(spec)
-    source_basename = os.path.basename(source)
-
-    for path, url in zip(spec.source_paths(), spec.source_urls()):
-        if path.endswith(source_basename):
-            return urlparse.urlparse(url)
-
-    raise KeyError(source_basename)
+    spec = planex.spec.Spec(spec, topdir=".")
+    urls = [urlparse.urlparse(url) for url in spec.source_urls()]
+    return zip(spec.source_paths(), urls)
 
 
 def parse_args_or_exit(argv=None):
@@ -93,7 +88,6 @@ def parse_args_or_exit(argv=None):
     """
     parser = argparse.ArgumentParser(description='Download package sources')
     parser.add_argument('spec', help='RPM Spec file')
-    parser.add_argument('source', help='Source file')
     parser.add_argument('--verbose', '-v', help='Be verbose',
                         action='store_true')
     parser.add_argument('--retries', '-r',
@@ -111,33 +105,32 @@ def main(argv):
     if args.verbose:
         logging.basicConfig(format='%(message)s', level=logging.INFO)
 
-    try:
-        url = url_for_source(args.spec, args.source)
-    except KeyError as exn:
-        # Source file doesn't exist in the spec
-        sys.exit("%s: No source corresponding to %s" % (sys.argv[0], exn))
+    for path, url in all_sources(args.spec):
+        if url.scheme in ["http", "https", "file"]:
+            try:
+                fetch_http(url, path, args.retries + 1)
 
-    if url.scheme in ["http", "https", "file"]:
-        try:
-            fetch_http(url, args.source, args.retries + 1)
-        except pycurl.error as exn:
-            # Curl download failed
-            sys.exit("%s: Failed to fetch %s: %s" %
-                     (sys.argv[0], url, exn.args[1]))
-        except IOError as exn:
-            # IO error saving source file
-            sys.exit("%s: %s: %s" % (sys.argv[0], exn.strerror, exn.filename))
+            except pycurl.error as exn:
+                # Curl download failed
+                sys.exit("%s: Failed to fetch %s: %s" %
+                         (sys.argv[0], urlparse.urlunparse(url), exn.args[1]))
 
-    elif url.scheme == '' and os.path.dirname(url.path) == '' and \
-            os.path.exists(args.source):
-        # Source file is pre-populated in the SOURCES directory (part of the
-        # repository - probably a patch or local include).   Update its
-        # timestamp to placate make, but don't try to download it.
-        logging.info("Refreshing timestamp for local source %s", args.source)
-        os.utime(args.source, None)
+            except IOError as exn:
+                # IO error saving source file
+                sys.exit("%s: %s: %s" %
+                         (sys.argv[0], exn.strerror, exn.filename))
 
-    else:
-        sys.exit("%s: Unimplemented protocol: %s" % (sys.argv[0], url.scheme))
+        elif url.scheme == '' and os.path.dirname(url.path) == '' and \
+                os.path.exists(path):
+            # Source file is pre-populated in the SOURCES directory (part of
+            # the repository - probably a patch or local include).   Update
+            # its timestamp to placate make, but don't try to download it.
+            logging.info("Refreshing timestamp for local source %s", path)
+            os.utime(path, None)
+
+        else:
+            sys.exit("%s: Unimplemented protocol: %s" %
+                     (sys.argv[0], url.scheme))
 
 
 def _main():
