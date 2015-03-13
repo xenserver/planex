@@ -8,6 +8,7 @@ import planex.spec
 import pycurl
 import sys
 import logging
+import pkg_resources
 
 
 def curl_get(url_string, out_file):
@@ -17,6 +18,8 @@ def curl_get(url_string, out_file):
     curl = pycurl.Curl()
 
     # General options
+    useragent = "planex-fetch/%s" % pkg_resources.require("planex")[0].version
+    curl.setopt(pycurl.USERAGENT, useragent)
     curl.setopt(pycurl.FOLLOWLOCATION, 1)
     curl.setopt(pycurl.MAXREDIRS, 5)
     curl.setopt(pycurl.CONNECTTIMEOUT, 30)
