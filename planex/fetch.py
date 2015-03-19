@@ -21,7 +21,7 @@ def curl_get(url, out_file):
     # General options
     useragent = "planex-fetch/%s" % pkg_resources.require("planex")[0].version
     curl.setopt(pycurl.USERAGENT, useragent)
-    curl.setopt(pycurl.FOLLOWLOCATION, 1)
+    curl.setopt(pycurl.FOLLOWLOCATION, True)
     curl.setopt(pycurl.MAXREDIRS, 5)
     curl.setopt(pycurl.CONNECTTIMEOUT, 30)
     curl.setopt(pycurl.TIMEOUT, 300)
