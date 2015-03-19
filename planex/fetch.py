@@ -12,7 +12,7 @@ import logging
 import pkg_resources
 
 
-def curl_get(url, out_file):
+def curl_get(url_string, out_file):
     """
     Fetch the contents of url and store to file represented by out_file
     """
@@ -34,7 +34,6 @@ def curl_get(url, out_file):
     # If we use threads, we should also set NOSIGNAL and ignore SIGPIPE
 
     # Set URL to fetch and file to which to write the response
-    url_string = urlparse.urlunparse(url)
     curl.setopt(pycurl.URL, url_string)
     curl.setopt(pycurl.WRITEDATA, out_file)
 
@@ -60,11 +59,12 @@ def fetch_http(url, filename, retries):
     while True:
         retries -= 1
         try:
-            logging.info("Fetching %s to %s", url, filename)
+            url_string = urlparse.urlunparse(url)
+            logging.info("Fetching %s to %s", url_string, filename)
 
             make_dir(os.path.dirname(filename))
             with open(filename, "wb") as out_file:
-                curl_get(url, out_file)
+                curl_get(url_string, out_file)
                 return
 
         except pycurl.error as exn:
