@@ -7,6 +7,9 @@ import os
 import sys
 import re
 import logging
+import tempfile
+import hashlib
+import shutil
 from planex.util import run
 
 
@@ -72,6 +75,13 @@ def pinned_spec_of_spec(spec_path, pin_version, source_path):
     return "".join(pinned_spec)
 
 
+def hash_of_file(path):
+    md5sum = hashlib.md5()
+    with open(path, 'r') as in_f:
+        md5sum.update(in_f.read())
+    return md5sum.digest()
+
+
 def parse_args_or_exit(argv=None):
     """
     Parse command line options
@@ -81,6 +91,8 @@ def parse_args_or_exit(argv=None):
     parser.add_argument('spec', help='RPM Spec file')
     parser.add_argument('pin', help='Specific version, local path or git url')
     parser.add_argument('output_dir', help='Path to write output spec file')
+    parser.add_argument('--remove-noop', help="Don't copy archive if unchanged",
+                        action='store_true')
     parser.add_argument('--remove', '-r', help='Remove pin for this package',
                         action='store_true')
     parser.add_argument('--verbose', '-v', help='Be verbose',
@@ -108,12 +120,21 @@ def main(argv):
     repo, _, hash = args.pin.partition('#')
     pin_version = describe(repo, hash) if hash else describe(repo)
 
-    source_path = archive(repo, hash, pin_version, args.output_dir)
+    tmpdir = tempfile.mkdtemp(prefix='planex-pin')
+    tmp = archive(repo, hash, pin_version, tmpdir)
+    tar_path = os.path.join(args.output_dir, os.path.basename(tmp))
+    if (args.remove_noop and os.path.exists(tar_path) and
+            hash_of_file(tmp) == hash_of_file(tar_path)):
+        print "Not copying"
+    else:
+        shutil.copy(tmp, tar_path)
+        spec_filename = os.path.basename(args.spec)
+        output_spec_path = os.path.join(args.output_dir, spec_filename)
+        with open(output_spec_path, 'w') as f:
+            f.write(pinned_spec_of_spec(args.spec, pin_version, tar_path))
 
-    spec_filename = os.path.basename(args.spec)
-    output_spec_path = os.path.join(args.output_dir, spec_filename)
-    with open(output_spec_path, 'w') as f:
-        f.write(pinned_spec_of_spec(args.spec, pin_version, source_path))
+    shutil.rmtree(tmpdir)
+
 
 
 def _main():
