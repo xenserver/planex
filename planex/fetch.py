@@ -5,15 +5,16 @@ planex-fetch: Download sources referred to by a spec file
 import argparse
 import os
 import planex.spec
+import urlparse
 import pycurl
 import sys
 import logging
 import pkg_resources
 
 
-def curl_get(url_string, out_file):
+def curl_get(url, out_file):
     """
-    Fetch the contents of url_string and store to file represented by out_file
+    Fetch the contents of url and store to file represented by out_file
     """
     curl = pycurl.Curl()
 
@@ -33,6 +34,7 @@ def curl_get(url_string, out_file):
     # If we use threads, we should also set NOSIGNAL and ignore SIGPIPE
 
     # Set URL to fetch and file to which to write the response
+    url_string = urlparse.urlunparse(url)
     curl.setopt(pycurl.URL, url_string)
     curl.setopt(pycurl.WRITEDATA, out_file)
 
@@ -80,7 +82,7 @@ def url_for_source(spec, source):
 
     for path, url in zip(spec.source_paths(), spec.source_urls()):
         if path.endswith(source_basename):
-            return url
+            return urlparse.urlparse(url)
 
     raise KeyError(source_basename)
 
@@ -111,20 +113,22 @@ def main(argv):
 
     try:
         url = url_for_source(args.spec, args.source)
-        fetch_http(url, args.source, args.retries + 1)
-
-    except pycurl.error as exn:
-        # Curl download failed
-        sys.exit("%s: Failed to fetch %s: %s" %
-                 (sys.argv[0], url, exn.args[1]))
-
     except KeyError as exn:
         # Source file doesn't exist in the spec
         sys.exit("%s: No source corresponding to %s" % (sys.argv[0], exn))
 
-    except IOError as exn:
-        # IO error saving source file
-        sys.exit("%s: %s: %s" % (sys.argv[0], exn.strerror, exn.filename))
+    if url.scheme in ["http", "https", "file"]:
+        try:
+            fetch_http(url, args.source, args.retries + 1)
+        except pycurl.error as exn:
+            # Curl download failed
+            sys.exit("%s: Failed to fetch %s: %s" %
+                     (sys.argv[0], url, exn.args[1]))
+        except IOError as exn:
+            # IO error saving source file
+            sys.exit("%s: %s: %s" % (sys.argv[0], exn.strerror, exn.filename))
+    else:
+        sys.exit("%s: Unimplemented protocol: %s" % (sys.argv[0], url.scheme))
 
 
 def _main():
