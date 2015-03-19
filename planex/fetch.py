@@ -127,6 +127,15 @@ def main(argv):
         except IOError as exn:
             # IO error saving source file
             sys.exit("%s: %s: %s" % (sys.argv[0], exn.strerror, exn.filename))
+
+    elif url.scheme == '' and os.path.dirname(url.path) == '' and \
+            os.path.exists(args.source):
+        # Source file is pre-populated in the SOURCES directory (part of the
+        # repository - probably a patch or local include).   Update its
+        # timestamp to placate make, but don't try to download it.
+        logging.info("Refreshing timestamp for local source %s", args.source)
+        os.utime(args.source, None)
+
     else:
         sys.exit("%s: Unimplemented protocol: %s" % (sys.argv[0], url.scheme))
 
