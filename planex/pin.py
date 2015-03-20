@@ -100,17 +100,20 @@ def update(args):
         tmpdir = tempfile.mkdtemp(prefix='planex-pin')
         tmp = archive(repo, hash, pin_version, tmpdir)
         tar_path = os.path.join(args.output_dir, os.path.basename(tmp))
-        if (args.remove_noop and os.path.exists(tar_path) and
+        if not (args.remove_noop and os.path.exists(tar_path) and
                 hash_of_file(tmp) == hash_of_file(tar_path)):
-            print "Not copying"
-        else:
             shutil.copy(tmp, tar_path)
         shutil.rmtree(tmpdir)
 
-        spec_filename = os.path.basename(spec)
-        output_spec_path = os.path.join(args.output_dir, spec_filename)
-        with open(output_spec_path, 'w') as f:
-            f.write(pinned_spec_of_spec(spec, pin_version, tar_path))
+        out_spec_path = os.path.join(args.output_dir, os.path.basename(spec))
+        tmp_spec = tempfile.NamedTemporaryFile(mode='w+', prefix='planex-pin',
+                                               delete=False)
+        tmp_spec.write(pinned_spec_of_spec(spec, pin_version, tar_path))
+        tmp_spec.close()
+        if not (args.remove_noop and os.path.exists(out_spec_path) and
+                hash_of_file(tmp_spec.name) == hash_of_file(out_spec_path)):
+            shutil.copy(tmp_spec.name, out_spec_path)
+        os.remove(tmp_spec.name)
 
 
 def parse_pins_file(args):
