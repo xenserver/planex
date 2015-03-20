@@ -82,32 +82,7 @@ def hash_of_file(path):
     return md5sum.digest()
 
 
-def parse_args_or_exit(argv=None):
-    """
-    Parse command line options
-    """
-    parser = argparse.ArgumentParser(
-        description='Pin a package to a specific version')
-    parser.add_argument('spec', help='RPM Spec file')
-    parser.add_argument('pin', help='Specific version, local path or git url')
-    parser.add_argument('output_dir', help='Path to write output spec file')
-    parser.add_argument('--remove-noop', help="Don't copy archive if unchanged",
-                        action='store_true')
-    parser.add_argument('--remove', '-r', help='Remove pin for this package',
-                        action='store_true')
-    parser.add_argument('--verbose', '-v', help='Be verbose',
-                        action='store_true')
-    return parser.parse_args(argv)
-
-
-def main(argv):
-    """
-    Main function
-    """
-    args = parse_args_or_exit(argv)
-    if args.verbose:
-        logging.basicConfig(format='%(message)s', level=logging.DEBUG)
-
+def update(args):
     if os.path.exists(args.output_dir):
         if not os.path.isdir(args.output_dir):
             raise Exception(
@@ -132,9 +107,39 @@ def main(argv):
         output_spec_path = os.path.join(args.output_dir, spec_filename)
         with open(output_spec_path, 'w') as f:
             f.write(pinned_spec_of_spec(args.spec, pin_version, tar_path))
-
     shutil.rmtree(tmpdir)
 
+
+def parse_args_or_exit(argv=None):
+    """
+    Parse command line options
+    """
+    # top-level parser
+    parser = argparse.ArgumentParser(
+        description='Pin a package to a specific version')
+    parser.add_argument('--verbose', '-v', help='Be verbose',
+                        action='store_true')
+    subparsers = parser.add_subparsers(title='COMMANDS')
+    # parser for the 'update' command
+    parser_update = subparsers.add_parser('update', help='Refresh a given pin')
+    parser_update.add_argument('spec', help='Spec file to override')
+    parser_update.add_argument('pin', help='Local git repo path#ref')
+    parser_update.add_argument('output_dir', help='To store pinned package')
+    parser_update.add_argument('--remove-noop', action='store_true',
+                               help="Don't copy archive if unchanged")
+    parser_update.set_defaults(func=update)
+
+    return parser.parse_args(argv)
+
+
+def main(argv):
+    """
+    Main function
+    """
+    args = parse_args_or_exit(argv)
+    if args.verbose:
+        logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+    args.func(args)
 
 
 def _main():
