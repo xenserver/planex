@@ -110,6 +110,30 @@ def update(args):
     shutil.rmtree(tmpdir)
 
 
+def parse_pins_file(args):
+    pins = {}
+    for (spec, pin) in [l.split(' ', 1) for l in args.pins_file.readlines()]:
+        pins[spec] = pin.strip()
+    return pins
+
+
+def list_pins(args):
+    pins = parse_pins_file(args)
+    for (spec, pin) in pins.iteritems():
+        print "* %s -> %s" % (spec, pin)
+
+
+def print_rules(args):
+    pins = parse_pins_file(args)
+    for (spec, pin) in pins.iteritems():
+        pinned_spec_path = os.path.join(args.pins_dir, os.path.basename(spec))
+        repo, _, hash = pin.partition('#')
+        dependency = "$(wildcard %s)" % os.path.join(repo, ".git/**/*")
+        print "%s: %s" % (pinned_spec_path, dependency)
+        print "\t@planex-pin update --remove-noop %s %s %s" % (spec, pin,
+                                                               args.pins_dir)
+
+
 def parse_args_or_exit(argv=None):
     """
     Parse command line options
@@ -128,6 +152,17 @@ def parse_args_or_exit(argv=None):
     parser_update.add_argument('--remove-noop', action='store_true',
                                help="Don't copy archive if unchanged")
     parser_update.set_defaults(func=update)
+    # parser for the 'list' command
+    parser_update = subparsers.add_parser('list', help='List active pins')
+    parser_update.add_argument('pins_file', type=argparse.FileType('r+'),
+                               help='File containing pin list')
+    parser_update.set_defaults(func=list_pins)
+    # parser for the 'rules' command
+    parser_rules = subparsers.add_parser('rules', help='Pint pin make rules')
+    parser_rules.add_argument('pins_file', type=argparse.FileType('r+'),
+                              help='File containing pin list')
+    parser_rules.add_argument('pins_dir', help='Directory used with update')
+    parser_rules.set_defaults(func=print_rules)
 
     return parser.parse_args(argv)
 
