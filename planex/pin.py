@@ -91,28 +91,34 @@ def update(args):
     else:
         os.makedirs(args.output_dir)
 
-    # we're assuming for now that the target is a git repository
-    repo, _, hash = args.pin.partition('#')
-    pin_version = describe(repo, hash) if hash else describe(repo)
+    pins = parse_pins_file(args)
+    for (spec, pin_target) in pins.iteritems():
+        # we're assuming for now that the target is a git repository
+        repo, _, hash = pin_target.partition('#')
+        pin_version = describe(repo, hash) if hash else describe(repo)
 
-    tmpdir = tempfile.mkdtemp(prefix='planex-pin')
-    tmp = archive(repo, hash, pin_version, tmpdir)
-    tar_path = os.path.join(args.output_dir, os.path.basename(tmp))
-    if (args.remove_noop and os.path.exists(tar_path) and
-            hash_of_file(tmp) == hash_of_file(tar_path)):
-        print "Not copying"
-    else:
-        shutil.copy(tmp, tar_path)
-        spec_filename = os.path.basename(args.spec)
+        tmpdir = tempfile.mkdtemp(prefix='planex-pin')
+        tmp = archive(repo, hash, pin_version, tmpdir)
+        tar_path = os.path.join(args.output_dir, os.path.basename(tmp))
+        if (args.remove_noop and os.path.exists(tar_path) and
+                hash_of_file(tmp) == hash_of_file(tar_path)):
+            print "Not copying"
+        else:
+            shutil.copy(tmp, tar_path)
+        shutil.rmtree(tmpdir)
+
+        spec_filename = os.path.basename(spec)
         output_spec_path = os.path.join(args.output_dir, spec_filename)
         with open(output_spec_path, 'w') as f:
-            f.write(pinned_spec_of_spec(args.spec, pin_version, tar_path))
-    shutil.rmtree(tmpdir)
+            f.write(pinned_spec_of_spec(spec, pin_version, tar_path))
 
 
 def parse_pins_file(args):
     pins = {}
-    for (spec, pin) in [l.split(' ', 1) for l in args.pins_file.readlines()]:
+    for line in args.pins_file.readlines():
+        if re.match(r'^\s*#', line):
+            continue
+        (spec, pin) = line.split(' ', 1)
         pins[spec] = pin.strip()
     return pins
 
@@ -128,10 +134,12 @@ def print_rules(args):
     for (spec, pin) in pins.iteritems():
         pinned_spec_path = os.path.join(args.pins_dir, os.path.basename(spec))
         repo, _, hash = pin.partition('#')
-        dependency = "$(wildcard %s)" % os.path.join(repo, ".git/**/*")
-        print "%s: %s" % (pinned_spec_path, dependency)
-        print "\t@planex-pin update --remove-noop %s %s %s" % (spec, pin,
-                                                               args.pins_dir)
+        dependencies = "$(wildcard %s) %s" % (os.path.join(repo, ".git/**/*"),
+                                              args.pins_file.name)
+        print "deps: %s" % pinned_spec_path
+        print "%s: %s" % (pinned_spec_path, dependencies)
+        print "\tplanex-pin update --remove-noop %s %s" % (args.pins_file.name,
+                                                           args.pins_dir)
 
 
 def parse_args_or_exit(argv=None):
@@ -146,17 +154,17 @@ def parse_args_or_exit(argv=None):
     subparsers = parser.add_subparsers(title='COMMANDS')
     # parser for the 'update' command
     parser_update = subparsers.add_parser('update', help='Refresh a given pin')
-    parser_update.add_argument('spec', help='Spec file to override')
-    parser_update.add_argument('pin', help='Local git repo path#ref')
+    parser_update.add_argument('pins_file', type=argparse.FileType('r+'),
+                               help='File containing pin list')
     parser_update.add_argument('output_dir', help='To store pinned package')
     parser_update.add_argument('--remove-noop', action='store_true',
                                help="Don't copy archive if unchanged")
     parser_update.set_defaults(func=update)
     # parser for the 'list' command
-    parser_update = subparsers.add_parser('list', help='List active pins')
-    parser_update.add_argument('pins_file', type=argparse.FileType('r+'),
-                               help='File containing pin list')
-    parser_update.set_defaults(func=list_pins)
+    parser_list = subparsers.add_parser('list', help='List active pins')
+    parser_list.add_argument('pins_file', type=argparse.FileType('r+'),
+                             help='File containing pin list')
+    parser_list.set_defaults(func=list_pins)
     # parser for the 'rules' command
     parser_rules = subparsers.add_parser('rules', help='Pint pin make rules')
     parser_rules.add_argument('pins_file', type=argparse.FileType('r+'),
