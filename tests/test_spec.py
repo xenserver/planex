@@ -41,7 +41,7 @@ class RpmTests(unittest.TestCase):
         self.assertEqual(self.spec.name(), "ocaml-cohttp")
 
     def test_specpath(self):
-        self.assertEqual(self.spec.specpath(), "./SPECS/ocaml-cohttp.spec")
+        self.assertEqual(self.spec.specpath(), "tests/data/ocaml-cohttp.spec")
 
     def test_version(self):
         self.assertEqual(self.spec.version(), "0.9.8")
@@ -123,7 +123,7 @@ class DebTests(unittest.TestCase):
         self.assertEqual(self.spec.name(), "ocaml-cohttp")
 
     def test_specpath(self):
-        self.assertEqual(self.spec.specpath(), "./SPECS/ocaml-cohttp.spec")
+        self.assertEqual(self.spec.specpath(), "./tests/data/ocaml-cohttp.spec")
 
     def test_version(self):
         self.assertEqual(self.spec.version(), "0.9.8")

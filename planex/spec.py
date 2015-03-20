@@ -78,6 +78,8 @@ class Spec(object):
         if topdir:
             rpm.addMacro('_topdir', topdir)
 
+        rpm.addMacro('_specdir', os.path.dirname(path))
+
         self.path = os.path.join(specdir(), os.path.basename(path))
         with open(path) as spec:
             self.spectext = spec.readlines()
