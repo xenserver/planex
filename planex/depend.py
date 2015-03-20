@@ -12,7 +12,6 @@ import sys
 import urlparse
 import glob
 from planex import mappkgname
-from planex import sources
 
 
 def build_type():
@@ -50,13 +49,6 @@ def download_rpm_sources(spec, args):
         # Source can be fetched by curl
         if source.scheme in ["http", "https", "file"]:
             print '%s: %s' % (path, spec.specpath())
-
-        if source.scheme in ["git", "hg"]:
-            print '%s: %s' % (path, spec.specpath())
-            cmds = sources.source(url, args).archive_commands()
-            print '\t@echo [ARCHIVER] $@'
-            for cmd in cmds:
-                print '\t@%s' % (' '.join(cmd))
 
 
 def build_rpm_from_srpm(spec):

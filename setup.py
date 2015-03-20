@@ -11,7 +11,6 @@ setup(name='planex',
       entry_points={
           'console_scripts': [
               'planex-init = planex.init:main',
-              'planex-clone = planex.clone:main',
               'planex-cache = planex.cache:_main',
               'planex-fetch = planex.fetch:_main',
               'planex-pin = planex.pin:_main',
