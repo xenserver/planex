@@ -143,8 +143,8 @@ def print_rules(args):
                                               args.pins_file.name)
         print "deps: %s" % pinned_spec_path
         print "%s: %s" % (pinned_spec_path, dependencies)
-        print "\tplanex-pin update %s %s" % (args.pins_file.name,
-                                             args.pins_dir)
+        print "\tplanex-pin --pins-file %s update %s" % (args.pins_file.name,
+                                                         args.pins_dir)
 
 
 def parse_args_or_exit(argv=None):
@@ -156,24 +156,20 @@ def parse_args_or_exit(argv=None):
         description='Pin a package to a specific version')
     parser.add_argument('--verbose', '-v', help='Be verbose',
                         action='store_true')
+    parser.add_argument('--pins-file', type=argparse.FileType('r+'),
+                        default='pins', help='Pins file (default: pins)')
     subparsers = parser.add_subparsers(title='COMMANDS')
     # parser for the 'update' command
     parser_update = subparsers.add_parser('update', help='Refresh a given pin')
-    parser_update.add_argument('pins_file', type=argparse.FileType('r+'),
-                               help='File containing pin list')
     parser_update.add_argument('output_dir', help='To store pinned package')
     parser_update.add_argument('--force', '-f', action='store_true',
                                help="Don't copy archive if unchanged")
     parser_update.set_defaults(func=update)
     # parser for the 'list' command
     parser_list = subparsers.add_parser('list', help='List active pins')
-    parser_list.add_argument('pins_file', type=argparse.FileType('r+'),
-                             help='File containing pin list')
     parser_list.set_defaults(func=list_pins)
     # parser for the 'rules' command
     parser_rules = subparsers.add_parser('rules', help='Pint pin make rules')
-    parser_rules.add_argument('pins_file', type=argparse.FileType('r+'),
-                              help='File containing pin list')
     parser_rules.add_argument('pins_dir', help='Directory used with update')
     parser_rules.set_defaults(func=print_rules)
 
