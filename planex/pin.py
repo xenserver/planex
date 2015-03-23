@@ -150,7 +150,7 @@ def add_pin(args):
         sys.exit(1)
     pins = parse_pins_file(args)
     normalised_path = os.path.relpath(args.spec_file)
-    if normalised_path in pins:
+    if normalised_path in pins and not args.force:
         sys.stdout.write("error: Package is already pinned:\n* %s -> %s\n" %
                          (normalised_path, pins[normalised_path]))
         sys.exit(1)
@@ -207,6 +207,8 @@ def parse_args_or_exit(argv=None):
     parser_list.set_defaults(func=list_pins)
     # parser for the 'add' command
     parser_add = subparsers.add_parser('add', help='Add a new pin definition')
+    parser_add.add_argument('--force', '-f', action='store_true',
+                            help='Override any existing pin definition')
     parser_add.add_argument('spec_file', help='Spec file to pin')
     parser_add.add_argument('target',
                             help='Pin target: <path-to-git-repo>#<tree-ish>')
