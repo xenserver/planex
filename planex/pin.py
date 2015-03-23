@@ -120,12 +120,22 @@ def update(args):
 
 def parse_pins_file(args):
     pins = {}
-    for line in args.pins_file.readlines():
-        if re.match(r'^\s*#', line):
-            continue
-        (spec, pin) = line.split(' ', 1)
-        pins[spec] = pin.strip()
+    if os.access(args.pins_file, os.R_OK):
+        with open(args.pins_file, 'r') as pins_file:
+            for line in pins_file.readlines():
+                if re.match(r'^\s*#', line):
+                    continue
+                (spec, pin) = line.split(' ', 1)
+                pins[spec] = pin.strip()
     return pins
+
+
+def serialise_pins(pins, path):
+    lines = []
+    for (spec, target) in pins.iteritems():
+        lines.append("%s %s\n" % (spec, target))
+    with open(path, 'w+') as pins_file:
+        pins_file.writelines(lines)
 
 
 def list_pins(args):
@@ -134,17 +144,31 @@ def list_pins(args):
         print "* %s -> %s" % (spec, pin)
 
 
+def add_pin(args):
+    if not os.access(args.spec_file, os.R_OK):
+        sys.stderr.write("error: File does not exist: '%s'\n" % args.spec_file)
+        sys.exit(1)
+    pins = parse_pins_file(args)
+    normalised_path = os.path.relpath(args.spec_file)
+    if normalised_path in pins:
+        sys.stdout.write("error: Package is already pinned:\n* %s -> %s\n" %
+                         (normalised_path, pins[normalised_path]))
+        sys.exit(1)
+    pins[normalised_path] = args.target
+    serialise_pins(pins, args.pins_file)
+
+
 def print_rules(args):
     pins = parse_pins_file(args)
     for (spec, pin) in pins.iteritems():
         pinned_spec_path = os.path.join(args.pins_dir, os.path.basename(spec))
         repo, _, _ = pin.partition('#')
         dependencies = "$(wildcard %s) %s" % (os.path.join(repo, ".git/**/*"),
-                                              args.pins_file.name)
+                                              args.pins_file)
         print "deps: %s" % pinned_spec_path
         print "%s: %s" % (pinned_spec_path, dependencies)
         print "\tplanex-pin --pins-file {0} --pins-dir {1} update".format(
-            args.pins_file.name, args.pins_dir)
+            args.pins_file, args.pins_dir)
 
 
 def parse_args_or_exit(argv=None):
@@ -156,8 +180,8 @@ def parse_args_or_exit(argv=None):
         description='Pin a package to a specific version')
     parser.add_argument('--verbose', '-v', help='Be verbose',
                         action='store_true')
-    parser.add_argument('--pins-file', type=argparse.FileType('r+'),
-                        default='pins', help='Pins file (default: pins)')
+    parser.add_argument('--pins-file', default='pins',
+                        help='Pins file (default: pins)')
     parser.add_argument('--pins-dir', default='PINS',
                         help='Directory of pin artifcats (default: PINS)')
     subparsers = parser.add_subparsers(title='COMMANDS')
@@ -169,6 +193,12 @@ def parse_args_or_exit(argv=None):
     # parser for the 'list' command
     parser_list = subparsers.add_parser('list', help='List active pins')
     parser_list.set_defaults(func=list_pins)
+    # parser for the 'add' command
+    parser_add = subparsers.add_parser('add', help='Add a new pin definition')
+    parser_add.add_argument('spec_file', help='Spec file to pin')
+    parser_add.add_argument('target',
+                            help='Pin target: <path-to-git-repo>#<tree-ish>')
+    parser_add.set_defaults(func=add_pin)
     # parser for the 'rules' command
     parser_rules = subparsers.add_parser('rules', help='Pint pin make rules')
     parser_rules.set_defaults(func=print_rules)
