@@ -89,13 +89,13 @@ def maybe_copy(src, dst, force=False):
 
 
 def update(args):
-    if os.path.exists(args.output_dir):
-        if not os.path.isdir(args.output_dir):
+    if os.path.exists(args.pins_dir):
+        if not os.path.isdir(args.pins_dir):
             raise Exception(
                 "Output directory exists and is not a directory: '%s'" %
-                args.output_dir)
+                args.pins_dir)
     else:
-        os.makedirs(args.output_dir)
+        os.makedirs(args.pins_dir)
 
     pins = parse_pins_file(args)
     for (spec, pin_target) in pins.iteritems():
@@ -105,11 +105,11 @@ def update(args):
 
         tmpdir = tempfile.mkdtemp(prefix='planex-pin')
         tmp_archive = archive(repo, treeish, pin_version, tmpdir)
-        tar_path = os.path.join(args.output_dir, os.path.basename(tmp_archive))
+        tar_path = os.path.join(args.pins_dir, os.path.basename(tmp_archive))
         maybe_copy(tmp_archive, tar_path, args.force)
         shutil.rmtree(tmpdir)
 
-        out_spec_path = os.path.join(args.output_dir, os.path.basename(spec))
+        out_spec_path = os.path.join(args.pins_dir, os.path.basename(spec))
         tmp_spec = tempfile.NamedTemporaryFile(mode='w+', prefix='planex-pin',
                                                delete=False)
         tmp_spec.write(pinned_spec_of_spec(spec, pin_version, tar_path))
@@ -143,8 +143,8 @@ def print_rules(args):
                                               args.pins_file.name)
         print "deps: %s" % pinned_spec_path
         print "%s: %s" % (pinned_spec_path, dependencies)
-        print "\tplanex-pin --pins-file %s update %s" % (args.pins_file.name,
-                                                         args.pins_dir)
+        print "\tplanex-pin --pins-file {0} --pins-dir {1} update".format(
+            args.pins_file.name, args.pins_dir)
 
 
 def parse_args_or_exit(argv=None):
@@ -158,10 +158,11 @@ def parse_args_or_exit(argv=None):
                         action='store_true')
     parser.add_argument('--pins-file', type=argparse.FileType('r+'),
                         default='pins', help='Pins file (default: pins)')
+    parser.add_argument('--pins-dir', default='PINS',
+                        help='Directory of pin artifcats (default: PINS)')
     subparsers = parser.add_subparsers(title='COMMANDS')
     # parser for the 'update' command
     parser_update = subparsers.add_parser('update', help='Refresh a given pin')
-    parser_update.add_argument('output_dir', help='To store pinned package')
     parser_update.add_argument('--force', '-f', action='store_true',
                                help="Don't copy archive if unchanged")
     parser_update.set_defaults(func=update)
@@ -170,7 +171,6 @@ def parse_args_or_exit(argv=None):
     parser_list.set_defaults(func=list_pins)
     # parser for the 'rules' command
     parser_rules = subparsers.add_parser('rules', help='Pint pin make rules')
-    parser_rules.add_argument('pins_dir', help='Directory used with update')
     parser_rules.set_defaults(func=print_rules)
 
     return parser.parse_args(argv)
