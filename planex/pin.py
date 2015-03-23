@@ -158,6 +158,18 @@ def add_pin(args):
     serialise_pins(pins, args.pins_file)
 
 
+def remove_pin(args):
+    pins = parse_pins_file(args)
+    normalised_path = os.path.relpath(args.spec_file)
+    if normalised_path in pins:
+        del pins[os.path.relpath(args.spec_file)]
+        serialise_pins(pins, args.pins_file)
+        pin_spec_path = os.path.join(args.pins_dir,
+                                     os.path.basename(args.spec_file))
+        os.remove(pin_spec_path)
+        os.utime(args.spec_file, None)
+
+
 def print_rules(args):
     pins = parse_pins_file(args)
     for (spec, pin) in pins.iteritems():
@@ -199,6 +211,10 @@ def parse_args_or_exit(argv=None):
     parser_add.add_argument('target',
                             help='Pin target: <path-to-git-repo>#<tree-ish>')
     parser_add.set_defaults(func=add_pin)
+    # parser for the 'remove' command
+    parser_remove = subparsers.add_parser('remove', help='Remove a pin')
+    parser_remove.add_argument('spec_file', help='Spec file to un-pin')
+    parser_remove.set_defaults(func=remove_pin)
     # parser for the 'rules' command
     parser_rules = subparsers.add_parser('rules', help='Pint pin make rules')
     parser_rules.set_defaults(func=print_rules)
