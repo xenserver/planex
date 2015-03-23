@@ -169,7 +169,6 @@ def main():
             spec = pkg.Spec(pin_path, target="rpm", dist=args.dist,
                             check_package_name=check_package_names,
                             topdir=args.topdir)
-            spec.specpath = lambda: pin_path
             pins[os.path.basename(pin_path)] = spec
 
     for spec_path in args.specs:
