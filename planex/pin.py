@@ -82,6 +82,12 @@ def hash_of_file(path):
     return md5sum.digest()
 
 
+def maybe_copy(src, dst, force=False):
+    if force or not (os.path.exists(dst) and
+                     hash_of_file(src) == hash_of_file(dst)):
+        shutil.copy(src, dst)
+
+
 def update(args):
     if os.path.exists(args.output_dir):
         if not os.path.isdir(args.output_dir):
@@ -98,11 +104,9 @@ def update(args):
         pin_version = describe(repo, treeish) if treeish else describe(repo)
 
         tmpdir = tempfile.mkdtemp(prefix='planex-pin')
-        tmp = archive(repo, treeish, pin_version, tmpdir)
-        tar_path = os.path.join(args.output_dir, os.path.basename(tmp))
-        if not (args.remove_noop and os.path.exists(tar_path) and
-                hash_of_file(tmp) == hash_of_file(tar_path)):
-            shutil.copy(tmp, tar_path)
+        tmp_archive = archive(repo, treeish, pin_version, tmpdir)
+        tar_path = os.path.join(args.output_dir, os.path.basename(tmp_archive))
+        maybe_copy(tmp_archive, tar_path, args.force)
         shutil.rmtree(tmpdir)
 
         out_spec_path = os.path.join(args.output_dir, os.path.basename(spec))
@@ -110,9 +114,7 @@ def update(args):
                                                delete=False)
         tmp_spec.write(pinned_spec_of_spec(spec, pin_version, tar_path))
         tmp_spec.close()
-        if not (args.remove_noop and os.path.exists(out_spec_path) and
-                hash_of_file(tmp_spec.name) == hash_of_file(out_spec_path)):
-            shutil.copy(tmp_spec.name, out_spec_path)
+        maybe_copy(tmp_spec.name, out_spec_path, args.force)
         os.remove(tmp_spec.name)
 
 
@@ -141,8 +143,8 @@ def print_rules(args):
                                               args.pins_file.name)
         print "deps: %s" % pinned_spec_path
         print "%s: %s" % (pinned_spec_path, dependencies)
-        print "\tplanex-pin update --remove-noop %s %s" % (args.pins_file.name,
-                                                           args.pins_dir)
+        print "\tplanex-pin update %s %s" % (args.pins_file.name,
+                                             args.pins_dir)
 
 
 def parse_args_or_exit(argv=None):
@@ -160,7 +162,7 @@ def parse_args_or_exit(argv=None):
     parser_update.add_argument('pins_file', type=argparse.FileType('r+'),
                                help='File containing pin list')
     parser_update.add_argument('output_dir', help='To store pinned package')
-    parser_update.add_argument('--remove-noop', action='store_true',
+    parser_update.add_argument('--force', '-f', action='store_true',
                                help="Don't copy archive if unchanged")
     parser_update.set_defaults(func=update)
     # parser for the 'list' command
