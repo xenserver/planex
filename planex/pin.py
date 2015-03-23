@@ -94,11 +94,11 @@ def update(args):
     pins = parse_pins_file(args)
     for (spec, pin_target) in pins.iteritems():
         # we're assuming for now that the target is a git repository
-        repo, _, hash = pin_target.partition('#')
-        pin_version = describe(repo, hash) if hash else describe(repo)
+        repo, _, treeish = pin_target.partition('#')
+        pin_version = describe(repo, treeish) if treeish else describe(repo)
 
         tmpdir = tempfile.mkdtemp(prefix='planex-pin')
-        tmp = archive(repo, hash, pin_version, tmpdir)
+        tmp = archive(repo, treeish, pin_version, tmpdir)
         tar_path = os.path.join(args.output_dir, os.path.basename(tmp))
         if not (args.remove_noop and os.path.exists(tar_path) and
                 hash_of_file(tmp) == hash_of_file(tar_path)):
@@ -136,7 +136,7 @@ def print_rules(args):
     pins = parse_pins_file(args)
     for (spec, pin) in pins.iteritems():
         pinned_spec_path = os.path.join(args.pins_dir, os.path.basename(spec))
-        repo, _, hash = pin.partition('#')
+        repo, _, _ = pin.partition('#')
         dependencies = "$(wildcard %s) %s" % (os.path.join(repo, ".git/**/*"),
                                               args.pins_file.name)
         print "deps: %s" % pinned_spec_path

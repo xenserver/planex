@@ -39,15 +39,14 @@ def build_srpm_from_spec(spec):
                          " ".join(spec.source_paths()))
 
 
-def download_rpm_sources(spec, args):
+def download_rpm_sources(spec):
     """
     Generate rules to download sources
     """
     for (url, path) in zip(spec.source_urls(), spec.source_paths()):
         source = urlparse.urlparse(url)
-
-        # Source can be fetched by curl
         if source.scheme in ["http", "https", "file"]:
+            # Source can be fetched by fetch
             print '%s: %s' % (path, spec.specpath())
 
 
@@ -200,7 +199,7 @@ def main():
 
     for spec in specs.itervalues():
         build_srpm_from_spec(spec)
-        download_rpm_sources(spec, args)
+        download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
         buildrequires_for_rpm(spec, provides_to_rpm)
         print ""

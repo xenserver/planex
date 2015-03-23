@@ -27,7 +27,7 @@ class BasicTests(unittest.TestCase):
             "./SOURCES/ocaml-cohttp-init\n")
 
     def test_download_rpm_sources(self):
-        planex.depend.download_rpm_sources(self.spec, None)
+        planex.depend.download_rpm_sources(self.spec)
 
         self.assertEqual(
             sys.stdout.getvalue(),
