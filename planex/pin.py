@@ -231,7 +231,7 @@ def print_rules(args):
         repo = os.path.abspath(pin.partition('#')[0])
         dependencies = "$(wildcard %s) %s" % (os.path.join(repo, ".git/**/*"),
                                               args.pins_file)
-        print "deps: %s" % pinned_spec_path
+        print "%s: %s" % (args.deps_path, pinned_spec_path)
         print "%s: %s" % (pinned_spec_path, dependencies)
         print "\tplanex-pin --pins-file {0} --pins-dir {1} update".format(
             args.pins_file, args.pins_dir)
@@ -273,6 +273,7 @@ def parse_args_or_exit(argv=None):
     parser_remove.set_defaults(func=remove_pin)
     # parser for the 'rules' command
     parser_rules = subparsers.add_parser('rules', help='Print pin make rules')
+    parser_rules.add_argument('deps_path', help='Path to deps file')
     parser_rules.set_defaults(func=print_rules)
 
     return parser.parse_args(argv)
