@@ -73,11 +73,11 @@ def fetch_http(url, filename, retries):
                 raise
 
 
-def all_sources(spec):
+def all_sources(spec, topdir):
     """
     Get all source URLs defined in the spec file
     """
-    spec = planex.spec.Spec(spec, topdir=".")
+    spec = planex.spec.Spec(spec, topdir=topdir)
     urls = [urlparse.urlparse(url) for url in spec.source_urls()]
     return zip(spec.source_paths(), urls)
 
@@ -93,6 +93,8 @@ def parse_args_or_exit(argv=None):
     parser.add_argument('--retries', '-r',
                         help='Number of times to retry a failed download',
                         type=int, default=5)
+    parser.add_argument("-t", "--topdir", metavar="DIR", default=None,
+                        help='Set rpmbuild toplevel directory')
     return parser.parse_args(argv)
 
 
@@ -105,7 +107,7 @@ def main(argv):
     if args.verbose:
         logging.basicConfig(format='%(message)s', level=logging.INFO)
 
-    for path, url in all_sources(args.spec):
+    for path, url in all_sources(args.spec, args.topdir):
         if url.scheme in ["http", "https", "file"]:
             try:
                 fetch_http(url, path, args.retries + 1)
