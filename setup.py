@@ -3,11 +3,9 @@ from setuptools import setup
 setup(name='planex',
       version='0.6.0',
       packages=['planex'],
-      include_package_data = True,
-      package_data={
-	'planex':['Makefile.rules']
-	},
-      data_files=[('/usr/share/planex',['planex/Makefile.rules'])],
+      include_package_data=True,
+      package_data={'planex': ['Makefile.rules']},
+      data_files=[('/usr/share/planex', ['planex/Makefile.rules'])],
       entry_points={
           'console_scripts': [
               'planex-init = planex.init:main',
