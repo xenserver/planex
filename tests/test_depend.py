@@ -22,23 +22,17 @@ class BasicTests(unittest.TestCase):
         self.assertEqual(
             sys.stdout.getvalue(),
             "./SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
-            "./SPECS/ocaml-cohttp.spec "
+            "tests/data/ocaml-cohttp.spec "
             "./SOURCES/ocaml-cohttp-0.9.8.tar.gz "
-            "./SOURCES/ocaml-cohttp-extra-0.9.8.tar.gz "
             "./SOURCES/ocaml-cohttp-init\n")
 
     def test_download_rpm_sources(self):
-        planex.depend.download_rpm_sources(self.spec, None)
+        planex.depend.download_rpm_sources(self.spec)
 
         self.assertEqual(
             sys.stdout.getvalue(),
-            "./SOURCES/ocaml-cohttp-0.9.8.tar.gz: ./SPECS/ocaml-cohttp.spec\n"
-            "./SOURCES/ocaml-cohttp-extra-0.9.8.tar.gz: "
-            "./SPECS/ocaml-cohttp.spec "
-            "$(shell find /code/ocaml-cohttp-extra)\n"
-            "	@echo [GIT] $@\n"
-            "	@git --git-dir=/code/ocaml-cohttp-extra/.git archive "
-            "--prefix ocaml-cohttp-extra-0.9.8/ -o $@ HEAD\n")
+            "./SOURCES/ocaml-cohttp-0.9.8.tar.gz: "
+            "tests/data/ocaml-cohttp.spec\n")
 
     def test_build_rpm_from_srpm(self):
         planex.depend.build_rpm_from_srpm(self.spec)

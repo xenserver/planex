@@ -5,7 +5,6 @@
 import subprocess
 import os
 import pipes
-import urlparse
 import sys
 import tempfile
 import yum
@@ -28,19 +27,6 @@ def print_col(col, msg):
     else:
         print msg
     sys.stdout.flush()
-
-
-def rewrite_url(url, destination=None):
-    """
-    Rewrite url to point to destination
-    """
-    (scheme, _, path, _, _, fragment) = urlparse.urlparse(url)
-    if destination == "" or scheme in ["git", "hg"]:
-        return url
-
-    else:
-        basename = os.path.basename(path)
-        return destination + basename + fragment
 
 
 def load_mock_config(cfg):

@@ -10,8 +10,8 @@ import planex.spec as pkg
 import platform
 import sys
 import urlparse
+import glob
 from planex import mappkgname
-from planex import sources
 
 
 def build_type():
@@ -39,35 +39,15 @@ def build_srpm_from_spec(spec):
                          " ".join(spec.source_paths()))
 
 
-def download_rpm_sources(spec, args):
+def download_rpm_sources(spec):
     """
     Generate rules to download sources
     """
     for (url, path) in zip(spec.source_urls(), spec.source_paths()):
         source = urlparse.urlparse(url)
-
-        # Source comes from a remote HTTP server
-        if source.scheme in ["http", "https"]:
+        if source.scheme in ["http", "https", "file"]:
+            # Source can be fetched by fetch
             print '%s: %s' % (path, spec.specpath())
-
-        # Source comes from a local file or directory
-        if source.scheme == "file":
-            print '%s: %s $(shell find %s)' % (
-                path, spec.specpath(), source.path)
-
-            # Assume that the directory name is already what's expected by the
-            # spec file, and prefix it with the version number in the tarball
-            print '\t@echo [GIT] $@'
-            dirname = "%s-%s" % (os.path.basename(source.path), spec.version())
-            print '\t@git --git-dir=%s/.git '\
-                'archive --prefix %s/ -o $@ HEAD' % (source.path, dirname)
-
-        if source.scheme in ["git", "hg"]:
-            print '%s: %s' % (path, spec.specpath())
-            cmds = sources.source(url, args).archive_commands()
-            print '\t@echo [ARCHIVER] $@'
-            for cmd in cmds:
-                print '\t@%s' % (' '.join(cmd))
 
 
 def build_rpm_from_srpm(spec):
@@ -130,6 +110,8 @@ def parse_cmdline():
         "-I", "--ignore-from", metavar="FILE", action="append", default=[],
         help="file of package names to be ignored")
     parser.add_argument(
+        "-P", "--pins-dir", help="Directory containing pin overlays")
+    parser.add_argument(
         "-d", "--dist", metavar="DIST", default="",
         help="distribution tag (used in RPM filenames)")
     parser.add_argument(
@@ -167,6 +149,19 @@ def main():
     for i in pkgs_to_ignore:
         print "# Will ignore: %s" % i
 
+    pins = {}
+    if args.pins_dir:
+        pins_glob = os.path.join(args.pins_dir, "*.spec")
+        pin_paths = glob.glob(pins_glob)
+        if pin_paths and args.packaging == "deb":
+            sys.stderr.write("error: Pinning not supported for debian target")
+            sys.exit(1)
+        for pin_path in pin_paths:
+            spec = pkg.Spec(pin_path, target="rpm", dist=args.dist,
+                            check_package_name=check_package_names,
+                            topdir=args.topdir)
+            pins[os.path.basename(pin_path)] = spec
+
     for spec_path in args.specs:
         try:
             if args.packaging == "deb":
@@ -188,7 +183,13 @@ def main():
             if pkg_name in pkgs_to_ignore:
                 continue
 
-            specs[os.path.basename(spec_path)] = spec
+            spec_name = os.path.basename(spec_path)
+            if spec_name in pins:
+                print "# Pinning '%s' to '%s'" % (pkg_name,
+                                                  pins[spec_name].specpath())
+                specs[spec_name] = pins[spec_name]
+            else:
+                specs[spec_name] = spec
 
         except pkg.SpecNameMismatch as exn:
             sys.stderr.write("error: %s\n" % exn.message)
@@ -198,7 +199,7 @@ def main():
 
     for spec in specs.itervalues():
         build_srpm_from_spec(spec)
-        download_rpm_sources(spec, args)
+        download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
         buildrequires_for_rpm(spec, provides_to_rpm)
         print ""

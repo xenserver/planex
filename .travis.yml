@@ -5,6 +5,6 @@ before_install:
   - sudo apt-get -q -y update
   - sudo apt-get -q -y install yum python-rpm
 script: 
-  - pep8 planex tests
+  - pep8 --show-source --show-pep8 planex tests
   - pylint planex
   - nosetests
