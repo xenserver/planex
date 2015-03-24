@@ -12,6 +12,8 @@ import planex.depend
 
 
 class BasicTests(unittest.TestCase):
+    # unittest.TestCase has more methods than Pylint permits
+    # pylint: disable=R0904
     def setUp(self):
         self.spec = planex.spec.Spec("tests/data/ocaml-cohttp.spec",
                                      dist=".el6", topdir=".")

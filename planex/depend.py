@@ -162,11 +162,11 @@ def main():
                             topdir=args.topdir)
             pins[os.path.basename(pin_path)] = spec
 
+    os_type = platform.linux_distribution(
+        full_distribution_name=False)[1].lower()
     for spec_path in args.specs:
         try:
             if args.packaging == "deb":
-                os_type = platform.linux_distribution(
-                    full_distribution_name=False)[1].lower()
 
                 def map_name_fn(name):
                     return mappkgname.map_package(name, os_type)

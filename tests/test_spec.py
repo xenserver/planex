@@ -20,9 +20,10 @@ def get_deb_machine():
 
 
 class RpmTests(unittest.TestCase):
+    # unittest.TestCase has more methods than Pylint permits
+    # pylint: disable=R0904
+
     def setUp(self):
-        # 'setUp' breaks Pylint's naming rules
-        # pylint: disable=C0103
         self.spec = planex.spec.Spec("tests/data/ocaml-cohttp.spec",
                                      dist=".el6", topdir=".")
 
@@ -87,9 +88,10 @@ class RpmTests(unittest.TestCase):
 
 
 class DebTests(unittest.TestCase):
+    # unittest.TestCase has more methods than Pylint permits
+    # pylint: disable=R0904
+
     def setUp(self):
-        # 'setUp' breaks Pylint's naming rules
-        # pylint: disable=C0103
         def map_rpm_to_deb(name):
             mapping = {"ocaml-cohttp": ["libcohttp-ocaml"],
                        "ocaml-cohttp-devel": ["libcohttp-ocaml-dev"],
