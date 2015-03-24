@@ -6,6 +6,7 @@ import argparse
 import os
 import sys
 import re
+import glob
 import logging
 import tempfile
 import hashlib
@@ -205,25 +206,23 @@ def add_pin(args):
 def remove_pin(args):
     """
     Entry point for the 'remove' sub-command.
-    Removes the pin definition from the pins file if it exists, removes the
-    generated spec file and touches the original spec file to ensure
-    dependencies are regenerated.
+    Removes the pin definition from the pins file and touches the original spec
+    file to ensure dependencies are regenerated. The next 'rules' command will
+    ensure that the override spec file is removed.
     """
     pins = parse_pins_file(args)
     normalised_path = os.path.relpath(args.spec_file)
     if normalised_path in pins:
         del pins[os.path.relpath(args.spec_file)]
         serialise_pins(pins, args.pins_file)
-        pin_spec_path = os.path.join(args.pins_dir,
-                                     os.path.basename(args.spec_file))
-        os.remove(pin_spec_path)
         os.utime(args.spec_file, None)
 
 
 def print_rules(args):
     """
     Entry point for the 'rules' sub-command.
-    Prints to stdout the Makefile snippet required for pinning updates.
+    Prints to stdout the Makefile snippet required for pinning updates and
+    removes any override spec files for removed pins.
     """
     pins = parse_pins_file(args)
     for (spec, pin) in pins.iteritems():
@@ -235,6 +234,11 @@ def print_rules(args):
         print "%s: %s" % (pinned_spec_path, dependencies)
         print "\tplanex-pin --pins-file {0} --pins-dir {1} update".format(
             args.pins_file, args.pins_dir)
+
+    expected_pin_specs = [os.path.join(args.pins_dir, path) for path in pins]
+    for pin_spec_path in glob.glob(os.path.join(args.pins_dir, '*.spec')):
+        if pin_spec_path not in expected_pin_specs:
+            os.remove(pin_spec_path)
 
 
 def parse_args_or_exit(argv=None):
