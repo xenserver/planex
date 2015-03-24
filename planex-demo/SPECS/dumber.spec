@@ -5,9 +5,9 @@ Summary:        Dumber example for planex
 License:        BSD3
 Group:          Development/Other
 URL:            http://github.com/jonludlam/dumber
-Source0:        http://github.com/jonludlam/dumber/archive/v%{version}/%{name}-%{version}.tar.gz
+Source0:        https://github.com/jonludlam/dumber/archive/v%{version}/%{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}
-BuildRequires:	dumb
+BuildRequires:  dumb
 
 %description
 Dumb package for demonstrating planex

@@ -37,7 +37,7 @@ failovermethod=priority
 
 [planex-repo]
 name=Mock output
-baseurl = file:///home/vagrant/pin-demo/RPMS
+baseurl = file://@PWD@/RPMS
 gpgcheck=0
 priority=1
 enabled=1
