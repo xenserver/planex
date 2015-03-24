@@ -126,7 +126,7 @@ def get_from_cache(cachedirs, pkg_hash, resultdir):
     Copy the build products specified by the hash to resultdir
     """
     possibilities = cache_locations(cachedirs, pkg_hash)
-    print "possibilities: %s" + ",".join(possibilities)
+    logging.debug("Possible cache hits: %s" + ", ".join(possibilities))
     cache_dir = next(itertools.ifilter(os.path.isdir, possibilities), None)
     if cache_dir:
         get_from_specified_cache(cache_dir, resultdir)
