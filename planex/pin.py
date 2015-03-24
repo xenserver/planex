@@ -228,7 +228,7 @@ def print_rules(args):
     pins = parse_pins_file(args)
     for (spec, pin) in pins.iteritems():
         pinned_spec_path = os.path.join(args.pins_dir, os.path.basename(spec))
-        repo, _, _ = pin.partition('#')
+        repo = os.path.abspath(pin.partition('#')[0])
         dependencies = "$(wildcard %s) %s" % (os.path.join(repo, ".git/**/*"),
                                               args.pins_file)
         print "deps: %s" % pinned_spec_path
