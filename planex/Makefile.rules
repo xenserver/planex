@@ -16,7 +16,7 @@ planex-build-root: $(wildcard SPECS/* SOURCES/*)
 # Fetch a source tarball listed in a spec file.
 %.tar %.tar.gz %.tar.bz2 %.tgz %.tbz %.zip:
 	@echo [FETCH] $@
-	@planex-fetch $< $@
+	@planex-fetch --topdir planex-build-root $<
 
 
 ############################################################################
