@@ -272,7 +272,7 @@ def parse_args_or_exit(argv=None):
     parser_remove.add_argument('spec_file', help='Spec file to un-pin')
     parser_remove.set_defaults(func=remove_pin)
     # parser for the 'rules' command
-    parser_rules = subparsers.add_parser('rules', help='Pint pin make rules')
+    parser_rules = subparsers.add_parser('rules', help='Print pin make rules')
     parser_rules.set_defaults(func=print_rules)
 
     return parser.parse_args(argv)
