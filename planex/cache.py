@@ -126,7 +126,7 @@ def get_from_cache(cachedirs, pkg_hash, resultdir):
     Copy the build products specified by the hash to resultdir
     """
     possibilities = cache_locations(cachedirs, pkg_hash)
-    print "possibilities: %s" + ",".join(possibilities)
+    logging.debug("Possible cache hits: %s" + ", ".join(possibilities))
     cache_dir = next(itertools.ifilter(os.path.isdir, possibilities), None)
     if cache_dir:
         get_from_specified_cache(cache_dir, resultdir)
@@ -199,14 +199,18 @@ def main(argv):
     config = os.path.join(intercepted_args.configdir,
                           intercepted_args.root + ".cfg")
 
+    # Initialize yum before setting up logging, because yum uses
+    # logging with a different default loglevel.   This avoids
+    # having yum print lots of irrelevant messages during startup.
+    yum_config = util.load_mock_config(config)
+    yumbase = util.get_yumbase(yum_config)
+    setup_yumbase(yumbase)
+
     loglevel = logging.INFO
     if intercepted_args.debug:
         loglevel = logging.DEBUG
     logging.basicConfig(format='%(message)s', level=loglevel)
 
-    yum_config = util.load_mock_config(config)
-    yumbase = util.get_yumbase(yum_config)
-    setup_yumbase(yumbase)
     srpm = load_srpm_from_file(passthrough_args[-1])
     with open(config) as cfg:
         mock_config = cfg.read()
