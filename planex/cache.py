@@ -199,14 +199,18 @@ def main(argv):
     config = os.path.join(intercepted_args.configdir,
                           intercepted_args.root + ".cfg")
 
+    # Initialize yum before setting up logging, because yum uses
+    # logging with a different default loglevel.   This avoids
+    # having yum print lots of irrelevant messages during startup.
+    yum_config = util.load_mock_config(config)
+    yumbase = util.get_yumbase(yum_config)
+    setup_yumbase(yumbase)
+
     loglevel = logging.INFO
     if intercepted_args.debug:
         loglevel = logging.DEBUG
     logging.basicConfig(format='%(message)s', level=loglevel)
 
-    yum_config = util.load_mock_config(config)
-    yumbase = util.get_yumbase(yum_config)
-    setup_yumbase(yumbase)
     srpm = load_srpm_from_file(passthrough_args[-1])
     with open(config) as cfg:
         mock_config = cfg.read()
