@@ -182,7 +182,7 @@ def build_package(configdir, root, passthrough_args):
     working_directory = tempfile.mkdtemp(prefix="planex-cache")
     logging.debug("Mock working directory: %s", working_directory)
 
-    cmd = ["sudo", "mock", "--configdir=%s" % configdir,
+    cmd = ["mock", "--configdir=%s" % configdir,
            "--root=%s" % root,
            "--resultdir=%s" % working_directory] + passthrough_args
 
