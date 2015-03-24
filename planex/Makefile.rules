@@ -1,13 +1,32 @@
+DIST := .el6
+TOPDIR ?= _build
+DEPS = $(TOPDIR)/deps
+PINSFILE = pins
+PINDEPS = $(TOPDIR)/pindeps
+PINSDIR = $(TOPDIR)/PINS
 
-.PHONY: rpms srpms srpm_repo
+.PHONY: all rpms srpms srpm_repo
+
+all: $(TOPDIR) rpms
 
 .PHONY: clean
 clean:
-	rm -rf planex-build-root deps
+	rm -rf $(TOPDIR) RPMS
 
-planex-build-root: $(wildcard SPECS/* SOURCES/*)
-	planex-configure
-	touch planex-build-root
+
+.DELETE_ON_ERROR: $(TOPDIR)
+$(TOPDIR):
+	@echo -n Populating build directory: $(TOPDIR)...
+	@mkdir -p $(TOPDIR)
+	@mkdir -p SPECS SOURCES
+	@ln -s ../SPECS $(TOPDIR)/SPECS
+	@ln -s ../SOURCES $(TOPDIR)/SOURCES
+	@ln -s ../mock $(TOPDIR)/mock
+	@mkdir $(TOPDIR)/RPMS
+	@ln -s $(TOPDIR)/RPMS RPMS
+	@createrepo RPMS >/dev/null
+	@echo done
+
 
 ############################################################################
 # Source download rules
@@ -16,7 +35,7 @@ planex-build-root: $(wildcard SPECS/* SOURCES/*)
 # Fetch a source tarball listed in a spec file.
 %.tar %.tar.gz %.tar.bz2 %.tgz %.tbz %.zip:
 	@echo [FETCH] $@
-	@planex-fetch --topdir planex-build-root $<
+	@planex-fetch --topdir $(TOPDIR) $<
 
 
 ############################################################################
@@ -30,7 +49,7 @@ planex-build-root: $(wildcard SPECS/* SOURCES/*)
 # (Fedora host) and foo-1.0.el6.x86_64.rpm (CentOS chroot).
 %.src.rpm:
 	@echo [RPMBUILD] $@ 
-	@rpmbuild --quiet --define "_topdir planex-build-root" \
+	@rpmbuild --quiet --define "_topdir $(TOPDIR)" \
 		--define "%dist $(DIST)" -bs $<
 
 # Phony target to create repository metadata for the SRPMs.   This makes
@@ -38,7 +57,7 @@ planex-build-root: $(wildcard SPECS/* SOURCES/*)
 # to install source RPMs.
 srpm_repo: srpms
 	@echo [CREATEREPO] SRPMS
-	@flock --timeout 30 ./planex-build-root/SRPMS createrepo --quiet --update ./planex-build-root/SRPMS
+	@flock --timeout 30 ./$(TOPDIR)/SRPMS createrepo --quiet --update ./$(TOPDIR)/SRPMS
 
 # Build one or more binary RPMs from a source RPM.   A typical source RPM
 # might produce a base binary RPM, a -devel binary RPM containing library
@@ -48,11 +67,11 @@ srpm_repo: srpms
 # to find and install it.
 %.rpm:
 	@echo [MOCK] $@
-	@planex-cache --debug --configdir=planex-build-root/mock --quiet \
+	@planex-cache --configdir=$(TOPDIR)/mock --quiet \
 		--resultdir=$(dir $@) --uniqueext=$(notdir $@) \
 		--disable-plugin=package_state --rebuild $<
 	@echo [CREATEREPO] $@
-	@flock --timeout 30 ./planex-build-root/RPMS createrepo --quiet --update ./planex-build-root/RPMS
+	@flock --timeout 30 ./$(TOPDIR)/RPMS createrepo --quiet --update ./$(TOPDIR)/RPMS
 
 
 ############################################################################
@@ -68,7 +87,7 @@ srpm_repo: srpms
 	@echo [MAKEDEB] $@
 	@planex-makedeb $<
 	@echo [UPDATEREPO] $@
-	@flock --timeout 30 ./planex-build-root/SRPMS scripts/deb/updaterepo sources planex-build-root/SRPMS
+	@flock --timeout 30 ./$(TOPDIR)/SRPMS scripts/deb/updaterepo sources $(TOPDIR)/SRPMS
 
 # Build one or more binary Debian packages from from a source package.
 # As with the RPM build, a typical source package might produce several
@@ -89,16 +108,23 @@ srpm_repo: srpms
 # Dependency build rules
 ############################################################################
 
+# Generate all the pinning rules
+.DELETE_ON_ERROR: $(PINDEPS)
+$(PINDEPS): $(PINSFILE)
+	@echo Updating pinning rules...
+	@planex-pin --pins-file $< --pins-dir $(PINSDIR) rules $(DEPS) > $@
+
+-include $(PINDEPS)
+
 # Generate dependency rules linking spec files to tarballs, source
 # packages and binary packages.   planex-depend generates rules suitable
 # for RPM or Debian builds depending on the host distribution.
 # If dependency generation fails, the deps file is deleted to avoid
 # problems with empty, incomplete or corrupt deps.   
-deps: planex-build-root planex-build-root/SPECS/*.spec 
+.DELETE_ON_ERROR: $(DEPS)
+$(DEPS): $(TOPDIR) SPECS/*.spec $(wildcard $(PINSFILE) $(PINDEPS) $(PINSDIR)/*.spec)
 	@echo Updating dependencies...
-	@planex-depend -d $(DIST) --ignore-from ignore \
-		--topdir planex-build-root \
-		planex-build-root/SPECS/*.spec > $@ || rm -f $@
+	@planex-depend -d $(DIST) --topdir $(TOPDIR) --ignore-from ignore \
+		--pins-dir $(PINSDIR) SPECS/*.spec > $@
 
--include deps
-
+-include $(DEPS)
