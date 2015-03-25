@@ -1,16 +1,11 @@
-%define planex_version 0.0.0
-%define planex_source0_version 0.0.0
-%define planex_release 1%{?extrarelease}
-%define planex_source0_hash 0
-
 Name:           dumb
-Version:        %{planex_version}
-Release:        %{planex_release}
+Version:        0.1
+Release:        1%{?extrarelease}
 Summary:        Dumb example for planex
 License:        BSD3
 Group:          Development/Other
 URL:            http://github.com/jonludlam/dumb
-Source0:        git://github.com/jonludlam/dumb
+Source0:        https://github.com/jonludlam/dumb/archive/%{version}/%{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}
 
 %description
