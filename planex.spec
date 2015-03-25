@@ -45,6 +45,14 @@ and caching.
 %{python_sitelib}/planex
 
 %changelog
+* Wed Mar 25 2015 Euan Harris <euan.harris@citrix.com> - 0.7.0-1
+- Build products are now written to the _build subdirectory by default
+- Add planex-pin, which overrides a package's sources with a local repo
+- Add planex-init, which sets up the planex environment
+- Add planex-fetch, replacing planex-downloader
+- Remove planex-configure, which is superseded by planex-pin
+- Rename Makefile.common to Makefile.rules
+
 * Wed Jan 21 2015 Euan Harris <euan.harris@citrix.com> - 0.6.0-1
 - planex-specdep is now known as planex-depend
 - planex-depend: By default, produce packages for the host system

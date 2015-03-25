@@ -1,3 +1,14 @@
+planex (0.7.0-1) trusty; urgency=low
+
+  * Build products are now written to the _build subdirectory by default
+  * Add planex-pin, which overrides a package's sources with a local repo
+  * Add planex-init, which sets up the planex environment
+  * Add planex-fetch, replacing planex-downloader
+  * Remove planex-configure, which is superseded by planex-pin
+  * Rename Makefile.common to Makefile.rules
+
+ -- Euan Harris <euan.harris@citrix.com>  Wed, 25 Mar 2015 16:30:00 +0000
+
 planex (0.6.0-1) trusty; urgency=low
 
   * planex-specdep is now known as planex-depend
