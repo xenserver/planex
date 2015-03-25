@@ -122,7 +122,8 @@ def parse_cmdline():
         choices=["rpm", "deb"], default=build_type(),
         help='Packaging to use (rpm or deb): default %s' % build_type())
     parser.add_argument(
-        "--no-package-name-check", action="store_true", default=False,
+        "--no-package-name-check", dest="check_package_names",
+        action="store_false", default=True,
         help="Don't check that package name matches spec file name")
     parser.add_argument(
         "-t", "--topdir", metavar="DIR", default=None,
@@ -135,7 +136,6 @@ def main():
     Entry point
     """
     args = parse_cmdline()
-    check_package_names = not args.no_package_name_check
     specs = {}
 
     pkgs_to_ignore = args.ignore
@@ -158,7 +158,7 @@ def main():
             sys.exit(1)
         for pin_path in pin_paths:
             spec = pkg.Spec(pin_path, target="rpm", dist=args.dist,
-                            check_package_name=check_package_names,
+                            check_package_name=args.check_package_names,
                             topdir=args.topdir)
             pins[os.path.basename(pin_path)] = spec
 
@@ -172,12 +172,12 @@ def main():
                     return mappkgname.map_package(name, os_type)
 
                 spec = pkg.Spec(spec_path, target="deb", map_name=map_name_fn,
-                                check_package_name=check_package_names,
+                                check_package_name=args.check_package_names,
                                 topdir=args.topdir)
 
             else:
                 spec = pkg.Spec(spec_path, target="rpm", dist=args.dist,
-                                check_package_name=check_package_names,
+                                check_package_name=args.check_package_names,
                                 topdir=args.topdir)
             pkg_name = spec.name()
             if pkg_name in pkgs_to_ignore:
