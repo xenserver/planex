@@ -74,11 +74,10 @@ def fetch_http(url, filename, retries):
                 raise
 
 
-def all_sources(spec, topdir, no_package_name_check):
+def all_sources(spec, topdir, check_package_names):
     """
     Get all source URLs defined in the spec file
     """
-    check_package_names = not no_package_name_check
     spec = planex.spec.Spec(spec, topdir=topdir,
                             check_package_name=check_package_names)
     urls = [urlparse.urlparse(url) for url in spec.source_urls()]
@@ -98,8 +97,8 @@ def parse_args_or_exit(argv=None):
                         type=int, default=5)
     parser.add_argument("-t", "--topdir", metavar="DIR", default=None,
                         help='Set rpmbuild toplevel directory')
-    parser.add_argument('--no-package-name-check', action="store_true",
-                        default=False,
+    parser.add_argument('--no-package-name-check', dest="check_package_names",
+                        action="store_false", default=True,
                         help="Don't check that package name matches spec "
                         "file name")
     argcomplete.autocomplete(parser)
@@ -116,7 +115,7 @@ def main(argv):
         logging.basicConfig(format='%(message)s', level=logging.INFO)
 
     for path, url in all_sources(args.spec, args.topdir,
-                                 args.no_package_name_check):
+                                 args.check_package_names):
         if url.scheme in ["http", "https", "file"]:
             try:
                 fetch_http(url, path, args.retries + 1)
