@@ -124,8 +124,10 @@ def main(argv):
                 sys.exit("%s: %s: %s" %
                          (sys.argv[0], exn.strerror, exn.filename))
 
-        elif url.scheme == '' and os.path.dirname(url.path) == '' and \
-                os.path.exists(path):
+        elif url.scheme == '' and os.path.dirname(url.path) == '':
+            if not os.path.exists(path):
+                sys.exit("%s: Source not found: %s" % (sys.argv[0], path))
+
             # Source file is pre-populated in the SOURCES directory (part of
             # the repository - probably a patch or local include).   Update
             # its timestamp to placate make, but don't try to download it.
