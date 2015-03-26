@@ -5,6 +5,7 @@ planex-depend: Generate Makefile-format dependencies from spec files
 """
 
 import argparse
+import argcomplete
 import os
 import planex.spec as pkg
 import platform
@@ -128,6 +129,7 @@ def parse_cmdline():
     parser.add_argument(
         "-t", "--topdir", metavar="DIR", default=None,
         help='Set rpmbuild toplevel directory')
+    argcomplete.autocomplete(parser)
     return parser.parse_args()
 
 

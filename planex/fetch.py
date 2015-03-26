@@ -3,6 +3,7 @@ planex-fetch: Download sources referred to by a spec file
 """
 
 import argparse
+import argcomplete
 import os
 import planex.spec
 import urlparse
@@ -95,6 +96,7 @@ def parse_args_or_exit(argv=None):
                         type=int, default=5)
     parser.add_argument("-t", "--topdir", metavar="DIR", default=None,
                         help='Set rpmbuild toplevel directory')
+    argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
 
