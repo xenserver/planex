@@ -1,9 +1,45 @@
+############################################################################
+# Configuration variables
+############################################################################
+
 DIST := .el6
 TOPDIR ?= _build
 DEPS = $(TOPDIR)/deps
 PINSFILE = pins
 PINDEPS = $(TOPDIR)/pindeps
 PINSDIR = $(TOPDIR)/PINS
+
+
+############################################################################
+# Executable names and flags
+############################################################################
+
+FETCH ?= planex-fetch
+FETCH_FLAGS ?= --topdir $(TOPDIR) $(FETCH_EXTRA_FLAGS)
+
+RPMBUILD ?= rpmbuild
+RPMBUILD_FLAGS ?= --quiet --define "_topdir $(TOPDIR)" \
+                  --define "%dist $(DIST)"
+
+CREATEREPO ?= createrepo
+CREATEREPO_FLAGS ?= --quiet --update
+
+MOCK ?= planex-cache
+MOCK_FLAGS ?= --configdir=$(TOPDIR)/mock --quiet \
+              --resultdir=$(dir $@) --uniqueext=$(notdir $@) \
+              --disable-plugin=package_state
+
+DEPEND ?= planex-depend
+DEPEND_FLAGS ?= -d $(DIST) --topdir $(TOPDIR) --ignore-from ignore \
+                --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
+
+COWBUILDER ?= sudo cowbuilder
+COWBUILDER_FLAGS ?= --build --configfile pbuilder/pbuilderrc \
+                    --buildresult RPMS
+
+############################################################################
+# Main targets
+############################################################################
 
 .PHONY: all rpms srpms srpm_repo
 
@@ -24,7 +60,7 @@ $(TOPDIR):
 	@ln -s ../mock $(TOPDIR)/mock
 	@mkdir $(TOPDIR)/RPMS
 	@ln -s $(TOPDIR)/RPMS RPMS
-	@createrepo RPMS >/dev/null
+	@$(CREATEREPO) RPMS >/dev/null
 	@echo done
 
 
@@ -34,8 +70,8 @@ $(TOPDIR):
 
 # Fetch a source tarball listed in a spec file.
 %.tar %.tar.gz %.tar.bz2 %.tgz %.tbz %.zip %.pdf:
-	@echo [FETCH] $@
-	@planex-fetch $(FETCH_EXTRA_ARGS) --topdir $(TOPDIR) $<
+	@echo [FETCH] $<
+	@$(FETCH) $(FETCH_FLAGS) $<
 
 
 ############################################################################
@@ -49,15 +85,14 @@ $(TOPDIR):
 # (Fedora host) and foo-1.0.el6.x86_64.rpm (CentOS chroot).
 %.src.rpm:
 	@echo [RPMBUILD] $@ 
-	@rpmbuild --quiet --define "_topdir $(TOPDIR)" \
-		--define "%dist $(DIST)" -bs $<
+	@$(RPMBUILD) $(RPMBUILD_FLAGS) -bs $<
 
 # Phony target to create repository metadata for the SRPMs.   This makes
 # it possible to add the SRPMS directory to yum.conf and use yumdownloader
 # to install source RPMs.
 srpm_repo: srpms
 	@echo [CREATEREPO] SRPMS
-	@flock --timeout 30 ./$(TOPDIR)/SRPMS createrepo --quiet --update ./$(TOPDIR)/SRPMS
+	@flock --timeout 30 ./$(TOPDIR)/SRPMS $(CREATEREPO) $(CREATEREPO_FLAGS) ./$(TOPDIR)/SRPMS
 
 # Build one or more binary RPMs from a source RPM.   A typical source RPM
 # might produce a base binary RPM, a -devel binary RPM containing library
@@ -67,11 +102,9 @@ srpm_repo: srpms
 # to find and install it.
 %.rpm:
 	@echo [MOCK] $@
-	@planex-cache --configdir=$(TOPDIR)/mock --quiet \
-		--resultdir=$(dir $@) --uniqueext=$(notdir $@) \
-		--disable-plugin=package_state --rebuild $<
+	@$(MOCK) $(MOCK_FLAGS) --rebuild $<
 	@echo [CREATEREPO] $@
-	@flock --timeout 30 ./$(TOPDIR)/RPMS createrepo --quiet --update ./$(TOPDIR)/RPMS
+	@flock --timeout 30 ./$(TOPDIR)/RPMS $(CREATEREPO) $(CREATEREPO_FLAGS) ./$(TOPDIR)/RPMS
 
 
 ############################################################################
@@ -97,9 +130,7 @@ srpm_repo: srpms
 %.deb:
 	@echo [COWBUILDER] $@
 	@touch RPMS/Packages
-	@sudo cowbuilder --build \
-		--configfile pbuilder/pbuilderrc \
-		--buildresult RPMS $<
+	@$(COWBUILDER) $(COWBUILDER_FLAGS) $<
 	@echo [UPDATEREPO] $@
 	@flock --timeout 30 ./RPMS scripts/deb/updaterepo packages RPMS
 
@@ -124,7 +155,6 @@ $(PINDEPS): $(PINSFILE)
 .DELETE_ON_ERROR: $(DEPS)
 $(DEPS): $(TOPDIR) SPECS/*.spec $(wildcard $(PINSFILE) $(PINDEPS) $(PINSDIR)/*.spec)
 	@echo Updating dependencies...
-	@planex-depend -d $(DIST) --topdir $(TOPDIR) --ignore-from ignore \
-		$(DEPEND_EXTRA_ARGS) --pins-dir $(PINSDIR) SPECS/*.spec > $@
+	@$(DEPEND) $(DEPEND_FLAGS) SPECS/*.spec > $@
 
 -include $(DEPS)
