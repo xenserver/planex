@@ -9,7 +9,7 @@ made dynamically by querying the package databases.
 import platform
 
 TARGET_SPECIFIC_MAPPING = {
-    'debian:jessie/sid': {
+    'debian:8.0': {
         'kernel': ['linux-image-amd64'],
         'kernel-firmware': ['firmware-linux-free'],
         "xen-libs": ["libxen-4.4"],
@@ -146,6 +146,7 @@ SECONDARY_MAPPING = {
     "xen-hypervisor-dev": ["libxen-dev", "blktap-dev"],
     "libvirt0-dev": ["libvirt-dev"],
     "libxen-4.2-dev": ["libxen-dev"],
+    "libxen-4.4-dev": ["libxen-dev"],
     "libffi6-dev": ["libffi-dev"],
     "libvirt-bin-dev": ["libvirt-bin"],
     "blktap-utils-dev": ["blktap-utils"],
