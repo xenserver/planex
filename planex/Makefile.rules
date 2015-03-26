@@ -33,9 +33,9 @@ $(TOPDIR):
 ############################################################################
 
 # Fetch a source tarball listed in a spec file.
-%.tar %.tar.gz %.tar.bz2 %.tgz %.tbz %.zip:
+%.tar %.tar.gz %.tar.bz2 %.tgz %.tbz %.zip %.pdf:
 	@echo [FETCH] $@
-	@planex-fetch --topdir $(TOPDIR) $<
+	@planex-fetch $(FETCH_EXTRA_ARGS) --topdir $(TOPDIR) $<
 
 
 ############################################################################
@@ -125,6 +125,6 @@ $(PINDEPS): $(PINSFILE)
 $(DEPS): $(TOPDIR) SPECS/*.spec $(wildcard $(PINSFILE) $(PINDEPS) $(PINSDIR)/*.spec)
 	@echo Updating dependencies...
 	@planex-depend -d $(DIST) --topdir $(TOPDIR) --ignore-from ignore \
-		--pins-dir $(PINSDIR) SPECS/*.spec > $@
+		$(DEPEND_EXTRA_ARGS) --pins-dir $(PINSDIR) SPECS/*.spec > $@
 
 -include $(DEPS)
