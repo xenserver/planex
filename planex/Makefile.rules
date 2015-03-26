@@ -15,7 +15,7 @@ PINSDIR = $(TOPDIR)/PINS
 ############################################################################
 
 FETCH ?= planex-fetch
-FETCH_FLAGS ?= --topdir $(TOPDIR) $(FETCH_EXTRA_ARGS)
+FETCH_FLAGS ?= --topdir $(TOPDIR) $(FETCH_EXTRA_FLAGS)
 
 RPMBUILD ?= rpmbuild
 RPMBUILD_FLAGS ?= --quiet --define "_topdir $(TOPDIR)" \
@@ -31,8 +31,11 @@ MOCK_FLAGS ?= --configdir=$(TOPDIR)/mock --quiet \
 
 DEPEND ?= planex-depend
 DEPEND_FLAGS ?= -d $(DIST) --topdir $(TOPDIR) --ignore-from ignore \
-                --pins-dir $(PINSDIR) $(DEPEND_EXTRA_ARGS)
+                --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
 
+COWBUILDER ?= sudo cowbuilder
+COWBUILDER_FLAGS ?= --build --configfile pbuilder/pbuilderrc \
+                    --buildresult RPMS
 
 ############################################################################
 # Main targets
@@ -127,9 +130,7 @@ srpm_repo: srpms
 %.deb:
 	@echo [COWBUILDER] $@
 	@touch RPMS/Packages
-	@sudo cowbuilder --build \
-		--configfile pbuilder/pbuilderrc \
-		--buildresult RPMS $<
+	@$(COWBUILDER) $(COWBUILDER_FLAGS) $<
 	@echo [UPDATEREPO] $@
 	@flock --timeout 30 ./RPMS scripts/deb/updaterepo packages RPMS
 
