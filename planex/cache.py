@@ -5,6 +5,7 @@ planex-cache: A caching wrapper around mock for building RPMs
 """
 
 import argparse
+import argcomplete
 import hashlib
 import os
 import rpm
@@ -41,6 +42,7 @@ def parse_args_or_exit(argv=None):
     parser.add_argument(
         '-r', '--root', default="default",
         help='chroot name/config file name default: default')
+    argcomplete.autocomplete(parser)
     return parser.parse_known_args(argv)
 
 

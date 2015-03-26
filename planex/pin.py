@@ -3,6 +3,7 @@ planex-pin: Generate a new override spec file for a given package
 """
 
 import argparse
+import argcomplete
 import os
 import sys
 import re
@@ -280,6 +281,7 @@ def parse_args_or_exit(argv=None):
     parser_rules.add_argument('deps_path', help='Path to deps file')
     parser_rules.set_defaults(func=print_rules)
 
+    argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
 
