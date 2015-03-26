@@ -15,6 +15,7 @@ Requires: mock
 Requires: rpm-build
 Requires: createrepo
 Requires: python-argparse
+Requires: python-argcomplete
 Requires: python-setuptools
 
 %description
