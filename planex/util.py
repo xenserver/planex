@@ -78,3 +78,15 @@ def setup_sigint_handler():
     Exit with 130 upon CTRL-C (http://tldp.org/LDP/abs/html/exitcodes.html
     """
     signal.signal(signal.SIGINT, lambda _: sys.exit(130))
+
+
+def setup_logging(args):
+    """
+    Intended to be called by any top-level module to set up "sensible" logging.
+    """
+    loglevel = logging.INFO
+    if args.verbose:
+        loglevel = logging.DEBUG
+    if args.quiet:
+        loglevel = logging.WARN
+    logging.basicConfig(format='%(message)s', level=loglevel)
