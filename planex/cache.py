@@ -26,9 +26,7 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(description='Cache package building')
-    parser.add_argument(
-        '--debug', action='store_true', default=False,
-        help='Print debugging information')
+    util.add_logging_parser_options(parser)
     parser.add_argument(
         '--cachedirs', default='~/.planex-cache:/misc/cache/planex-cache',
         help='colon-separated cache search path')
@@ -209,10 +207,7 @@ def main(argv):
     yumbase = util.get_yumbase(yum_config)
     setup_yumbase(yumbase)
 
-    loglevel = logging.INFO
-    if intercepted_args.debug:
-        loglevel = logging.DEBUG
-    logging.basicConfig(format='%(message)s', level=loglevel)
+    util.setup_logging(intercepted_args)
 
     srpm = load_srpm_from_file(passthrough_args[-1])
     with open(config) as cfg:

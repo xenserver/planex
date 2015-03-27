@@ -12,6 +12,8 @@ import sys
 import logging
 import pkg_resources
 from planex.util import setup_sigint_handler
+from planex.util import add_logging_parser_options
+from planex.util import setup_logging
 
 
 def curl_get(url_string, out_file):
@@ -90,9 +92,8 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(description='Download package sources')
+    add_logging_parser_options(parser)
     parser.add_argument('spec', help='RPM Spec file')
-    parser.add_argument('--verbose', '-v', help='Be verbose',
-                        action='store_true')
     parser.add_argument('--retries', '-r',
                         help='Number of times to retry a failed download',
                         type=int, default=5)
@@ -113,8 +114,7 @@ def main(argv):
     """
     setup_sigint_handler()
     args = parse_args_or_exit(argv)
-    if args.verbose:
-        logging.basicConfig(format='%(message)s', level=logging.INFO)
+    setup_logging(args)
 
     for path, url in all_sources(args.spec, args.topdir,
                                  args.check_package_names):

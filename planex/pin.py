@@ -16,6 +16,8 @@ import json
 import rpm
 from planex.util import run
 from planex.util import setup_sigint_handler
+from planex.util import add_logging_parser_options
+from planex.util import setup_logging
 
 
 def describe(repo, treeish="HEAD"):
@@ -281,8 +283,7 @@ def parse_args_or_exit(argv=None):
     # top-level parser
     parser = argparse.ArgumentParser(
         description='Pin a package to a specific version')
-    parser.add_argument('--verbose', '-v', help='Be verbose',
-                        action='store_true')
+    add_logging_parser_options(parser)
     parser.add_argument('--pins-file', default='pins',
                         help='Pins file (default: pins)')
     parser.add_argument('--pins-dir', default='PINS',
@@ -327,8 +328,7 @@ def main(argv):
     """
     setup_sigint_handler()
     args = parse_args_or_exit(argv)
-    if args.verbose:
-        logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+    setup_logging(args)
     args.func(args)
 
 

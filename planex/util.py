@@ -90,3 +90,13 @@ def setup_logging(args):
     if args.quiet:
         loglevel = logging.WARN
     logging.basicConfig(format='%(message)s', level=loglevel)
+
+
+def add_logging_parser_options(parser):
+    """
+    Takes a parser and adds --quiet and -v/--verbose/--debug options to it
+    """
+    parser.add_argument('--quiet', '--warn', action='store_true',
+                        help='Only log warnings and errors')
+    parser.add_argument('--verbose', '--debug', action='store_true',
+                        help='Enable debug logging')
