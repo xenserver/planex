@@ -15,6 +15,7 @@ import shutil
 import json
 import rpm
 from planex.util import run
+from planex.util import setup_sigint_handler
 
 
 def describe(repo, treeish="HEAD"):
@@ -324,6 +325,7 @@ def main(argv):
     """
     Main function
     """
+    setup_sigint_handler()
     args = parse_args_or_exit(argv)
     if args.verbose:
         logging.basicConfig(format='%(message)s', level=logging.DEBUG)

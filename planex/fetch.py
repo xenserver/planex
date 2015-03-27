@@ -11,6 +11,7 @@ import pycurl
 import sys
 import logging
 import pkg_resources
+from planex.util import setup_sigint_handler
 
 
 def curl_get(url_string, out_file):
@@ -110,6 +111,7 @@ def main(argv):
     Main function.  Parse spec file and iterate over its sources, downloading
     them as appropriate.
     """
+    setup_sigint_handler()
     args = parse_args_or_exit(argv)
     if args.verbose:
         logging.basicConfig(format='%(message)s', level=logging.INFO)

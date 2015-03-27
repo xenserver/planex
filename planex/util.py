@@ -3,11 +3,13 @@
 # Some generic utils used by several other files
 
 import subprocess
+import sys
 import os
 import pipes
 import tempfile
 import yum
 import logging
+import signal
 
 
 def load_mock_config(cfg):
@@ -69,3 +71,10 @@ def run(cmd, check=True, env=None, inputtext=None):
         raise Exception
 
     return {"stdout": stdout, "stderr": stderr, "rc": proc.returncode}
+
+
+def setup_sigint_handler():
+    """
+    Exit with 130 upon CTRL-C (http://tldp.org/LDP/abs/html/exitcodes.html
+    """
+    signal.signal(signal.SIGINT, lambda _: sys.exit(130))
