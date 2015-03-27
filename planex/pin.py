@@ -12,6 +12,8 @@ import logging
 import tempfile
 import hashlib
 import shutil
+import json
+import rpm
 from planex.util import run
 
 
@@ -44,14 +46,14 @@ def describe(repo, treeish="HEAD"):
     return description[matchlen:].replace('-', '+')
 
 
-def archive(repo, commit_hash, pin_version, target_dir):
+def archive(repo, commit_hash, prefix, target_dir):
     """
     Archive a git repo at a given commit with a specified version prefix.
     Returns the path to a tar.gz to be used as a source for building an RPM.
     """
     dotgitdir = os.path.join(repo, ".git")
 
-    prefix = "%s-%s" % (os.path.basename(repo), pin_version)
+    prefix = "%s-%s" % (os.path.basename(repo), prefix)
     path = os.path.join(target_dir, "%s.tar" % prefix)
 
     run(["git", "--git-dir=%s" % dotgitdir, "archive", commit_hash,
@@ -61,31 +63,50 @@ def archive(repo, commit_hash, pin_version, target_dir):
     return path + ".gz"
 
 
-def pinned_spec_of_spec(spec_path, pin_version, source_path):
+def pinned_spec_of_spec(spec_path, src_map):
     """
-    Given a path to a spec file, return the contents of a new spec file for the
-    same package which uses the given version and source.
+    Given a path to a spec file, and a map of source number to (version, path),
+    return the contents of a new spec file for the pinned package. The new spec
+    file will have the source paths overriden and the Release tag set to
+    a sensible combination of the versions of the source pin targets. This.
+    This conforms to the Fedora Project packaging guidelines for what to put
+    into the Release Tag (see commit message for relevant link).
     """
+    logging.debug("Generating pinned spec for %s from source_map %s",
+                  spec_path, src_map)
     spec_in = open(spec_path)
     spec_contents = spec_in.readlines()
     spec_in.close()
 
-    source_url = "file://" + os.path.abspath(source_path)
-
     pinned_spec = []
     for line in spec_contents:
-        # replace the source url
-        match = re.match(r'^([Ss]ource\d*:\s+)(.+)\n', line)
+        # replace the source url(s)
+        for src_num in src_map.iterkeys():
+            match = re.match(r'^([Ss]ource%s*:\s+)(.+)\n' % src_num, line)
+            if match:
+                source_url = "file://" + os.path.abspath(src_map[src_num][1])
+                logging.info("Replacing Source%s of %s with %s",
+                             src_num, spec_path, src_map[src_num][1])
+                line = match.group(1) + source_url + "\n"
+        # replace the release
+        match = re.match(r'^([Rr]elease:\s+)([^%]+)(.*)\n', line)
         if match:
-            line = match.group(1) + source_url + "\n"
-        # replace the version
-        match = re.match(r'^([Vv]ersion\d*:\s+)(.+)\n', line)
-        if match:
-            print "replacing %s with %s" % (match.group(2), pin_version)
-            line = match.group(1) + pin_version + "\n"
+            # combine the source override versions to get the package release
+            release_stamps = ["s{0}+{1}".format(n, v)
+                              for (n, (v, _)) in src_map.items()]
+            # Note that %% expands to just %...
+            pin_release = "_".join(sorted(release_stamps))
+            logging.info("Replacing Release %s of %s with %s",
+                         match.group(2), spec_path, pin_release)
+            line = match.group(1) + pin_release + match.group(3) + "\n"
         pinned_spec.append(line)
 
     return "".join(pinned_spec)
+
+
+def version_of_spec_file(path):
+    spec = rpm.ts().parseSpec(path)
+    return spec.sourceHeader['version']
 
 
 def hash_of_file(path):
@@ -122,21 +143,29 @@ def update(args):
         os.makedirs(args.pins_dir)
 
     pins = parse_pins_file(args)
-    for (spec, pin_target) in pins.iteritems():
-        # we're assuming for now that the target is a git repository
-        repo, _, treeish = pin_target.partition('#')
-        pin_version = describe(repo, treeish) if treeish else describe(repo)
+    for (spec, pinned_sources) in pins.iteritems():
+        source_map = {}
+        orig_version = version_of_spec_file(spec)
+        for (src_num, pin_target) in pinned_sources.iteritems():
+            # we're assuming for now that the target is a git repository
+            repo, _, treeish = pin_target.partition('#')
+            src_version = describe(repo, treeish if treeish else None)
+            logging.debug("Source%s pin target is at version %s",
+                          src_num, src_version)
 
-        tmpdir = tempfile.mkdtemp(prefix='planex-pin')
-        tmp_archive = archive(repo, treeish, pin_version, tmpdir)
-        tar_path = os.path.join(args.pins_dir, os.path.basename(tmp_archive))
-        maybe_copy(tmp_archive, tar_path, args.force)
-        shutil.rmtree(tmpdir)
+            tmpdir = tempfile.mkdtemp(prefix='planex-pin')
+            tmp_archive = archive(repo, treeish, orig_version, tmpdir)
+            tar_name = os.path.basename(tmp_archive).replace(orig_version,
+                                                             src_version)
+            tar_path = os.path.join(args.pins_dir, tar_name)
+            maybe_copy(tmp_archive, tar_path, args.force)
+            shutil.rmtree(tmpdir)
+            source_map[src_num] = (src_version, tar_path)
 
         out_spec_path = os.path.join(args.pins_dir, os.path.basename(spec))
         tmp_spec = tempfile.NamedTemporaryFile(mode='w+', prefix='planex-pin',
                                                delete=False)
-        tmp_spec.write(pinned_spec_of_spec(spec, pin_version, tar_path))
+        tmp_spec.write(pinned_spec_of_spec(spec, source_map))
         tmp_spec.close()
         maybe_copy(tmp_spec.name, out_spec_path, args.force)
         os.remove(tmp_spec.name)
@@ -145,19 +174,16 @@ def update(args):
 def parse_pins_file(args):
     """
     Return a dictionary of spec files to pin targets from the pin definition
-    file.  The file can have comments (lines that begin with a '#') and each
-    definition is a single line of the form:
-        "<path-to-spec-file> <path-to-git-repo>#<git-tree-ish>"
+    file.  The file can have comments (lines that begin with a '#') and then
+    the pin definitions are a json dump of the dictionary
     """
-    pins = {}
+    lines = []
     if os.access(args.pins_file, os.R_OK):
         with open(args.pins_file, 'r') as pins_file:
             for line in pins_file.readlines():
-                if re.match(r'^\s*#', line):
-                    continue
-                (spec, pin) = line.split(' ', 1)
-                pins[spec] = pin.strip()
-    return pins
+                if not re.match(r'^\s*#', line):
+                    lines.append(line)
+    return json.loads(''.join(lines)) if lines else {}
 
 
 def serialise_pins(pins, path):
@@ -168,12 +194,9 @@ def serialise_pins(pins, path):
         "# This file is auto-generated by planex-pin\n",
         "# Do not edit directly, instead use planex-pin {add,list,remove}\n"
     ]
-    lines = []
-    for (spec, target) in pins.iteritems():
-        lines.append("%s %s\n" % (spec, target))
     with open(path, 'w+') as pins_file:
         pins_file.writelines(preamble)
-        pins_file.writelines(lines)
+        json.dump(pins, pins_file)
 
 
 def list_pins(args):
@@ -182,8 +205,9 @@ def list_pins(args):
     Prints to stdout the pins in the pin definition file.
     """
     pins = parse_pins_file(args)
-    for (spec, pin) in pins.iteritems():
-        print "* %s -> %s" % (spec, pin)
+    for (spec, pinned_sources) in pins.iteritems():
+        for (source_number, target) in pinned_sources.iteritems():
+            print "* %s : Source%s -> %s" % (spec, source_number, target)
 
 
 def add_pin(args):
@@ -196,11 +220,15 @@ def add_pin(args):
         sys.exit(1)
     pins = parse_pins_file(args)
     normalised_path = os.path.relpath(args.spec_file)
-    if normalised_path in pins and not args.force:
-        sys.stdout.write("error: Package is already pinned:\n* %s -> %s\n" %
-                         (normalised_path, pins[normalised_path]))
-        sys.exit(1)
-    pins[normalised_path] = args.target
+    if normalised_path in pins:
+        if args.source in pins[normalised_path] and not args.force:
+            sys.exit("error: Package already has source pinned:\n"
+                     "* %s : Source%s -> %s\n" %
+                     (normalised_path, args.source,
+                      pins[normalised_path][args.source]))
+        pins[normalised_path].update({args.source: args.target})
+    else:
+        pins[normalised_path] = {args.source: args.target}
     serialise_pins(pins, args.pins_file)
 
 
@@ -214,9 +242,10 @@ def remove_pin(args):
     pins = parse_pins_file(args)
     normalised_path = os.path.relpath(args.spec_file)
     if normalised_path in pins:
-        del pins[os.path.relpath(args.spec_file)]
-        serialise_pins(pins, args.pins_file)
-        os.utime(args.spec_file, None)
+        if args.source in pins[normalised_path]:
+            del pins[normalised_path][args.source]
+            serialise_pins(pins, args.pins_file)
+            os.utime(args.spec_file, None)
 
 
 def print_rules(args):
@@ -226,10 +255,12 @@ def print_rules(args):
     removes any override spec files for removed pins.
     """
     pins = parse_pins_file(args)
-    for (spec, pin) in pins.iteritems():
+    for (spec, pinned_sources) in pins.iteritems():
         pinned_spec_path = os.path.join(args.pins_dir, os.path.basename(spec))
-        repo = os.path.abspath(pin.partition('#')[0])
-        dependencies = "$(wildcard %s) %s" % (os.path.join(repo, ".git/**/*"),
+        repos = [pin.partition('#')[0] for pin in pinned_sources.values()]
+        repo_paths = [os.path.abspath(repo) for repo in repos]
+        gitdir_paths = [os.path.join(p, ".git/**/*") for p in repo_paths]
+        dependencies = "$(wildcard %s) %s" % (" ".join(gitdir_paths),
                                               args.pins_file)
         print "%s: %s" % (args.deps_path, pinned_spec_path)
         print "%s: %s" % (pinned_spec_path, dependencies)
@@ -268,12 +299,16 @@ def parse_args_or_exit(argv=None):
     parser_add = subparsers.add_parser('add', help='Add a new pin definition')
     parser_add.add_argument('--force', '-f', action='store_true',
                             help='Override any existing pin definition')
+    parser_add.add_argument('--source', default="0",
+                            help='Which source number to pin. (default: 0)')
     parser_add.add_argument('spec_file', help='Spec file to pin')
     parser_add.add_argument('target',
                             help='Pin target: <path-to-git-repo>#<tree-ish>')
     parser_add.set_defaults(func=add_pin)
     # parser for the 'remove' command
     parser_remove = subparsers.add_parser('remove', help='Remove a pin')
+    parser_remove.add_argument('--source', default="0",
+                               help='Which source to unpin. (default: 0)')
     parser_remove.add_argument('spec_file', help='Spec file to un-pin')
     parser_remove.set_defaults(func=remove_pin)
     # parser for the 'rules' command
