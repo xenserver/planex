@@ -80,7 +80,7 @@ def pinned_spec_of_spec(spec_path, pin_version, source_path):
         if match:
             line = match.group(1) + source_url + "\n"
         # replace the version
-        match = re.match(r'^([Vv]ersion\d*:\s+)(.+)\n', line)
+        match = re.match(r'^([Vv]ersion:\s+)(.+)\n', line)
         if match:
             print "replacing %s with %s" % (match.group(2), pin_version)
             line = match.group(1) + pin_version + "\n"
