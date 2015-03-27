@@ -197,6 +197,7 @@ def main(argv):
     Main function.  Parse spec file and iterate over its sources, downloading
     them as appropriate.
     """
+    util.setup_sigint_handler()
     intercepted_args, passthrough_args = parse_args_or_exit(argv)
     config = os.path.join(intercepted_args.configdir,
                           intercepted_args.root + ".cfg")

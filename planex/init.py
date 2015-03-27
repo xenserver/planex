@@ -6,6 +6,7 @@ Creates or regenerates a Makefile with special planex-init comments
 
 import os
 import logging
+from planex.util import setup_sigint_handler
 
 MAKEFILE_PATH = "/usr/share/planex"
 
@@ -55,6 +56,7 @@ def main():
     """
     Main entry point
     """
+    setup_sigint_handler()
     logging.basicConfig(format='%(message)s', level=logging.ERROR)
     create_makefile()
 

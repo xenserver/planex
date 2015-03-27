@@ -13,6 +13,7 @@ import sys
 import urlparse
 import glob
 from planex import mappkgname
+from planex.util import setup_sigint_handler
 
 
 def build_type():
@@ -137,6 +138,7 @@ def main():
     """
     Entry point
     """
+    setup_sigint_handler()
     args = parse_cmdline()
     specs = {}
 

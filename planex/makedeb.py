@@ -14,6 +14,7 @@ from planex import debianmisc
 from planex import debianrules
 from planex import mappkgname
 from planex import rpmextra
+from planex.util import setup_sigint_handler
 
 # BUGS:
 #   Hack to disable CFLAGS for ocaml-oclock
@@ -118,6 +119,7 @@ def rename_source(spec, pkgname, pkgversion):
 
 
 def main():
+    setup_sigint_handler()
     shutil.rmtree(BUILD_DIR)
     os.mkdir(BUILD_DIR)
     spec = rpmextra.spec_from_file(sys.argv[1])
