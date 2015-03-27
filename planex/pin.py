@@ -13,6 +13,7 @@ import tempfile
 import hashlib
 import shutil
 import json
+import rpm
 from planex.util import run
 
 
@@ -65,7 +66,11 @@ def archive(repo, commit_hash, prefix, target_dir):
 def pinned_spec_of_spec(spec_path, src_map):
     """
     Given a path to a spec file, and a map of source number to (version, path),
-    return the contents of a new spec file for the pinned package.
+    return the contents of a new spec file for the pinned package. The new spec
+    file will have the source paths overriden and the Release tag set to
+    a sensible combination of the versions of the source pin targets. This.
+    This conforms to the Fedora Project packaging guidelines for what to put
+    into the Release Tag (see commit message for relevant link).
     """
     logging.debug("Generating pinned spec for %s from source_map %s",
                   spec_path, src_map)
@@ -83,19 +88,25 @@ def pinned_spec_of_spec(spec_path, src_map):
                 logging.info("Replacing Source%s of %s with %s",
                              src_num, spec_path, src_map[src_num][1])
                 line = match.group(1) + source_url + "\n"
-        # replace the version
-        match = re.match(r'^([Vv]ersion:\s+)(.+)\n', line)
+        # replace the release
+        match = re.match(r'^([Rr]elease:\s+)([^%]+)(.*)\n', line)
         if match:
-            # combine the source override versions to get the package version
-            version_stamps = ["s{0}+{1}".format(n, v)
+            # combine the source override versions to get the package release
+            release_stamps = ["s{0}+{1}".format(n, v)
                               for (n, (v, _)) in src_map.items()]
-            pin_version = "_".join(sorted(version_stamps))
-            logging.info("Replacing Version %s of %s with %s",
-                         match.group(2), spec_path, pin_version)
-            line = match.group(1) + pin_version + "\n"
+            # Note that %% expands to just %...
+            pin_release = "_".join(sorted(release_stamps))
+            logging.info("Replacing Release %s of %s with %s",
+                         match.group(2), spec_path, pin_release)
+            line = match.group(1) + pin_release + match.group(3) + "\n"
         pinned_spec.append(line)
 
     return "".join(pinned_spec)
+
+
+def version_of_spec_file(path):
+    spec = rpm.ts().parseSpec(path)
+    return spec.sourceHeader['version']
 
 
 def hash_of_file(path):
@@ -134,6 +145,7 @@ def update(args):
     pins = parse_pins_file(args)
     for (spec, pinned_sources) in pins.iteritems():
         source_map = {}
+        orig_version = version_of_spec_file(spec)
         for (src_num, pin_target) in pinned_sources.iteritems():
             # we're assuming for now that the target is a git repository
             repo, _, treeish = pin_target.partition('#')
@@ -142,8 +154,10 @@ def update(args):
                           src_num, src_version)
 
             tmpdir = tempfile.mkdtemp(prefix='planex-pin')
-            tmp_archive = archive(repo, treeish, src_version, tmpdir)
-            tar_path = os.path.join(args.pins_dir, os.path.basename(tmp_archive))
+            tmp_archive = archive(repo, treeish, orig_version, tmpdir)
+            tar_name = os.path.basename(tmp_archive).replace(orig_version,
+                                                             src_version)
+            tar_path = os.path.join(args.pins_dir, tar_name)
             maybe_copy(tmp_archive, tar_path, args.force)
             shutil.rmtree(tmpdir)
             source_map[src_num] = (src_version, tar_path)
