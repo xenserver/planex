@@ -3,4 +3,4 @@ mock/logging.ini
 mock/site-defaults.cfg
 _build/
 SOURCES/
-RPMS/
+RPMS
