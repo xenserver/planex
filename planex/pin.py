@@ -76,7 +76,7 @@ def pinned_spec_of_spec(spec_path, pin_version, source_path):
     pinned_spec = []
     for line in spec_contents:
         # replace the source url
-        match = re.match(r'^([Ss]ource\d*:\s+)(.+)\n', line)
+        match = re.match(r'^([Ss]ource%d*:\s+)(.+)\n' % 0, line)
         if match:
             line = match.group(1) + source_url + "\n"
         # replace the version
