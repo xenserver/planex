@@ -45,14 +45,14 @@ def describe(repo, treeish="HEAD"):
     return description[matchlen:].replace('-', '+')
 
 
-def archive(repo, commit_hash, pin_version, target_dir):
+def archive(repo, commit_hash, prefix, target_dir):
     """
     Archive a git repo at a given commit with a specified version prefix.
     Returns the path to a tar.gz to be used as a source for building an RPM.
     """
     dotgitdir = os.path.join(repo, ".git")
 
-    prefix = "%s-%s" % (os.path.basename(repo), pin_version)
+    prefix = "%s-%s" % (os.path.basename(repo), prefix)
     path = os.path.join(target_dir, "%s.tar" % prefix)
 
     run(["git", "--git-dir=%s" % dotgitdir, "archive", commit_hash,
@@ -86,8 +86,10 @@ def pinned_spec_of_spec(spec_path, src_map):
         # replace the version
         match = re.match(r'^([Vv]ersion:\s+)(.+)\n', line)
         if match:
-            # use the maximum version of all the pinned sources
-            pin_version = max(src_map.values())[0]
+            # combine the source override versions to get the package version
+            version_stamps = ["s{0}+{1}".format(n, v)
+                              for (n, (v, _)) in src_map.items()]
+            pin_version = "_".join(sorted(version_stamps))
             logging.info("Replacing Version %s of %s with %s",
                          match.group(2), spec_path, pin_version)
             line = match.group(1) + pin_version + "\n"
