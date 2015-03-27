@@ -78,3 +78,25 @@ def setup_sigint_handler():
     Exit with 130 upon CTRL-C (http://tldp.org/LDP/abs/html/exitcodes.html
     """
     signal.signal(signal.SIGINT, lambda _: sys.exit(130))
+
+
+def setup_logging(args):
+    """
+    Intended to be called by any top-level module to set up "sensible" logging.
+    """
+    loglevel = logging.INFO
+    if args.verbose:
+        loglevel = logging.DEBUG
+    if args.quiet:
+        loglevel = logging.WARN
+    logging.basicConfig(format='%(message)s', level=loglevel)
+
+
+def add_logging_parser_options(parser):
+    """
+    Takes a parser and adds --quiet and -v/--verbose/--debug options to it
+    """
+    parser.add_argument('--quiet', '--warn', action='store_true',
+                        help='Only log warnings and errors')
+    parser.add_argument('--verbose', '--debug', action='store_true',
+                        help='Enable debug logging')
