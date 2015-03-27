@@ -62,7 +62,7 @@ def archive(repo, commit_hash, pin_version, target_dir):
     return path + ".gz"
 
 
-def pinned_spec_of_spec(spec_path, pin_version, source_path):
+def pinned_spec_of_spec(spec_path, pin_version, src_num, src_path):
     """
     Given a path to a spec file, return the contents of a new spec file for the
     same package which uses the given version and source.
@@ -71,12 +71,12 @@ def pinned_spec_of_spec(spec_path, pin_version, source_path):
     spec_contents = spec_in.readlines()
     spec_in.close()
 
-    source_url = "file://" + os.path.abspath(source_path)
+    source_url = "file://" + os.path.abspath(src_path)
 
     pinned_spec = []
     for line in spec_contents:
         # replace the source url
-        match = re.match(r'^([Ss]ource%d*:\s+)(.+)\n' % 0, line)
+        match = re.match(r'^([Ss]ource%d*:\s+)(.+)\n' % int(src_num), line)
         if match:
             line = match.group(1) + source_url + "\n"
         # replace the version
@@ -123,7 +123,8 @@ def update(args):
         os.makedirs(args.pins_dir)
 
     pins = parse_pins_file(args)
-    for (spec, pin_target) in pins.iteritems():
+    for (spec, pinned_sources) in pins.iteritems():
+        (src_num, pin_target) = pinned_sources.items()[0]
         # we're assuming for now that the target is a git repository
         repo, _, treeish = pin_target.partition('#')
         pin_version = describe(repo, treeish) if treeish else describe(repo)
@@ -137,7 +138,8 @@ def update(args):
         out_spec_path = os.path.join(args.pins_dir, os.path.basename(spec))
         tmp_spec = tempfile.NamedTemporaryFile(mode='w+', prefix='planex-pin',
                                                delete=False)
-        tmp_spec.write(pinned_spec_of_spec(spec, pin_version, tar_path))
+        tmp_spec.write(pinned_spec_of_spec(spec, pin_version, src_num,
+                                           tar_path))
         tmp_spec.close()
         maybe_copy(tmp_spec.name, out_spec_path, args.force)
         os.remove(tmp_spec.name)
@@ -177,8 +179,9 @@ def list_pins(args):
     Prints to stdout the pins in the pin definition file.
     """
     pins = parse_pins_file(args)
-    for (spec, pin) in pins.iteritems():
-        print "* %s -> %s" % (spec, pin)
+    for (spec, pinned_sources) in pins.iteritems():
+        for (source_number, target) in pinned_sources.iteritems():
+            print "* %s : Source%s -> %s" % (spec, source_number, target)
 
 
 def add_pin(args):
@@ -195,7 +198,7 @@ def add_pin(args):
         sys.stdout.write("error: Package is already pinned:\n* %s -> %s\n" %
                          (normalised_path, pins[normalised_path]))
         sys.exit(1)
-    pins[normalised_path] = args.target
+    pins[normalised_path] = {args.source: args.target}
     serialise_pins(pins, args.pins_file)
 
 
@@ -221,7 +224,8 @@ def print_rules(args):
     removes any override spec files for removed pins.
     """
     pins = parse_pins_file(args)
-    for (spec, pin) in pins.iteritems():
+    for (spec, pinned_sources) in pins.iteritems():
+        (_, pin) = pinned_sources.items()[0]
         pinned_spec_path = os.path.join(args.pins_dir, os.path.basename(spec))
         repo = os.path.abspath(pin.partition('#')[0])
         dependencies = "$(wildcard %s) %s" % (os.path.join(repo, ".git/**/*"),
@@ -263,6 +267,8 @@ def parse_args_or_exit(argv=None):
     parser_add = subparsers.add_parser('add', help='Add a new pin definition')
     parser_add.add_argument('--force', '-f', action='store_true',
                             help='Override any existing pin definition')
+    parser_add.add_argument('--source', type=int, default=0,
+                            help='Which source number to pin. (default: 0)')
     parser_add.add_argument('spec_file', help='Spec file to pin')
     parser_add.add_argument('target',
                             help='Pin target: <path-to-git-repo>#<tree-ish>')
