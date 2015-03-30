@@ -16,7 +16,6 @@ import yum
 from planex import util
 import itertools
 import logging
-from planex.globals import PLANEX_REPO_NAME
 
 PLANEX_CACHE_SALT = "planex-cache-1"
 
@@ -30,6 +29,9 @@ def parse_args_or_exit(argv=None):
     parser.add_argument(
         '--cachedirs', default='~/.planex-cache:/misc/cache/planex-cache',
         help='colon-separated cache search path')
+    parser.add_argument(
+        '--loopback-repo', default='mock',
+        help='Name of the mock loopback repository')
 
     # Overridden mock arguments.  Help text taken directly from mock.
     parser.add_argument(
@@ -54,7 +56,7 @@ RFC4880_HASHES = {
     11: "SHA224"}
 
 
-def setup_yumbase(yumbase):
+def setup_yumbase(yumbase, loopback_repo):
     """
     Set up the YUM database.
     """
@@ -65,7 +67,7 @@ def setup_yumbase(yumbase):
 
     # much faster if we only enable our own repository
     yumbase.repos.disableRepo('*')
-    yumbase.repos.enableRepo(PLANEX_REPO_NAME)
+    yumbase.repos.enableRepo(loopback_repo)
 
     yumbase.setCacheDir(force=True, reuse=True)
     # yumbase.repos.populateSack(cacheonly=True)
@@ -205,7 +207,7 @@ def main(argv):
     # having yum print lots of irrelevant messages during startup.
     yum_config = util.load_mock_config(config)
     yumbase = util.get_yumbase(yum_config)
-    setup_yumbase(yumbase)
+    setup_yumbase(yumbase, intercepted_args.loopback_repo)
 
     util.setup_logging(intercepted_args)
 
