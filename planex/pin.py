@@ -247,6 +247,8 @@ def remove_pin(args):
     if normalised_path in pins:
         if args.source in pins[normalised_path]:
             del pins[normalised_path][args.source]
+            if not pins[normalised_path]:
+                del pins[normalised_path]
             serialise_pins(pins, args.pins_file)
             os.utime(args.spec_file, None)
 
