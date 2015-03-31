@@ -1,11 +1,7 @@
-%define name planex
-%define version 0.6.0
-%define release 1
-
 Summary: RPM/deb build tool
-Name: %{name}
-Version: %{version}
-Release: %{release}%{?dist}
+Name: planex
+Version: 0.6.0
+Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
 License: LGPLv2.1
@@ -36,15 +32,25 @@ and caching.
 %doc LICENSE
 %doc CHANGES
 %{_bindir}/planex-cache
-%{_bindir}/planex-clone
-%{_bindir}/planex-configure
-%{_bindir}/planex-fetch
-%{_bindir}/planex-makedeb
 %{_bindir}/planex-depend
-%{python_sitelib}/planex-*.egg-info
+%{_bindir}/planex-fetch
+%{_bindir}/planex-init
+%{_bindir}/planex-makedeb
+%{_bindir}/planex-pin
+%{_datarootdir}/%{name}/Makefile.rules
 %{python_sitelib}/planex
+%{python_sitelib}/planex-*.egg-info
+%config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Wed Mar 25 2015 Euan Harris <euan.harris@citrix.com> - 0.7.0-1
+- Build products are now written to the _build subdirectory by default
+- Add planex-pin, which overrides a package's sources with a local repo
+- Add planex-init, which sets up the planex environment
+- Add planex-fetch, replacing planex-downloader
+- Remove planex-configure, which is superseded by planex-pin
+- Rename Makefile.common to Makefile.rules
+
 * Wed Jan 21 2015 Euan Harris <euan.harris@citrix.com> - 0.6.0-1
 - planex-specdep is now known as planex-depend
 - planex-depend: By default, produce packages for the host system
