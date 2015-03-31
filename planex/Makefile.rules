@@ -62,8 +62,8 @@ $(TOPDIR):
 	@mkdir $(TOPDIR)/SRPMS
 	@ln -s $(TOPDIR)/RPMS RPMS
 	@ln -s $(TOPDIR)/SRPMS SRPMS
-	@$(CREATEREPO) RPMS >/dev/null
-	@$(CREATEREPO) SRPMS >/dev/null
+	@$(CREATEREPO) --quiet RPMS
+	@$(CREATEREPO) --quiet SRPMS
 	@echo done
 
 
