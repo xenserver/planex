@@ -32,13 +32,15 @@ and caching.
 %doc LICENSE
 %doc CHANGES
 %{_bindir}/planex-cache
-%{_bindir}/planex-clone
-%{_bindir}/planex-configure
-%{_bindir}/planex-fetch
-%{_bindir}/planex-makedeb
 %{_bindir}/planex-depend
-%{python_sitelib}/planex-*.egg-info
+%{_bindir}/planex-fetch
+%{_bindir}/planex-init
+%{_bindir}/planex-makedeb
+%{_bindir}/planex-pin
+%{_datarootdir}/%{name}/Makefile.rules
 %{python_sitelib}/planex
+%{python_sitelib}/planex-*.egg-info
+%config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
 * Wed Mar 25 2015 Euan Harris <euan.harris@citrix.com> - 0.7.0-1
