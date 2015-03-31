@@ -1,11 +1,7 @@
-%define name planex
-%define version 0.6.0
-%define release 1
-
 Summary: RPM/deb build tool
-Name: %{name}
-Version: %{version}
-Release: %{release}%{?dist}
+Name: planex
+Version: 0.6.0
+Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
 License: LGPLv2.1
