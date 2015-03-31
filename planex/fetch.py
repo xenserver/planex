@@ -5,6 +5,7 @@ planex-fetch: Download sources referred to by a spec file
 import argparse
 import argcomplete
 import os
+import shutil
 import planex.spec
 import urlparse
 import pycurl
@@ -67,8 +68,10 @@ def fetch_http(url, filename, retries):
             logging.info("Fetching %s to %s", url_string, filename)
 
             make_dir(os.path.dirname(filename))
-            with open(filename, "wb") as out_file:
-                curl_get(url_string, out_file)
+            tmp_filename = filename + "~"
+            with open(tmp_filename, "wb") as tmp_file:
+                curl_get(url_string, tmp_file)
+                shutil.move(tmp_filename, filename)
                 return
 
         except pycurl.error as exn:
