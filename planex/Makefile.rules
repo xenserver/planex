@@ -158,3 +158,6 @@ $(DEPS): $(TOPDIR) SPECS/*.spec $(wildcard $(PINSFILE) $(PINDEPS) $(PINSDIR)/*.s
 	@$(DEPEND) $(DEPEND_FLAGS) SPECS/*.spec > $@
 
 -include $(DEPS)
+
+# vim:ft=make:
+# -*- MakeFile -*-
