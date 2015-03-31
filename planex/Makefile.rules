@@ -69,6 +69,7 @@ $(TOPDIR):
 ############################################################################
 
 # Fetch a source tarball listed in a spec file.
+.DELETE_ON_ERROR: %.tar %.tar.gz %.tar.bz2 %.tgz %.tbz %.zip %.pdf
 %.tar %.tar.gz %.tar.bz2 %.tgz %.tbz %.zip %.pdf:
 	@echo [FETCH] $<
 	@$(FETCH) $(FETCH_FLAGS) $<
