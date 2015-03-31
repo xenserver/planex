@@ -59,8 +59,11 @@ $(TOPDIR):
 	@ln -s ../SOURCES $(TOPDIR)/SOURCES
 	@ln -s ../mock $(TOPDIR)/mock
 	@mkdir $(TOPDIR)/RPMS
+	@mkdir $(TOPDIR)/SRPMS
 	@ln -s $(TOPDIR)/RPMS RPMS
+	@ln -s $(TOPDIR)/SRPMS SRPMS
 	@$(CREATEREPO) RPMS >/dev/null
+	@$(CREATEREPO) SRPMS >/dev/null
 	@echo done
 
 
