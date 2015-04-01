@@ -25,7 +25,7 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(description='Cache package building')
-    util.add_logging_parser_options(parser)
+    util.add_common_parser_options(parser)
     parser.add_argument(
         '--cachedirs', default='~/.planex-cache:/misc/cache/planex-cache',
         help='colon-separated cache search path')

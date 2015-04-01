@@ -12,7 +12,7 @@ import sys
 import logging
 import pkg_resources
 from planex.util import setup_sigint_handler
-from planex.util import add_logging_parser_options
+from planex.util import add_common_parser_options
 from planex.util import setup_logging
 
 
@@ -92,7 +92,7 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(description='Download package sources')
-    add_logging_parser_options(parser)
+    add_common_parser_options(parser)
     parser.add_argument('spec', help='RPM Spec file')
     parser.add_argument('--retries', '-r',
                         help='Number of times to retry a failed download',
