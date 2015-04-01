@@ -98,7 +98,8 @@ def pinned_spec_of_spec(spec_path, src_map):
             release_stamps = ["s{0}+{1}".format(n, v)
                               for (n, (v, _)) in src_map.items()]
             # Note that %% expands to just %...
-            pin_release = "_".join(sorted(release_stamps))
+            pin_release = "%s+%s" % (match.group(2),
+                                     "_".join(sorted(release_stamps)))
             logging.info("Replacing Release %s of %s with %s",
                          match.group(2), spec_path, pin_release)
             line = match.group(1) + pin_release + match.group(3) + "\n"
