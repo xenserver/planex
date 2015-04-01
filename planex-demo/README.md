@@ -71,3 +71,20 @@ $ make
 [RPMBUILD] _build/SRPMS/dumbest-0.1-s0+0.1+1+gbad8958_s1+0.1+1+geaa4587.src.rpm
 [CREATEREPO] _build/RPMS/x86_64/dumbest-0.1-s0+0.1+1+gbad8958_s1+0.1+1+geaa4587.x86_64.rpm
 ```
+
+### Including a spec file from outside of the `SPECS/` directory
+You may want to include another package whose spec file is not in the
+planex-compatible repo for instance if the spec file in question resides within
+the source repo for the package.
+
+In this case you can add the following stanza to your Makefile (the one in your
+project, not the internal planex one) for each of the externally defined
+package:
+
+
+```make
+SPECS/package.spec: ../package.spec
+        ln -sf $(realpath ../package.spec) SPECS/package.spec
+        touch $@
+_build/deps: SPECS/package.spec
+```
