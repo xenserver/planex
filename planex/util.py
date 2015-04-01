@@ -10,6 +10,7 @@ import tempfile
 import yum
 import logging
 import signal
+import pkg_resources
 
 
 def load_mock_config(cfg):
@@ -92,11 +93,16 @@ def setup_logging(args):
     logging.basicConfig(format='%(message)s', level=loglevel)
 
 
-def add_logging_parser_options(parser):
+def add_common_parser_options(parser):
     """
-    Takes a parser and adds --quiet and -v/--verbose/--debug options to it
+    Takes a parser and adds the following command line flags:
+        * --quiet/--warn
+        * -v/--verbose/--debug
+        * --version
     """
     parser.add_argument('--quiet', '--warn', action='store_true',
                         help='Only log warnings and errors')
     parser.add_argument('-v', '--verbose', '--debug', action='store_true',
                         help='Enable debug logging')
+    parser.add_argument('--version', action='version', version="%%(prog)s %s" %
+                        pkg_resources.require("planex")[0].version)

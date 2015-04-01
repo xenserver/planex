@@ -16,7 +16,7 @@ import json
 import rpm
 from planex.util import run
 from planex.util import setup_sigint_handler
-from planex.util import add_logging_parser_options
+from planex.util import add_common_parser_options
 from planex.util import setup_logging
 
 
@@ -286,7 +286,7 @@ def parse_args_or_exit(argv=None):
     # top-level parser
     parser = argparse.ArgumentParser(
         description='Pin a package to a specific version')
-    add_logging_parser_options(parser)
+    add_common_parser_options(parser)
     parser.add_argument('--pins-file', default='pins',
                         help='Pins file (default: pins)')
     parser.add_argument('--pins-dir', default='PINS',
