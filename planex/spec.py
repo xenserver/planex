@@ -16,18 +16,22 @@ from planex import debianmisc
 # Directories where rpmbuild/mock expects to find inputs
 # and writes outputs
 def rpmdir():
+    """Return the expanded value of the RPM %_rpmdir macro"""
     return rpm.expandMacro('%_rpmdir')
 
 
 def srpmdir():
+    """Return the expanded value of the RPM %_srcrpmdir macro"""
     return rpm.expandMacro('%_srcrpmdir')
 
 
 def specdir():
+    """Return the expanded value of the RPM %_specrpmdir macro"""
     return rpm.expandMacro('%_specdir')
 
 
 def sourcedir():
+    """Return the expanded value of the RPM %_sourcedir macro"""
     return rpm.expandMacro('%_sourcedir')
 
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-# Some generic utils used by several other files
+"""
+Library of generic functions used by other planex components
+"""
 
 import subprocess
 import sys

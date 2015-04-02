@@ -109,6 +109,9 @@ def pinned_spec_of_spec(spec_path, src_map):
 
 
 def version_of_spec_file(path):
+    """
+    Return the version defined in the spec file at path.
+    """
     spec = rpm.ts().parseSpec(path)
     return spec.sourceHeader['version']
 
