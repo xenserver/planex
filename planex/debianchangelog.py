@@ -1,3 +1,8 @@
+"""
+Utility functions for generating Debian changelogs from RPM
+spec files.
+"""
+
 from planex.tree import Tree
 from planex import mappkgname
 import re
@@ -5,6 +10,8 @@ import time
 
 
 def changelog_from_spec(spec, isnative):
+    """Generate a Debian changelog from spec"""
+
     res = Tree()
 
     hdr = spec.sourceHeader

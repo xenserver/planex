@@ -1,3 +1,7 @@
+"""
+Library of utility wrappers around the rpm library.
+"""
+
 import rpm
 
 

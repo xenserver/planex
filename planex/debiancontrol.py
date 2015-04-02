@@ -1,3 +1,8 @@
+"""
+Utility functions for generating Debian control files from RPM
+spec files.
+"""
+
 from planex.tree import Tree
 from planex import mappkgname
 import textwrap

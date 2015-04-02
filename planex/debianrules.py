@@ -1,5 +1,10 @@
 #!/usr/bin/python
 
+"""
+Utility functions for generating Debian rules files from RPM
+spec files.
+"""
+
 import rpm
 from planex import rpmextra
 import os

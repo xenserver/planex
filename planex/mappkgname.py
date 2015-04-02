@@ -210,4 +210,9 @@ def map_package_name(hdr, target=None):
 
 
 def map_section(_):
+    """
+    Return an appropriate section (group of pacakges).
+    Currently hard-coded to put every package in the 'ocaml'
+    section.
+    """
     return "ocaml"  # XXXXX

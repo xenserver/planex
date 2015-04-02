@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+"""
+planex-makedeb: Build a Debian source archive from an RPM spec file
+"""
+
 import glob
 import os
 import re
