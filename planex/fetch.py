@@ -64,7 +64,7 @@ def fetch_http(url, filename, retries):
         retries -= 1
         try:
             url_string = urlparse.urlunparse(url)
-            logging.info("Fetching %s to %s", url_string, filename)
+            logging.debug("Fetching %s to %s", url_string, filename)
 
             make_dir(os.path.dirname(filename))
             with open(filename, "wb") as out_file:
@@ -72,7 +72,7 @@ def fetch_http(url, filename, retries):
                 return
 
         except pycurl.error as exn:
-            logging.info(exn.args[1])
+            logging.debug(exn.args[1])
             if not retries > 0:
                 raise
 
@@ -139,7 +139,7 @@ def main(argv):
             # Source file is pre-populated in the SOURCES directory (part of
             # the repository - probably a patch or local include).   Update
             # its timestamp to placate make, but don't try to download it.
-            logging.info("Refreshing timestamp for local source %s", path)
+            logging.debug("Refreshing timestamp for local source %s", path)
             os.utime(path, None)
 
         else:
