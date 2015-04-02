@@ -1,12 +1,6 @@
 """
-Library of utility wrappers around the rpm library.
+Library of utility functions for dealing with RPMs and spec files
 """
-
-import rpm
-
-
-def spec_from_file(spec):
-    return rpm.ts().parseSpec(spec)
 
 
 def files_from_spec(basename, specpath):
