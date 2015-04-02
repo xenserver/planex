@@ -1,3 +1,7 @@
+"""
+python-setuptools definition for planex
+"""
+
 from setuptools import setup
 
 setup(name='planex',
