@@ -24,7 +24,7 @@ RPMBUILD_FLAGS ?= --quiet --define "_topdir $(TOPDIR)" \
 CREATEREPO ?= createrepo
 CREATEREPO_FLAGS ?= --quiet --update
 
-MOCK ?= planex-cache
+MOCK ?= mock
 MOCK_FLAGS ?= --configdir=$(TOPDIR)/mock --quiet \
               --resultdir=$(dir $@) --uniqueext=$(notdir $@) \
               --disable-plugin=package_state
