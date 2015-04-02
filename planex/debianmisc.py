@@ -12,6 +12,9 @@ from planex import rpmextra
 
 
 def conffiles_from_spec(spec, specpath):
+    """
+    Create contents of the debian/conffiles file.
+    """
     # Configuration files, not to be overwritten on upgrade.
     # Files in /etc are automatically marked as config files,
     # so we only need to list files here if they are in a
@@ -26,6 +29,9 @@ def conffiles_from_spec(spec, specpath):
 
 
 def filelists_from_spec(spec, specpath):
+    """
+    Create package contents file from spec.
+    """
     res = Tree()
     for pkg in spec.packages:
         name = "%s.install.in" % mappkgname.map_package_name(pkg.header)
@@ -35,6 +41,10 @@ def filelists_from_spec(spec, specpath):
 
 
 def files_from_pkg(basename, pkg, specpath):
+    """
+    Return list of files which will be included in the package,
+    with Debian-compatible pathnames.
+    """
     # should be able to build this from the files sections - can't find how
     # to get at them from the spec object
     res = ""
@@ -72,6 +82,11 @@ def files_from_pkg(basename, pkg, specpath):
 # We use dpkg-source -b --auto-commit <dir>
 
 def patches_from_spec(spec, src_dir):
+    """
+    Create the contents of the debian/patches directory,
+    which holds local patches to be applied to the pristine
+    sources.
+    """
     res = Tree()
     patches = [(seq, name) for (name, seq, typ) in spec.sources
                if typ == 2]
@@ -87,12 +102,18 @@ def patches_from_spec(spec, src_dir):
 
 
 def compat_from_spec(_):
+    """
+    Create the contents of the debian/compat file.
+    """
     res = Tree()
     res.append("debian/compat", "8")
     return res
 
 
 def format_from_spec(_, isnative):
+    """
+    Create the contents of the debian/format file.
+    """
     res = Tree()
     fmt = "native" if isnative else "quilt"
     res.append("debian/source/format", "3.0 (%s)\n" % fmt)
@@ -100,18 +121,34 @@ def format_from_spec(_, isnative):
 
 
 def copyright_from_spec(_):
+    """
+    Create the contents of the debian/copyright file.
+    Currently not filled correctly.
+    """
     res = Tree()
     res.append("debian/copyright", "FIXME")
     return res
 
 
 def principal_source_file(spec):
+    """
+    Return our best guess at the main source file defined
+    in spec.   This will be used as the pristine tarball
+    in the generated Debian package;  all other sources will
+    be packed as patches.
+    """
     return os.path.basename([name for (name, seq, filetype)
                              in spec.sources
                              if seq == 0 and filetype == 1][0])
 
 
 def is_native(_spec):
+    """
+    Guess whether the package should be a 'native' Debian package,
+    based on the type of the principal source file.
+    """
+    # See https://wiki.debian.org/DebianMentorsFaq for more
+    # information on native and non-native packages.
     tarball = principal_source_file(_spec)
     match = re.match(r"^(.+)((\.tar\.(gz|bz2|lzma|xz)|\.tbz)$)", tarball)
     return match is None
