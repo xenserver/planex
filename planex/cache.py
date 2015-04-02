@@ -70,7 +70,7 @@ def setup_yumbase(yumbase, loopback_repo):
     yumbase.repos.enableRepo(loopback_repo)
 
     yumbase.setCacheDir(force=True, reuse=True)
-    # yumbase.repos.populateSack(cacheonly=True)
+    yumbase.repos.populateSack(cacheonly=True)
 
 
 def load_srpm_from_file(filename):

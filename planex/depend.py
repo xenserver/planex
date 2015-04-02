@@ -173,6 +173,7 @@ def main():
             if args.packaging == "deb":
 
                 def map_name_fn(name):
+                    # pylint: disable=C0111
                     return mappkgname.map_package(name, os_type)
 
                 spec = pkg.Spec(spec_path, target="deb", map_name=map_name_fn,

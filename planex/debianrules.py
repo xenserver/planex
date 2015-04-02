@@ -1,5 +1,10 @@
 #!/usr/bin/python
 
+"""
+Utility functions for generating Debian rules files from RPM
+spec files.
+"""
+
 import rpm
 from planex import rpmextra
 import os
@@ -9,6 +14,9 @@ from planex.tree import Tree
 
 
 def rules_from_spec(spec, specpath):
+    """
+    Generate the contents of the debian/rules file from spec
+    """
     res = Tree()
     ocaml_rules_preamble(spec, res)
     rules_configure_from_spec(spec, res)
@@ -22,6 +30,10 @@ def rules_from_spec(spec, specpath):
 
 
 def ocaml_rules_preamble(_, tree):
+    """
+    Return the rules stanza which pulls in OCaml-specific
+    helper scripts.
+    """
     # TODO: should only include if we have packed up ocaml files
     rule = "#!/usr/bin/make -f\n"
     rule += "\n"
@@ -40,6 +52,11 @@ def ocaml_rules_preamble(_, tree):
 
 
 def rules_configure_from_spec(_, tree):
+    """
+    Generate a configure rule.   This prevents the Debian helper
+    scripts from being confused by the presence of oasis-generated
+    configure scripts.
+    """
     # RPM doesn't have a configure target - everything happens in the
     # build target.  Nevertheless we must override the auto_configure target
     # because some OASIS packages have configure scripts.    If debhelper
@@ -54,6 +71,10 @@ def rules_configure_from_spec(_, tree):
 
 
 def rules_build_from_spec(spec, tree):
+    """
+    Generate the build rule
+    """
+
     # RPM's build rule is just a script which is run at the appropriate time.
     # debian/rules is a Makefile.   Makefile recipes aren't shell scripts -
     # each line is run independently, so exports don't survive from line to
@@ -78,6 +99,10 @@ def rules_build_from_spec(spec, tree):
 
 
 def rules_install_from_spec(spec, tree):
+    """
+    Generate the install rule
+    """
+
     rule = ".PHONY: override_dh_auto_install\n"
     rule += "override_dh_auto_install:\n"
     rule += "\tdebian/install.sh\n"
@@ -91,6 +116,9 @@ def rules_install_from_spec(spec, tree):
 
 
 def rules_dh_install_from_spec(spec, tree, specpath):
+    """
+    Generate the install rule
+    """
     rule = ".PHONY: override_dh_install\n"
     rule += "override_dh_install:\n"
     rule += "\tdh_install\n"
@@ -107,6 +135,9 @@ def rules_dh_install_from_spec(spec, tree, specpath):
 
 
 def rules_clean_from_spec(spec, tree):
+    """
+    Generate the clean rule
+    """
     rule = ".PHONY: override_dh_auto_clean\n"
     rule += "override_dh_auto_clean:\n"
     rule += "\tdebian/clean.sh\n"
@@ -121,6 +152,10 @@ def rules_clean_from_spec(spec, tree):
 
 
 def rules_test_from_spec(_, tree):
+    """
+    Generate a test rule, mainly to disable tests which fail when
+    building ocaml-oclock.
+    """
     # XXX HACK for ocaml-oclock - don't try to run the tests when building
     rule = ".PHONY: override_dh_auto_test\n"
     rule += "override_dh_auto_test:\n"
@@ -129,8 +164,10 @@ def rules_test_from_spec(_, tree):
 
 
 def python_setuptools_cfg(_, tree):
-    # Configuration file for python setuptools, which defaults to installing
-    # in /usr/local/lib instead of /usr/lib
+    """
+    Generate a configuration file for python setuptools.
+    """
+    # By default, setuptools installs to /usr/local/lib instead of /usr/lib
     content = "[install]\n"
     content += "install-layout=deb\n"
 

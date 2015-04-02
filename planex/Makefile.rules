@@ -104,11 +104,16 @@ srpm_repo: srpms
 # The repository metadata is updated after building a binary package so that
 # a subsequent mock build for a package which depend on this one is able
 # to find and install it.
+#
+# We take a shared lock on RPMS around mock to prevent concurrent 
+# createrepo jobs from corrupting the repo metadata files as mock runs.
+# We take an exclusive lock around createrepo to ensure that no mock
+# runs at the same time as a createrepo is updating the repo metadata.
 %.rpm:
 	@echo [MOCK] $@
-	@$(MOCK) $(MOCK_FLAGS) --rebuild $<
+	@flock --shared --timeout 300 ./$(TOPDIR)/RPMS $(MOCK) $(MOCK_FLAGS) --rebuild $<
 	@echo [CREATEREPO] $@
-	@flock --timeout 30 ./$(TOPDIR)/RPMS $(CREATEREPO) $(CREATEREPO_FLAGS) ./$(TOPDIR)/RPMS
+	@flock --exclusive --timeout 300 ./$(TOPDIR)/RPMS $(CREATEREPO) $(CREATEREPO_FLAGS) ./$(TOPDIR)/RPMS
 
 
 ############################################################################
