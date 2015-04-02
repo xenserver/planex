@@ -69,7 +69,7 @@ def setup_yumbase(yumbase, loopback_repo):
     yumbase.repos.disableRepo('*')
     yumbase.repos.enableRepo(loopback_repo)
 
-    yumbase.setCacheDir(force=True, reuse=True)
+    yumbase.setCacheDir(force=True, reuse=False)
     yumbase.repos.populateSack(cacheonly=True)
 
 
