@@ -57,6 +57,9 @@ rpm.addMacro("_libdir", "/usr/lib")
 
 
 def debian_dir_from_spec(spec, path, specpath, isnative):
+    """
+    Generate a Debian package specification directory from spec
+    """
     os.makedirs(os.path.join(path, "debian/source"))
 
     control = debiancontrol.control_from_spec(spec)
@@ -88,6 +91,12 @@ def debian_dir_from_spec(spec, path, specpath, isnative):
 
 
 def prepare_build_dir(spec, build_subdir):
+    """
+    Unpack the sources defined in spec, creating a build directory
+    structure.   This will later be re-packed into the Debian
+    source package.
+    """
+
     # To prepare the build dir, RPM cds into $TOPDIR/BUILD
     # and expands all paths in the prep script with $TOPDIR.
     # It unpacks the tarball and then cds into the directory it
@@ -106,6 +115,9 @@ def prepare_build_dir(spec, build_subdir):
 
 
 def rename_source(spec, pkgname, pkgversion):
+    """
+    Rename source files defined in spec to match Debian conventions.
+    """
     # Debian source package name should probably match the tarball name
     origfilename = debianmisc.principal_source_file(spec)
     if origfilename.endswith(".tbz"):
@@ -123,6 +135,9 @@ def rename_source(spec, pkgname, pkgversion):
 
 
 def main():
+    """
+    Main entry point
+    """
     setup_sigint_handler()
     shutil.rmtree(BUILD_DIR)
     os.mkdir(BUILD_DIR)
