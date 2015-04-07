@@ -170,12 +170,8 @@ def update(args):
             source_map[src_num] = (src_version, tar_path)
 
         out_spec_path = os.path.join(args.pins_dir, os.path.basename(spec))
-        tmp_spec = tempfile.NamedTemporaryFile(mode='w+', prefix='planex-pin',
-                                               delete=False)
-        tmp_spec.write(pinned_spec_of_spec(spec, source_map))
-        tmp_spec.close()
-        maybe_copy(tmp_spec.name, out_spec_path, args.force)
-        os.remove(tmp_spec.name)
+        with open(out_spec_path, 'w+') as out_spec_file:
+            out_spec_file.write(pinned_spec_of_spec(spec, source_map))
 
 
 def parse_pins_file(args):
@@ -269,8 +265,8 @@ def print_rules(args):
         repos = [pin.partition('#')[0] for pin in pinned_sources.values()]
         repo_paths = [os.path.abspath(repo) for repo in repos]
         gitdir_paths = [os.path.join(p, ".git/**/*") for p in repo_paths]
-        dependencies = "$(wildcard %s) %s" % (" ".join(gitdir_paths),
-                                              args.pins_file)
+        dependencies = "%s %s $(wildcard %s)" % (args.pins_file, spec,
+                                                 " ".join(gitdir_paths))
         print "%s: %s" % (args.deps_path, pinned_spec_path)
         print "%s: %s" % (pinned_spec_path, dependencies)
         print "\tplanex-pin --pins-file {0} --pins-dir {1} update".format(
