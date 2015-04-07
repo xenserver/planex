@@ -22,6 +22,7 @@ and caching.
 %setup -q
 
 %build
+sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %{__python} setup.py build
 
 %install
