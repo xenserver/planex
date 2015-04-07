@@ -90,6 +90,12 @@ def all_sources(spec, topdir, check_package_names):
     return zip(spec.source_paths(), urls)
 
 
+def check_valid_protocol(url):
+    if url.scheme and url.scheme not in ["http", "https", "file"]:
+        sys.exit("%s: Unimplemented protocol: %s" %
+                 (sys.argv[0], url.scheme))
+
+
 def parse_args_or_exit(argv=None):
     """
     Parse command line options
@@ -121,6 +127,7 @@ def main(argv):
 
     for path, url in all_sources(args.spec, args.topdir,
                                  args.check_package_names):
+        check_valid_protocol(url)
         if url.scheme in ["http", "https", "file"]:
             try:
                 fetch_http(url, path, args.retries + 1)
@@ -144,10 +151,6 @@ def main(argv):
             # its timestamp to placate make, but don't try to download it.
             logging.debug("Refreshing timestamp for local source %s", path)
             os.utime(path, None)
-
-        else:
-            sys.exit("%s: Unimplemented protocol: %s" %
-                     (sys.argv[0], url.scheme))
 
 
 def _main():
