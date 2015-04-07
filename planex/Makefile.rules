@@ -2,7 +2,7 @@
 # Configuration variables
 ############################################################################
 
-DIST := .el6
+DIST ?= .el6
 TOPDIR ?= _build
 DEPS = $(TOPDIR)/deps
 PINSFILE = pins
