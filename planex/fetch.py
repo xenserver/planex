@@ -15,10 +15,19 @@ import pkg_resources
 from planex.util import setup_sigint_handler
 from planex.util import add_common_parser_options
 from planex.util import setup_logging
+from planex.util import run
 
 
 # This should include all of the extensions in the Makefile.rules for fetch
-supported_exts = ['.tar', '.gz', '.tgz', '.bz2', '.tbz', '.zip', '.pdf']
+SUPPORTED_EXT_TO_MIME = {
+    '.tar': 'application/x-tar',
+    '.gz': 'application/x-gzip',
+    '.tgz': 'application/x-gzip',
+    '.bz2': 'application/x-bzip2',
+    '.tbz': 'application/x-bzip2',
+    '.zip': 'application/zip',
+    '.pdf': 'application/pdf'
+}
 
 
 def curl_get(url_string, out_file):
@@ -60,6 +69,25 @@ def make_dir(path):
         os.makedirs(path)
 
 
+def best_effort_file_verify(path):
+    """
+    Given a path, check if the file at that path has a sensible format.
+    If the file has an extension then it checks that the mime-type of this file
+    matches that of the file extension as defined by the IANA:
+        http://www.iana.org/assignments/media-types/media-types.xhtml
+    """
+    _, ext = os.path.splitext(path)
+    if ext and ext in SUPPORTED_EXT_TO_MIME:
+        # output of `file` is of form: "<path>: <mime-type>"
+        cmd = ["file", "--mime-type", path]
+        stdout = run(cmd, check=False)['stdout'].strip()
+        _, _, mime_type = stdout.partition(': ')
+
+        if SUPPORTED_EXT_TO_MIME[ext] != mime_type:
+            sys.exit("%s: Fetched file format looks incorrect: %s: %s" %
+                     (sys.argv[0], path, mime_type))
+
+
 def fetch_http(url, filename, retries):
     """
     Download the file at url and store it as filename
@@ -75,6 +103,7 @@ def fetch_http(url, filename, retries):
             tmp_filename = filename + "~"
             with open(tmp_filename, "wb") as tmp_file:
                 curl_get(url_string, tmp_file)
+                best_effort_file_verify(tmp_filename)
                 shutil.move(tmp_filename, filename)
                 return
 
@@ -102,8 +131,8 @@ def check_supported_url(url):
     if url.scheme and url.scheme not in ["http", "https", "file"]:
         sys.exit("%s: Unimplemented protocol: %s" %
                  (sys.argv[0], url.scheme))
-    _, ext = os.path.splitext(url)
-    if ext not in supported_exts:
+    _, ext = os.path.splitext(url.path)
+    if ext not in SUPPORTED_EXT_TO_MIME:
         sys.exit("%s: Unsupported extension: %s" %
                  (sys.argv[0], ext))
 
