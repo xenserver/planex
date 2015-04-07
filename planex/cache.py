@@ -32,6 +32,9 @@ def parse_args_or_exit(argv=None):
     parser.add_argument(
         '--loopback-repo', default='mock',
         help='Name of the mock loopback repository')
+    parser.add_argument(
+        '--no-loopback-repo', action='store_true',
+        help='Disable the use of the mock loopback repository')
 
     # Overridden mock arguments.  Help text taken directly from mock.
     parser.add_argument(
@@ -67,7 +70,8 @@ def setup_yumbase(yumbase, loopback_repo):
 
     # much faster if we only enable our own repository
     yumbase.repos.disableRepo('*')
-    yumbase.repos.enableRepo(loopback_repo)
+    if loopback_repo:
+        yumbase.repos.enableRepo(loopback_repo)
 
     yumbase.setCacheDir(force=True, reuse=True)
     # yumbase.repos.populateSack(cacheonly=True)
@@ -207,7 +211,10 @@ def main(argv):
     # having yum print lots of irrelevant messages during startup.
     yum_config = util.load_mock_config(config)
     yumbase = util.get_yumbase(yum_config)
-    setup_yumbase(yumbase, intercepted_args.loopback_repo)
+    loopback_repo = (None
+                     if intercepted_args.no_loopback_repo
+                     else intercepted_args.loopback_repo)
+    setup_yumbase(yumbase, loopback_repo)
 
     util.setup_logging(intercepted_args)
 
