@@ -17,6 +17,10 @@ from planex.util import add_common_parser_options
 from planex.util import setup_logging
 
 
+# This should include all of the extensions in the Makefile.rules for fetch
+supported_exts = ['.tar', '.gz', '.tgz', '.bz2', '.tbz', '.zip', '.pdf']
+
+
 def curl_get(url_string, out_file):
     """
     Fetch the contents of url and store to file represented by out_file
@@ -90,10 +94,18 @@ def all_sources(spec, topdir, check_package_names):
     return zip(spec.source_paths(), urls)
 
 
-def check_valid_protocol(url):
+def check_supported_url(url):
+    """
+    Checks that the URL we've been asked to fetch is a supported protocol and
+    extension.  This function causes the program to exit with an error if not.
+    """
     if url.scheme and url.scheme not in ["http", "https", "file"]:
         sys.exit("%s: Unimplemented protocol: %s" %
                  (sys.argv[0], url.scheme))
+    _, ext = os.path.splitext(url)
+    if ext not in supported_exts:
+        sys.exit("%s: Unsupported extension: %s" %
+                 (sys.argv[0], ext))
 
 
 def parse_args_or_exit(argv=None):
@@ -127,7 +139,7 @@ def main(argv):
 
     for path, url in all_sources(args.spec, args.topdir,
                                  args.check_package_names):
-        check_valid_protocol(url)
+        check_supported_url(url)
         if url.scheme in ["http", "https", "file"]:
             try:
                 fetch_http(url, path, args.retries + 1)
