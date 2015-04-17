@@ -106,12 +106,15 @@ def add_to_cache(cachedirs, pkg_hash, build_dir):
     cache_dir = cache_locations(cachedirs, pkg_hash)[0]
     assert not os.path.isdir(cache_dir)
 
-    if not os.path.isdir(cachedirs[0]):
-        os.makedirs(cachedirs[0])
-
     cache_output_dir = os.path.join(cache_dir, "output")
-    shutil.move(build_dir, cache_output_dir)
-    logging.debug("moved to %s", cache_output_dir)
+
+    if not os.path.isdir(cache_output_dir):
+        os.makedirs(cache_output_dir)
+
+    for fname in os.listdir(build_dir):
+        shutil.copy(os.path.join(build_dir, fname), cache_output_dir)
+
+    logging.debug("copied to %s", cache_output_dir)
 
 
 def get_from_specified_cache(cache_dir, resultdir):
@@ -226,17 +229,29 @@ def main(argv):
     cachedirs = [os.path.expanduser(x) for x
                  in intercepted_args.cachedirs.split(':')]
 
+    # Expand default resultdir as done in mock.backend.Root
+    resultdir = intercepted_args.resultdir or \
+        yum_config['resultdir'] % yum_config
+
     # Rebuild if not available in the cache
     if not in_cache(cachedirs, pkg_hash):
         logging.debug("Cache miss - rebuilding")
         build_output = build_package(intercepted_args.configdir,
                                      intercepted_args.root, passthrough_args)
-        add_to_cache(cachedirs, pkg_hash, build_output)
+        try:
+            add_to_cache(cachedirs, pkg_hash, build_output)
+        except OSError:
+            # If we can't cache the result, that's not a fatal error
+            pass
 
-    # Expand default resultdir as done in mock.backend.Root
-    resultdir = intercepted_args.resultdir or \
-        yum_config['resultdir'] % yum_config
-    get_from_cache(cachedirs, pkg_hash, resultdir)
+        for cached_file in os.listdir(build_output):
+            dest = os.path.join(resultdir, cached_file)
+
+            if os.path.exists(dest):
+                os.unlink(dest)
+            shutil.move(os.path.join(build_output, cached_file), resultdir)
+    else:
+        get_from_cache(cachedirs, pkg_hash, resultdir)
 
 
 def _main():
