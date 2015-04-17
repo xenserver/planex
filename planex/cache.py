@@ -33,6 +33,9 @@ def parse_args_or_exit(argv=None):
         '--loopback-repo', default='mock',
         help='Name of the mock loopback repository')
     parser.add_argument(
+        '--mock-exe', default='mock',
+        help='Path to the mock executable')
+    parser.add_argument(
         '--no-loopback-repo', action='store_true',
         help='Disable the use of the mock loopback repository')
 
@@ -180,7 +183,7 @@ def get_srpm_hash(srpm, yumbase, mock_config):
     return pkg_hash.hexdigest()
 
 
-def build_package(configdir, root, passthrough_args):
+def build_package(mock, configdir, root, passthrough_args):
     """
     Spawn a mock process to build the package.   Some arguments
     are intercepted and rewritten, for instance --resultdir.
@@ -188,7 +191,7 @@ def build_package(configdir, root, passthrough_args):
     working_directory = tempfile.mkdtemp(prefix="planex-cache")
     logging.debug("Mock working directory: %s", working_directory)
 
-    cmd = ["mock", "--configdir=%s" % configdir,
+    cmd = [mock, "--configdir=%s" % configdir,
            "--root=%s" % root,
            "--resultdir=%s" % working_directory] + passthrough_args
 
@@ -229,7 +232,8 @@ def main(argv):
     # Rebuild if not available in the cache
     if not in_cache(cachedirs, pkg_hash):
         logging.debug("Cache miss - rebuilding")
-        build_output = build_package(intercepted_args.configdir,
+        build_output = build_package(intercepted_args.mock_exe,
+                                     intercepted_args.configdir,
                                      intercepted_args.root, passthrough_args)
         add_to_cache(cachedirs, pkg_hash, build_output)
 
