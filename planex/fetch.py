@@ -152,7 +152,7 @@ def main(argv):
 
     for path, url in sources:
         if url.scheme in ["http", "https", "file"]:
-            if args.mirror:
+            if url.scheme != "file" and args.mirror:
                 if not urlparse.urlparse(args.mirror).scheme:
                     args.mirror = "file://" + args.mirror
                 mpath = os.path.join(args.mirror, os.path.basename(url.path))
