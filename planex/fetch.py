@@ -82,12 +82,25 @@ def fetch_http(url, filename, retries):
 
 def all_sources(spec, topdir, check_package_names):
     """
-    Get all source URLs defined in the spec file
+    Get all sources defined in the spec file
     """
     spec = planex.spec.Spec(spec, topdir=topdir,
                             check_package_name=check_package_names)
     urls = [urlparse.urlparse(url) for url in spec.source_urls()]
     return zip(spec.source_paths(), urls)
+
+
+def url_for_source(spec, source, topdir, check_package_names):
+    """
+    Find the URL from which source should be downloaded
+    """
+    source_basename = os.path.basename(source)
+
+    for path, url in all_sources(spec, topdir, check_package_names):
+        if path.endswith(source_basename):
+            return path, url
+
+    raise KeyError(source_basename)
 
 
 def parse_args_or_exit(argv=None):
@@ -97,9 +110,14 @@ def parse_args_or_exit(argv=None):
     parser = argparse.ArgumentParser(description='Download package sources')
     add_common_parser_options(parser)
     parser.add_argument('spec', help='RPM Spec file')
+    parser.add_argument("sources", metavar="SOURCE", nargs="+",
+                        help="Source file to fetch")
     parser.add_argument('--retries', '-r',
                         help='Number of times to retry a failed download',
                         type=int, default=5)
+    parser.add_argument('-a', '--all',
+                        help='Fetch all sources defined in spec file',
+                        action='store_true')
     parser.add_argument("-t", "--topdir", metavar="DIR", default=None,
                         help='Set rpmbuild toplevel directory')
     parser.add_argument('--no-package-name-check', dest="check_package_names",
@@ -119,8 +137,18 @@ def main(argv):
     args = parse_args_or_exit(argv)
     setup_logging(args)
 
-    for path, url in all_sources(args.spec, args.topdir,
-                                 args.check_package_names):
+    if args.all:
+        sources = all_sources(args.spec, args.topdir,
+                              args.check_package_names)
+    else:
+        try:
+            sources = [url_for_source(args.spec, s, args.topdir,
+                                      args.check_package_names)
+                       for s in args.sources]
+        except KeyError as exn:
+            sys.exit("%s: No source corresponding to %s" % (sys.argv[0], exn))
+
+    for path, url in sources:
         if url.scheme in ["http", "https", "file"]:
             try:
                 fetch_http(url, path, args.retries + 1)
