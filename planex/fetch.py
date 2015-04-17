@@ -115,7 +115,7 @@ def fetch_http(url, filename, retries):
 
 def all_sources(spec, topdir, check_package_names):
     """
-    Get all source URLs defined in the spec file
+    Get all sources defined in the spec file
     """
     spec = planex.spec.Spec(spec, topdir=topdir,
                             check_package_name=check_package_names)
@@ -137,6 +137,19 @@ def check_supported_url(url):
                  (sys.argv[0], ext))
 
 
+def url_for_source(spec, source, topdir, check_package_names):
+    """
+    Find the URL from which source should be downloaded
+    """
+    source_basename = os.path.basename(source)
+
+    for path, url in all_sources(spec, topdir, check_package_names):
+        if path.endswith(source_basename):
+            return path, url
+
+    raise KeyError(source_basename)
+
+
 def parse_args_or_exit(argv=None):
     """
     Parse command line options
@@ -144,6 +157,8 @@ def parse_args_or_exit(argv=None):
     parser = argparse.ArgumentParser(description='Download package sources')
     add_common_parser_options(parser)
     parser.add_argument('spec', help='RPM Spec file')
+    parser.add_argument("sources", metavar="SOURCE", nargs="+",
+                        help="Source file to fetch")
     parser.add_argument('--retries', '-r',
                         help='Number of times to retry a failed download',
                         type=int, default=5)
@@ -166,8 +181,14 @@ def main(argv):
     args = parse_args_or_exit(argv)
     setup_logging(args)
 
-    for path, url in all_sources(args.spec, args.topdir,
-                                 args.check_package_names):
+    try:
+        sources = [url_for_source(args.spec, s, args.topdir,
+                                  args.check_package_names)
+                   for s in args.sources]
+    except KeyError as exn:
+        sys.exit("%s: No source corresponding to %s" % (sys.argv[0], exn))
+
+    for path, url in sources:
         check_supported_url(url)
         if url.scheme in ["http", "https", "file"]:
             try:
