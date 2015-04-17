@@ -235,7 +235,11 @@ def main(argv):
         build_output = build_package(intercepted_args.mock_exe,
                                      intercepted_args.configdir,
                                      intercepted_args.root, passthrough_args)
-        add_to_cache(cachedirs, pkg_hash, build_output)
+        try:
+            add_to_cache(cachedirs, pkg_hash, build_output)
+        except:
+            # If we can't cache the result, that's not a fatal error
+            pass
 
     # Expand default resultdir as done in mock.backend.Root
     resultdir = intercepted_args.resultdir or \
