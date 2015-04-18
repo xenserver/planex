@@ -237,7 +237,7 @@ def main(argv):
                                      intercepted_args.root, passthrough_args)
         try:
             add_to_cache(cachedirs, pkg_hash, build_output)
-        except:
+        except OSError as e:
             # If we can't cache the result, that's not a fatal error
             pass
 
