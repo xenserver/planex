@@ -66,14 +66,10 @@ def setup_yumbase(yumbase, loopback_repo):
     # the following call creates a /var/tmp/yum-<username>-<random>
     # directory to use as a cache.   reuse=True makes yum check
     # for similarly-named directories and re-use them, which makes
-    # dependency searching much faster
+    # dependency searching much faster. However, this causes breakage
+    # for concurrent builds.
 
-    # much faster if we only enable our own repository
-    yumbase.repos.disableRepo('*')
-    if loopback_repo:
-        yumbase.repos.enableRepo(loopback_repo)
-
-    yumbase.setCacheDir(force=True, reuse=False)
+    yumbase.setCacheDir(force=True, reuse=True)
     yumbase.repos.populateSack(cacheonly=True)
 
 
@@ -232,6 +228,9 @@ def main(argv):
     # Expand default resultdir as done in mock.backend.Root
     resultdir = intercepted_args.resultdir or \
         yum_config['resultdir'] % yum_config
+
+    if not os.path.isdir(resultdir):
+        os.makedirs(resultdir)
 
     # Rebuild if not available in the cache
     if not in_cache(cachedirs, pkg_hash):
