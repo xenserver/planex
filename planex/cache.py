@@ -72,9 +72,9 @@ def setup_yumbase(yumbase, loopback_repo):
     # dependency searching much faster
 
     # much faster if we only enable our own repository
-    yumbase.repos.disableRepo('*')
-    if loopback_repo:
-        yumbase.repos.enableRepo(loopback_repo)
+    #yumbase.repos.disableRepo('*')
+    #if loopback_repo:
+    #    yumbase.repos.enableRepo(loopback_repo)
 
     yumbase.setCacheDir(force=True, reuse=False)
     yumbase.repos.populateSack(cacheonly=True)
@@ -232,6 +232,9 @@ def main(argv):
     # Expand default resultdir as done in mock.backend.Root
     resultdir = intercepted_args.resultdir or \
         yum_config['resultdir'] % yum_config
+
+    if not os.path.isdir(resultdir):
+        os.makedirs(resultdir)
 
     # Rebuild if not available in the cache
     if not in_cache(cachedirs, pkg_hash):
