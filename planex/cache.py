@@ -109,12 +109,15 @@ def add_to_cache(cachedirs, pkg_hash, build_dir):
     cache_dir = cache_locations(cachedirs, pkg_hash)[0]
     assert not os.path.isdir(cache_dir)
 
-    if not os.path.isdir(cachedirs[0]):
-        os.makedirs(cachedirs[0])
-
     cache_output_dir = os.path.join(cache_dir, "output")
-    shutil.move(build_dir, cache_output_dir)
-    logging.debug("moved to %s", cache_output_dir)
+
+    if not os.path.isdir(cache_output_dir):
+        os.makedirs(cache_output_dir)
+
+    for fname in os.listdir(build_dir):
+        shutil.copy(os.path.join(build_dir, fname), cache_output_dir)
+
+    logging.debug("copied to %s", cache_output_dir)
 
 
 def get_from_specified_cache(cache_dir, resultdir):
