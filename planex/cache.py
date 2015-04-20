@@ -33,6 +33,9 @@ def parse_args_or_exit(argv=None):
         '--loopback-repo', default='mock',
         help='Name of the mock loopback repository')
     parser.add_argument(
+        '--mock-exe', default='mock',
+        help='Path to the mock executable')
+    parser.add_argument(
         '--no-loopback-repo', action='store_true',
         help='Disable the use of the mock loopback repository')
 
@@ -69,9 +72,9 @@ def setup_yumbase(yumbase, loopback_repo):
     # dependency searching much faster
 
     # much faster if we only enable our own repository
-    yumbase.repos.disableRepo('*')
-    if loopback_repo:
-        yumbase.repos.enableRepo(loopback_repo)
+    #yumbase.repos.disableRepo('*')
+    #if loopback_repo:
+    #    yumbase.repos.enableRepo(loopback_repo)
 
     yumbase.setCacheDir(force=True, reuse=False)
     yumbase.repos.populateSack(cacheonly=True)
@@ -106,12 +109,15 @@ def add_to_cache(cachedirs, pkg_hash, build_dir):
     cache_dir = cache_locations(cachedirs, pkg_hash)[0]
     assert not os.path.isdir(cache_dir)
 
-    if not os.path.isdir(cachedirs[0]):
-        os.makedirs(cachedirs[0])
-
     cache_output_dir = os.path.join(cache_dir, "output")
-    shutil.move(build_dir, cache_output_dir)
-    logging.debug("moved to %s", cache_output_dir)
+
+    if not os.path.isdir(cache_output_dir):
+        os.makedirs(cache_output_dir)
+
+    for fname in os.listdir(build_dir):
+        shutil.copy(os.path.join(build_dir, fname), cache_output_dir)
+
+    logging.debug("copied to %s", cache_output_dir)
 
 
 def get_from_specified_cache(cache_dir, resultdir):
@@ -180,7 +186,7 @@ def get_srpm_hash(srpm, yumbase, mock_config):
     return pkg_hash.hexdigest()
 
 
-def build_package(configdir, root, passthrough_args):
+def build_package(mock, configdir, root, passthrough_args):
     """
     Spawn a mock process to build the package.   Some arguments
     are intercepted and rewritten, for instance --resultdir.
@@ -188,7 +194,7 @@ def build_package(configdir, root, passthrough_args):
     working_directory = tempfile.mkdtemp(prefix="planex-cache")
     logging.debug("Mock working directory: %s", working_directory)
 
-    cmd = ["mock", "--configdir=%s" % configdir,
+    cmd = [mock, "--configdir=%s" % configdir,
            "--root=%s" % root,
            "--resultdir=%s" % working_directory] + passthrough_args
 
@@ -226,17 +232,33 @@ def main(argv):
     cachedirs = [os.path.expanduser(x) for x
                  in intercepted_args.cachedirs.split(':')]
 
-    # Rebuild if not available in the cache
-    if not in_cache(cachedirs, pkg_hash):
-        logging.debug("Cache miss - rebuilding")
-        build_output = build_package(intercepted_args.configdir,
-                                     intercepted_args.root, passthrough_args)
-        add_to_cache(cachedirs, pkg_hash, build_output)
-
     # Expand default resultdir as done in mock.backend.Root
     resultdir = intercepted_args.resultdir or \
         yum_config['resultdir'] % yum_config
-    get_from_cache(cachedirs, pkg_hash, resultdir)
+
+    if not os.path.isdir(resultdir):
+        os.makedirs(resultdir)
+
+    # Rebuild if not available in the cache
+    if not in_cache(cachedirs, pkg_hash):
+        logging.debug("Cache miss - rebuilding")
+        build_output = build_package(intercepted_args.mock_exe,
+                                     intercepted_args.configdir,
+                                     intercepted_args.root, passthrough_args)
+        try:
+            add_to_cache(cachedirs, pkg_hash, build_output)
+        except OSError:
+            # If we can't cache the result, that's not a fatal error
+            pass
+
+        for cached_file in os.listdir(build_output):
+            dest = os.path.join(resultdir, cached_file)
+
+            if os.path.exists(dest):
+                os.unlink(dest)
+            shutil.move(os.path.join(build_output, cached_file), resultdir)
+    else:
+        get_from_cache(cachedirs, pkg_hash, resultdir)
 
 
 def _main():
