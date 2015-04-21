@@ -26,7 +26,8 @@ SUPPORTED_EXT_TO_MIME = {
     '.bz2': 'application/x-bzip2',
     '.tbz': 'application/x-bzip2',
     '.zip': 'application/zip',
-    '.pdf': 'application/pdf'
+    '.pdf': 'application/pdf',
+    '.patch': 'text/x-diff'
 }
 
 
