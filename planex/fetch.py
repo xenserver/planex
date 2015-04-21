@@ -15,6 +15,19 @@ import pkg_resources
 from planex.util import setup_sigint_handler
 from planex.util import add_common_parser_options
 from planex.util import setup_logging
+from planex.util import run
+
+
+# This should include all of the extensions in the Makefile.rules for fetch
+SUPPORTED_EXT_TO_MIME = {
+    '.tar': 'application/x-tar',
+    '.gz': 'application/x-gzip',
+    '.tgz': 'application/x-gzip',
+    '.bz2': 'application/x-bzip2',
+    '.tbz': 'application/x-bzip2',
+    '.zip': 'application/zip',
+    '.pdf': 'application/pdf'
+}
 
 
 def curl_get(url_string, out_file):
@@ -56,6 +69,25 @@ def make_dir(path):
         os.makedirs(path)
 
 
+def best_effort_file_verify(path):
+    """
+    Given a path, check if the file at that path has a sensible format.
+    If the file has an extension then it checks that the mime-type of this file
+    matches that of the file extension as defined by the IANA:
+        http://www.iana.org/assignments/media-types/media-types.xhtml
+    """
+    _, ext = os.path.splitext(path)
+    if ext and ext in SUPPORTED_EXT_TO_MIME:
+        # output of `file` is of form: "<path>: <mime-type>"
+        cmd = ["file", "--mime-type", path]
+        stdout = run(cmd, check=False)['stdout'].strip()
+        _, _, mime_type = stdout.partition(': ')
+
+        if SUPPORTED_EXT_TO_MIME[ext] != mime_type:
+            sys.exit("%s: Fetched file format looks incorrect: %s: %s" %
+                     (sys.argv[0], path, mime_type))
+
+
 def fetch_http(url, filename, retries):
     """
     Download the file at url and store it as filename
@@ -71,6 +103,7 @@ def fetch_http(url, filename, retries):
             tmp_filename = filename + "~"
             with open(tmp_filename, "wb") as tmp_file:
                 curl_get(url_string, tmp_file)
+                best_effort_file_verify(tmp_filename)
                 shutil.move(tmp_filename, filename)
                 return
 
@@ -88,6 +121,20 @@ def all_sources(spec, topdir, check_package_names):
                             check_package_name=check_package_names)
     urls = [urlparse.urlparse(url) for url in spec.source_urls()]
     return zip(spec.source_paths(), urls)
+
+
+def check_supported_url(url):
+    """
+    Checks that the URL we've been asked to fetch is a supported protocol and
+    extension.  This function causes the program to exit with an error if not.
+    """
+    if url.scheme and url.scheme not in ["http", "https", "file"]:
+        sys.exit("%s: Unimplemented protocol: %s" %
+                 (sys.argv[0], url.scheme))
+    _, ext = os.path.splitext(url.path)
+    if ext not in SUPPORTED_EXT_TO_MIME:
+        sys.exit("%s: Unsupported extension: %s" %
+                 (sys.argv[0], ext))
 
 
 def parse_args_or_exit(argv=None):
@@ -121,6 +168,7 @@ def main(argv):
 
     for path, url in all_sources(args.spec, args.topdir,
                                  args.check_package_names):
+        check_supported_url(url)
         if url.scheme in ["http", "https", "file"]:
             try:
                 fetch_http(url, path, args.retries + 1)
@@ -144,10 +192,6 @@ def main(argv):
             # its timestamp to placate make, but don't try to download it.
             logging.debug("Refreshing timestamp for local source %s", path)
             os.utime(path, None)
-
-        else:
-            sys.exit("%s: Unimplemented protocol: %s" %
-                     (sys.argv[0], url.scheme))
 
 
 def _main():
