@@ -26,7 +26,8 @@ SUPPORTED_EXT_TO_MIME = {
     '.bz2': 'application/x-bzip2',
     '.tbz': 'application/x-bzip2',
     '.zip': 'application/zip',
-    '.pdf': 'application/pdf'
+    '.pdf': 'application/pdf',
+    '.patch': 'text/x-diff'
 }
 
 
@@ -125,16 +126,12 @@ def all_sources(spec, topdir, check_package_names):
 
 def check_supported_url(url):
     """
-    Checks that the URL we've been asked to fetch is a supported protocol and
-    extension.  This function causes the program to exit with an error if not.
+    Checks that the URL we've been asked to fetch is a supported protocol.
+    This function causes the program to exit with an error if not.
     """
     if url.scheme and url.scheme not in ["http", "https", "file"]:
         sys.exit("%s: Unimplemented protocol: %s" %
                  (sys.argv[0], url.scheme))
-    _, ext = os.path.splitext(url.path)
-    if ext not in SUPPORTED_EXT_TO_MIME:
-        sys.exit("%s: Unsupported extension: %s" %
-                 (sys.argv[0], ext))
 
 
 def parse_args_or_exit(argv=None):
