@@ -29,13 +29,6 @@ def parse_args_or_exit(argv=None):
     parser.add_argument(
         '--cachedirs', default='~/.planex-cache:/misc/cache/planex-cache',
         help='colon-separated cache search path')
-    parser.add_argument(
-        '--loopback-repo', default='mock',
-        help='Name of the mock loopback repository')
-    parser.add_argument(
-        '--no-loopback-repo', action='store_true',
-        help='Disable the use of the mock loopback repository')
-
     # Overridden mock arguments.  Help text taken directly from mock.
     parser.add_argument(
         '--configdir', default="/etc/mock",
@@ -59,7 +52,7 @@ RFC4880_HASHES = {
     11: "SHA224"}
 
 
-def setup_yumbase(yumbase, loopback_repo):
+def setup_yumbase(yumbase):
     """
     Set up the YUM database.
     """
@@ -210,10 +203,7 @@ def main(argv):
     # having yum print lots of irrelevant messages during startup.
     yum_config = util.load_mock_config(config)
     yumbase = util.get_yumbase(yum_config)
-    loopback_repo = (None
-                     if intercepted_args.no_loopback_repo
-                     else intercepted_args.loopback_repo)
-    setup_yumbase(yumbase, loopback_repo)
+    setup_yumbase(yumbase)
 
     util.setup_logging(intercepted_args)
 
