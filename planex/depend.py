@@ -223,8 +223,6 @@ def main():
     print ""
     print "srpms: " + " \\\n\t".join(all_srpms)
     print ""
-    print "install: all"
-    print "\t. scripts/%s/install.sh" % build_type()
 
 
 if __name__ == "__main__":
