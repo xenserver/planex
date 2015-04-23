@@ -29,13 +29,6 @@ def parse_args_or_exit(argv=None):
     parser.add_argument(
         '--cachedirs', default='~/.planex-cache:/misc/cache/planex-cache',
         help='colon-separated cache search path')
-    parser.add_argument(
-        '--loopback-repo', default='mock',
-        help='Name of the mock loopback repository')
-    parser.add_argument(
-        '--no-loopback-repo', action='store_true',
-        help='Disable the use of the mock loopback repository')
-
     # Overridden mock arguments.  Help text taken directly from mock.
     parser.add_argument(
         '--configdir', default="/etc/mock",
@@ -59,21 +52,17 @@ RFC4880_HASHES = {
     11: "SHA224"}
 
 
-def setup_yumbase(yumbase, loopback_repo):
+def setup_yumbase(yumbase):
     """
     Set up the YUM database.
     """
     # the following call creates a /var/tmp/yum-<username>-<random>
     # directory to use as a cache.   reuse=True makes yum check
     # for similarly-named directories and re-use them, which makes
-    # dependency searching much faster
+    # dependency searching much faster. However, this causes breakage
+    # for concurrent builds.
 
-    # much faster if we only enable our own repository
-    yumbase.repos.disableRepo('*')
-    if loopback_repo:
-        yumbase.repos.enableRepo(loopback_repo)
-
-    yumbase.setCacheDir(force=True, reuse=False)
+    yumbase.setCacheDir(force=True, reuse=True)
     yumbase.repos.populateSack(cacheonly=True)
 
 
@@ -106,12 +95,15 @@ def add_to_cache(cachedirs, pkg_hash, build_dir):
     cache_dir = cache_locations(cachedirs, pkg_hash)[0]
     assert not os.path.isdir(cache_dir)
 
-    if not os.path.isdir(cachedirs[0]):
-        os.makedirs(cachedirs[0])
-
     cache_output_dir = os.path.join(cache_dir, "output")
-    shutil.move(build_dir, cache_output_dir)
-    logging.debug("moved to %s", cache_output_dir)
+
+    if not os.path.isdir(cache_output_dir):
+        os.makedirs(cache_output_dir)
+
+    for fname in os.listdir(build_dir):
+        shutil.copy(os.path.join(build_dir, fname), cache_output_dir)
+
+    logging.debug("copied to %s", cache_output_dir)
 
 
 def get_from_specified_cache(cache_dir, resultdir):
@@ -211,10 +203,7 @@ def main(argv):
     # having yum print lots of irrelevant messages during startup.
     yum_config = util.load_mock_config(config)
     yumbase = util.get_yumbase(yum_config)
-    loopback_repo = (None
-                     if intercepted_args.no_loopback_repo
-                     else intercepted_args.loopback_repo)
-    setup_yumbase(yumbase, loopback_repo)
+    setup_yumbase(yumbase)
 
     util.setup_logging(intercepted_args)
 
@@ -226,17 +215,32 @@ def main(argv):
     cachedirs = [os.path.expanduser(x) for x
                  in intercepted_args.cachedirs.split(':')]
 
+    # Expand default resultdir as done in mock.backend.Root
+    resultdir = intercepted_args.resultdir or \
+        yum_config['resultdir'] % yum_config
+
+    if not os.path.isdir(resultdir):
+        os.makedirs(resultdir)
+
     # Rebuild if not available in the cache
     if not in_cache(cachedirs, pkg_hash):
         logging.debug("Cache miss - rebuilding")
         build_output = build_package(intercepted_args.configdir,
                                      intercepted_args.root, passthrough_args)
-        add_to_cache(cachedirs, pkg_hash, build_output)
+        try:
+            add_to_cache(cachedirs, pkg_hash, build_output)
+        except OSError:
+            # If we can't cache the result, that's not a fatal error
+            pass
 
-    # Expand default resultdir as done in mock.backend.Root
-    resultdir = intercepted_args.resultdir or \
-        yum_config['resultdir'] % yum_config
-    get_from_cache(cachedirs, pkg_hash, resultdir)
+        for cached_file in os.listdir(build_output):
+            dest = os.path.join(resultdir, cached_file)
+
+            if os.path.exists(dest):
+                os.unlink(dest)
+            shutil.move(os.path.join(build_output, cached_file), resultdir)
+    else:
+        get_from_cache(cachedirs, pkg_hash, resultdir)
 
 
 def _main():
