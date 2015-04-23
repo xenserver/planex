@@ -7,7 +7,7 @@ planex (0.7.0-1) trusty; urgency=low
   * Remove planex-configure, which is superseded by planex-pin
   * Rename Makefile.common to Makefile.rules
 
- -- Euan Harris <euan.harris@citrix.com>  Wed, 25 Mar 2015 16:30:00 +0000
+ -- Euan Harris <euan.harris@citrix.com>  Thu, 23 Apr 2015 13:30:00 +0100
 
 planex (0.6.0-1) trusty; urgency=low
 
