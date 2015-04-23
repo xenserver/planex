@@ -7,6 +7,7 @@ Library of generic functions used by other planex components
 import subprocess
 import sys
 import os
+import __main__
 import pipes
 import tempfile
 import yum
@@ -87,12 +88,27 @@ def setup_logging(args):
     """
     Intended to be called by any top-level module to set up "sensible" logging.
     """
+    # use lowercase (and abbreviated to max 5 chars) level names
+    logging.addLevelName(logging.DEBUG, "debug")
+    logging.addLevelName(logging.INFO, "info")
+    logging.addLevelName(logging.WARNING, "warn")
+    logging.addLevelName(logging.ERROR, "error")
+    logging.addLevelName(logging.CRITICAL, "crit")
+
+    tag = os.path.basename(__main__.__file__)
+
     loglevel = logging.INFO
     if args.verbose:
         loglevel = logging.DEBUG
     if args.quiet:
         loglevel = logging.WARN
-    logging.basicConfig(format='%(message)s', level=loglevel)
+
+    datefmt = '%b %d %H:%M:%S'
+    fmt = ('%(asctime)s.%(msecs).3d ' + tag +
+           ' [%(process)d] %(levelname)5s: %(message)s')
+
+    logging.basicConfig(format=fmt, datefmt=datefmt, level=loglevel)
+    logging.debug("Initialised logging.")
 
 
 def add_common_parser_options(parser):
