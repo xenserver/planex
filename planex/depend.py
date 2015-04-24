@@ -14,6 +14,7 @@ import urlparse
 import glob
 from planex import mappkgname
 from planex.util import setup_sigint_handler
+from planex.util import add_common_parser_options
 
 
 def build_type():
@@ -104,6 +105,7 @@ def parse_cmdline():
     """
     parser = argparse.ArgumentParser(
         description="Generate Makefile dependencies from RPM Spec files")
+    add_common_parser_options(parser)
     parser.add_argument("specs", metavar="SPEC", nargs="+", help="spec file")
     parser.add_argument(
         "-i", "--ignore", metavar="PKG", action="append", default=[],
