@@ -141,8 +141,11 @@ def get_srpm_hash(srpm, yumbase, mock_config):
     pkg_hash.update(mock_config)
 
     if srpm.filedigestalgo:
-        logging.debug("Hashes of SRPM contents (%s):",
-                      RFC4880_HASHES[srpm.filedigestalgo])
+        digestalgo = RFC4880_HASHES[srpm.filedigestalgo]
+        logging.debug("Hashes of SRPM contents (%s):", digestalgo)
+    else:
+        digestalgo = RFC4880_HASHES[1]
+        logging.debug("Hashes of SRPM contents (defaulted to %s):", digestalgo)
 
     for name, digest in zip(srpm.filenames, srpm.filedigests):
         logging.debug("  %s: %s", name, digest)
@@ -159,8 +162,7 @@ def get_srpm_hash(srpm, yumbase, mock_config):
 
                 yumbase.downloadHeader(pkg)
                 hdr = pkg.returnLocalHeader()
-                logging.debug("  File hashes (%s):",
-                              RFC4880_HASHES[hdr.filedigestalgo])
+                logging.debug("  File hashes (%s):", digestalgo)
                 for name, digest in zip(hdr.filenames, hdr.filedigests):
                     logging.debug("    %s: %s", name, digest)
                     pkg_hash.update(digest)
