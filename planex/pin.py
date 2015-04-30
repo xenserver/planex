@@ -199,7 +199,8 @@ def serialise_pins(pins, path):
     ]
     with open(path, 'w+') as pins_file:
         pins_file.writelines(preamble)
-        json.dump(pins, pins_file)
+        json.dump(pins, pins_file,
+                  sort_keys=True, indent=2, separators=(',', ': '))
 
 
 def list_pins(args):
