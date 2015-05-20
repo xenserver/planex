@@ -186,7 +186,10 @@ def build_package(configdir, root, passthrough_args):
            "--root=%s" % root,
            "--resultdir=%s" % working_directory] + passthrough_args
 
-    util.run(cmd)
+    logfiles = [os.path.join(working_directory, "root.log"),
+                os.path.join(working_directory, "build.log")]
+    util.run(cmd, logfiles=logfiles)
+
     return working_directory
 
 
