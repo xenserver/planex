@@ -51,12 +51,15 @@ def get_yumbase(config):
     return yumbase
 
 
-def run(cmd, check=True, env=None, inputtext=None):
+def run(cmd, check=True, env=None, inputtext=None, logfiles=None):
     """
     Run a command, dumping it cut-n-pasteably if required. Checks the return
     code unless check=False. Returns a dictionary of stdout, stderr and return
     code (rc)
     """
+    if logfiles is None:
+        logfiles = []
+
     logging.debug("running command: %s",
                   (" ".join([pipes.quote(word) for word in cmd])))
 
@@ -72,6 +75,9 @@ def run(cmd, check=True, env=None, inputtext=None):
                       (" ".join([pipes.quote(word) for word in cmd])))
         logging.error("stdout: %s", stdout)
         logging.error("stderr: %s", stderr)
+        for log_path in logfiles:
+            with open(log_path) as log_file:
+                logging.error("%s:\n%s", log_path, log_file.read())
         raise Exception
 
     return {"stdout": stdout, "stderr": stderr, "rc": proc.returncode}
