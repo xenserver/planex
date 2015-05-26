@@ -116,7 +116,15 @@ def get_from_specified_cache(cache_dir, resultdir):
         os.makedirs(resultdir)
 
     for cached_file in os.listdir(build_output):
-        shutil.copy(os.path.join(build_output, cached_file), resultdir)
+        cached_file_path = os.path.join(build_output, cached_file)
+        shutil.copy(cached_file_path, resultdir)
+
+        try:
+            os.utime(cached_file_path, None)
+        except OSError:
+            # Don't fail if we can't update the timestamp.
+            # The cache might be mounted read-only, for example.
+            pass
 
 
 def get_from_cache(cachedirs, pkg_hash, resultdir):
