@@ -1,3 +1,11 @@
+planex (0.7.1-1) trusty; urgency=low
+
+  * planex-cache: Update cached files' timestamps on cache hits
+  * planex-cache: Print mock's logs if it fails
+  * planex-pin: Improve formatting of the pins file
+
+ -- Euan Harris <euan.harris@citrix.com>  Tue, May 26 2015 10:00:00 +0100
+
 planex (0.7.0-1) trusty; urgency=low
 
   * Build products are now written to the _build subdirectory by default
