@@ -1,6 +1,6 @@
 Summary: RPM/deb build tool
 Name: planex
-Version: 0.7.0
+Version: 0.7.1
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -44,6 +44,11 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Tue May 26 2015 Euan Harris <euan.harris@citrix.com> - 0.7.1-1
+- planex-cache: Update cached files' timestamps on cache hits
+- planex-cache: Print mock's logs if it fails
+- planex-pin: Improve formatting of the pins file
+
 * Thu Apr 23 2015 Euan Harris <euan.harris@citrix.com> - 0.7.0-1
 - Build products are now written to the _build subdirectory by default
 - Add planex-pin, which overrides a package's sources with a local repo
