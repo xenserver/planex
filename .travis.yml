@@ -1,9 +1,12 @@
 language: python
 virtualenv: 
   system_site_packages: true
-before_install:
-  - sudo apt-get -q -y update
-  - sudo apt-get -q -y install yum python-rpm
+sudo: false
+addons:
+  apt:
+    packages:
+    - yum
+    - python-rpm
 script: 
   - pep8 --show-source --show-pep8 setup.py planex tests
   - pylint setup.py planex
