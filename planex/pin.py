@@ -191,8 +191,12 @@ def update(args):
             source_map[src_num] = (src_version, tar_path)
 
         out_spec_path = os.path.join(args.pins_dir, os.path.basename(spec))
-        with open(out_spec_path, 'w+') as out_spec_file:
-            out_spec_file.write(pinned_spec_of_spec(spec, source_map))
+        tmp_spec = tempfile.NamedTemporaryFile(mode='w+', prefix='planex-pin',
+                                               delete=False)
+        tmp_spec.write(pinned_spec_of_spec(spec, source_map))
+        tmp_spec.close()
+        maybe_copy(tmp_spec.name, out_spec_path, args.force)
+        os.remove(tmp_spec.name)
 
 
 def parse_pins_file(args):
