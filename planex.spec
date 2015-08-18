@@ -13,6 +13,7 @@ Requires: python-argcomplete
 Requires: python-argparse
 Requires: python-setuptools
 Requires: rpm-build
+Requires: yum-plugin-priorities
 
 %description
 Planex is a tool for building RPMs and deb files. It manages interdependencies
