@@ -4,12 +4,12 @@ Planex is a toolkit for building collections of interdependent RPMs.  The main t
 
 * `planex-depend` - extracts dependencies from Spec files, in `make` format
 * `planex-fetch` - downloads sources specified in Spec files
-* `planex-cache` - similar to 'ccache', caches previous builds to speed up rebuilds
+* `planex-cache` - similar to `ccache`, caches previous builds to speed up rebuilds
 * `planex-pin` - for developers, overrides Spec file sources with local development repositories
 
 Planex also contains a generic makefile which handles dependency resolution and sequences the build.   Partial rebuilds and concurrent builds are both supported.   By default, packages are built in `mock` chroots but this can be changed by overriding a variable in the makefile.
 
-Planex runs on RedHat- and Debian-like Linux distributions.   On Debian, the `planex-makedeb` tool can generate source packages which can be passed to `cowbuilder` to produce binary `.deb' packages.   The makefile has rules to sequence Debian package builds, but `planex-cache` cannot be used.
+Planex runs on RedHat- and Debian-like Linux distributions.   On Debian, the `planex-makedeb` tool can generate source packages which can be passed to `cowbuilder` to produce binary `.deb` packages.   The makefile has rules to sequence Debian package builds, but `planex-cache` cannot be used.
 
 ## Usage
 
