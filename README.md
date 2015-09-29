@@ -21,39 +21,30 @@ make
 ```
 See [the planex-demo README](planex-demo/README.md) for a more advanced tutorial, including how to use `planex-pin` for development.
 
-## Installation
+## Installation from source
 
 ### Dependencies
 
+#### CentOS 7
+```bash
+yum install epel-release yum-utils
+yum-builddep planex.spec
+```
+#### Fedora 22
+```bash
+dnf builddep planex.spec
+```
 #### Ubuntu 14.04
-
 ```bash
-sudo apt-get -qy install python-rpm python-setuptools python-argparse rpm
+apt-get -qy install python-rpm python-setuptools python-argparse rpm
 ```
 
-#### CentOS 6
-
- * Basic dependencies:
-
+#### Build and test
 ```bash
-wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
-rpm -Uvh epel-release-6-8.noarch.rpm
-yum -y install git rpm-python rpm-build mock python-setuptools python-argparse
+python setup.py build
+nosetests
 ```
- * Pip:
+#### Install
 ```bash
-wget --no-check-certificate https://raw.github.com/pypa/pip/master/contrib/get-pip.py
-python get-pip.py
-pip install virtualenv
-virtualenv --system-site-packages env
-. env/bin/activate
-pip install -r requirements.txt
-```
-
-## Testing
-
-To run unit tests, use `tox`:
-
-```bash
-$ tox
+python setup.py install
 ```
