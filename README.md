@@ -13,25 +13,13 @@ Planex runs on RedHat- and Debian-like Linux distributions.   On Debian, the `pl
 
 ## Usage
 
-This is an example run to demonstrate how you can build the software specified
-in the planex-demo subdirectory
 
- * Change directory to planex-demo
-```bash
+Building a Planex project is straightforward.   The Planex repository includes a small demo project:
+```
 cd planex-demo
-```
- * Clone the repositories specified in the spec files
-```bash
-planex-clone
-```
- * Configure
-```bash
-planex-configure
-```
- * Build
-```bash
 make
 ```
+See [the planex-demo README](planex-demo/README.md) for a more advanced tutorial, including how to use `planex-pin` for development.
 
 ## Installation
 
