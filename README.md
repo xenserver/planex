@@ -21,6 +21,20 @@ make
 ```
 See [the planex-demo README](planex-demo/README.md) for a more advanced tutorial, including how to use `planex-pin` for development.
 
+## Installation from binary packages
+
+#### CentOS 7
+```bash
+yum install https://xenserver.github.io/planex-release/release/rpm/el/planex-release-7-1.noarch.rpm
+yum install planex
+```
+
+#### Fedora 21
+```bash
+yum install https://xenserver.github.io/planex-release/release/rpm/fedora/planex-release-21-1.noarch.rpm
+yum install planex
+```
+
 ## Installation from source
 
 ### Dependencies
