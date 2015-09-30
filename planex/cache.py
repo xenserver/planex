@@ -138,7 +138,7 @@ def get_from_cache(cachedirs, pkg_hash, resultdir):
         get_from_specified_cache(cache_dir, resultdir)
 
 
-def get_srpm_hash(srpm, yumbase, mock_config):
+def get_srpm_hash(srpm, yumbase):
     """
     Calculate the cache hash of srpm, including the hashes of its build
     dependencies.  Only the first layer of dependencies are hashed -
@@ -146,7 +146,6 @@ def get_srpm_hash(srpm, yumbase, mock_config):
     """
     pkg_hash = hashlib.md5()
     pkg_hash.update(PLANEX_CACHE_SALT)
-    pkg_hash.update(mock_config)
 
     if srpm.filedigestalgo:
         digestalgo = RFC4880_HASHES[srpm.filedigestalgo]
@@ -221,9 +220,7 @@ def main(argv):
     util.setup_logging(intercepted_args)
 
     srpm = load_srpm_from_file(passthrough_args[-1])
-    with open(config) as cfg:
-        mock_config = cfg.read()
-    pkg_hash = get_srpm_hash(srpm, yumbase, mock_config)
+    pkg_hash = get_srpm_hash(srpm, yumbase)
 
     cachedirs = [os.path.expanduser(x) for x
                  in intercepted_args.cachedirs.split(':')]
