@@ -70,7 +70,7 @@ def build_rpm_from_srpm(spec):
     # a single rule invocation, but only for pattern rules (e.g. %.h %.c: %.y).
     # It is tricky to generate correct pattern rules for RPM builds.
 
-    rpm_path = spec.binary_package_paths()[0]
+    rpm_path = spec.binary_package_paths()[-1]
     srpm_path = spec.source_package_path()
     print '%s: %s' % (rpm_path, srpm_path)
 
@@ -83,7 +83,7 @@ def package_to_rpm_map(specs):
     provides_to_rpm = {}
     for spec in specs:
         for provided in spec.provides():
-            provides_to_rpm[provided] = spec.binary_package_paths()[0]
+            provides_to_rpm[provided] = spec.binary_package_paths()[-1]
     return provides_to_rpm
 
 
@@ -91,7 +91,7 @@ def buildrequires_for_rpm(spec, provides_to_rpm):
     """
     Generate build dependency rules between binary RPMs
     """
-    rpmpath = spec.binary_package_paths()[0]
+    rpmpath = spec.binary_package_paths()[-1]
     for buildreq in spec.buildrequires():
         # Some buildrequires come from the system repository
         if buildreq in provides_to_rpm:
@@ -215,7 +215,7 @@ def main():
     all_rpms = []
     all_srpms = []
     for spec in specs.itervalues():
-        rpm_path = spec.binary_package_paths()[0]
+        rpm_path = spec.binary_package_paths()[-1]
         all_rpms.append(rpm_path)
         all_srpms.append(spec.source_package_path())
         print "%s: %s" % (spec.name(), rpm_path)

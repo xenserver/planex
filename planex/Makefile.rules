@@ -110,9 +110,9 @@ srpm_repo: srpms
 # We take an exclusive lock around createrepo to ensure that no mock
 # runs at the same time as a createrepo is updating the repo metadata.
 %.rpm:
-	@echo [MOCK] $@
+	@echo [MOCK] $<
 	@flock --shared --timeout 300 ./$(TOPDIR)/RPMS $(MOCK) $(MOCK_FLAGS) --rebuild $<
-	@echo [CREATEREPO] $@
+	@echo [CREATEREPO] $<
 	@flock --exclusive --timeout 300 ./$(TOPDIR)/RPMS $(CREATEREPO) $(CREATEREPO_FLAGS) ./$(TOPDIR)/RPMS
 
 

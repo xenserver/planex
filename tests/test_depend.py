@@ -41,7 +41,7 @@ class BasicTests(unittest.TestCase):
 
         self.assertEqual(
             sys.stdout.getvalue(),
-            "./RPMS/x86_64/ocaml-cohttp-0.9.8-1.el6.x86_64.rpm: "
+            "./RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
             "./SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm\n")
 
     def test_buildrequires_for_rpm(self):
@@ -58,7 +58,7 @@ class BasicTests(unittest.TestCase):
 
         self.assertEqual(
             sys.stdout.getvalue(),
-            "./RPMS/x86_64/ocaml-cohttp-0.9.8-1.el6.x86_64.rpm: "
-            "./RPMS/x86_64/ocaml-uri-1.6.0-1.el6.x86_64.rpm\n"
-            "./RPMS/x86_64/ocaml-cohttp-0.9.8-1.el6.x86_64.rpm: "
-            "./RPMS/x86_64/ocaml-cstruct-1.4.0-1.el6.x86_64.rpm\n")
+            "./RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
+            "./RPMS/x86_64/ocaml-uri-devel-1.6.0-1.el6.x86_64.rpm\n"
+            "./RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
+            "./RPMS/x86_64/ocaml-cstruct-devel-1.4.0-1.el6.x86_64.rpm\n")
