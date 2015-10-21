@@ -1,0 +1,61 @@
+digraph planex {
+	// Processes
+	"planex-fetch" [shape=box];
+	"planex-depend" [shape=box];
+	rpmbuild [shape=box];
+	"planex-cache / mock" [shape=box];
+	createrepo [shape=box];
+	make [shape=box];
+	"planex-init" [shape=box];
+	"planex-pin" [shape=box];
+
+	// External inputs
+	"external yum repos" [color=blue];
+	"http mirror" [color=blue];
+
+	// Our inputs
+	"mock.cfg" [color=red];
+	"git repo" [color=red];
+
+	// Our outputs
+	"loopback yum repo" [color=green];
+
+	// Intermediate files
+	"local RPM" [color=yellow];
+	"intermediate SRPM" [color=yellow];
+	"local tarball" [color=yellow];
+	"specs" [color=yellow];
+	"pinned specs" [color=yellow];
+	"deps" [color=yellow];
+	Makefile [color=yellow];
+	"RPM cache" [color=yellow];
+
+	"specs" -> "planex-pin" -> "pinned specs";
+	"git repo" -> "planex-pin" -> "local tarball";
+
+	"specs" -> "planex-depend" -> deps;
+	"pinned specs" -> "planex-depend"; // -> deps;
+
+	"specs" -> "planex-fetch" -> "local tarball";
+	"http mirror" -> "planex-fetch"; // -> local tarball;
+
+	"specs" -> rpmbuild -> "intermediate SRPM";
+	"pinned specs" -> rpmbuild; // -> "intermediate SRPM";
+	"local tarball" -> rpmbuild; // -> SRPM;
+
+	"intermediate SRPM" -> "planex-cache / mock" -> "local RPM";
+	"mock.cfg" -> "planex-cache / mock"; // -> local RPM;
+	"loopback yum repo" -> "planex-cache / mock"; // -> local RPM;
+	"external yum repos" -> "planex-cache / mock"; // -> local RPM;
+
+	"planex-cache / mock" -> "RPM cache";
+	"RPM cache" -> "planex-cache / mock";
+
+ 	"local RPM" -> createrepo -> "loopback yum repo";
+
+	"deps" -> make;
+	Makefile -> make;
+
+	"planex-init" -> Makefile;
+}
+
