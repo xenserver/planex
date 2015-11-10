@@ -1,3 +1,15 @@
+planex (0.7.2-1) trusty; urgency=low
+
+  * planex-pin: It is now possible to pin to a bare Git repository
+  * planex-cache: Use yum configuration but not mock configuration when
+    calculating hash
+  * planex-cache: When writing back to the cache, do not exit if the binary
+    package already exists
+  * Locally-built packages now override newer packages of the same name in
+    distribution repositories
+
+ -- Euan Harris <euan.harris@citrix.com>  Tue, 10 Nov 2015 17:30:00 +0000
+
 planex (0.7.1-1) trusty; urgency=low
 
   * planex-cache: Update cached files' timestamps on cache hits

@@ -1,6 +1,6 @@
 Summary: RPM/deb build tool
 Name: planex
-Version: 0.7.1
+Version: 0.7.2
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -45,6 +45,15 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Tue Nov 10 2015 Euan Harris <euan.harris@citrix.com> - 0.7.2-1
+- planex-pin: It is now possible to pin to a bare Git repository
+- planex-cache: Use yum configuration but not mock configuration when
+  calculating hash
+- planex-cache: When writing back to the cache, do not exit if the binary
+  package already exists
+- Locally-built packages now override newer packages of the same name in
+  distribution repositories
+
 * Tue May 26 2015 Euan Harris <euan.harris@citrix.com> - 0.7.1-1
 - planex-cache: Update cached files' timestamps on cache hits
 - planex-cache: Print mock's logs if it fails
