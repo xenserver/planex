@@ -92,9 +92,15 @@ def add_to_cache(cachedirs, pkg_hash, build_dir):
     """
     Add the build products in build_dir to the cache
     """
-    cache_dir = cache_locations(cachedirs, pkg_hash)[0]
-    assert not os.path.isdir(cache_dir)
 
+    # Another racing build may have written this package into the cache
+    # while we were building.  If that is the case, we don't have to do
+    # anything.
+    if in_cache(cachedirs, pkg_hash):
+        logging.debug("binary package already cached, skipping")
+        return
+
+    cache_dir = cache_locations(cachedirs, pkg_hash)[0]
     cache_output_dir = os.path.join(cache_dir, "output")
 
     if not os.path.isdir(cache_output_dir):
