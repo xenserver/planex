@@ -22,6 +22,9 @@ buildrpms: conf_dir srpmutil
 	rm -rf planex-build-root/RPMS
 	mkdir planex-build-root/RPMS
 	cp /distfiles/centos5/buildsys-build* planex-build-root/RPMS
+	cp /output/openssl-xs/RPMS/x86_64/*.rpm planex-build-root/RPMS
+	cp /output/openssl-xs/RPMS/noarch/*.rpm planex-build-root/RPMS
+	cp /output/openssl-wrapper/RPMS/x86_64/*.rpm planex-build-root/RPMS
 	createrepo planex-build-root/RPMS/
 	touch /etc/hosts
 	planex-build --xs-build-sys --use-mock
