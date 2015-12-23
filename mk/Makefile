@@ -19,10 +19,6 @@ buildrpms: conf_dir srpmutil
 	echo confdir $(CONFIG_DIR)
 	chown -R root.root $(CONFIG_DIR)/*
 	planex-configure --config-dir=$(CONFIG_DIR) --use-distfiles
-	mkdir -p planex-build-root/RPMS
-	cp /output/openssl-xs/RPMS/**/*.rpm planex-build-root/RPMS
-	cp /output/openssl-wrapper/RPMS/**/*.rpm planex-build-root/RPMS
-	createrepo --update planex-build-root/RPMS/
 	touch /etc/hosts
 	planex-build --xs-build-sys --use-mock
 	planex-install $(CONFIG_DIR) $(MY_MAIN_PACKAGES)
