@@ -284,7 +284,7 @@ if __name__ == "__main__":
     order = toposort2(deps)
     external = "external dependencies hash"
 
-    for path in (TMP_RPM_PATH, BUILD_DIR):
+    for path in (TMP_RPM_PATH, BUILD_DIR, RPMS_DIR):
         if os.path.exists(path):
             print "Cleaning out directory: %s" % path
             shutil.rmtree(path)
