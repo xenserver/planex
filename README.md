@@ -25,6 +25,7 @@ See [the planex-demo README](planex-demo/README.md) for a more advanced tutorial
 
 #### CentOS 7
 ```bash
+yum install epel-release
 yum install https://xenserver.github.io/planex-release/release/rpm/el/planex-release-7-1.noarch.rpm
 yum install planex
 ```
