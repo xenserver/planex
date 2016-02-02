@@ -5,16 +5,17 @@ planex-depend: Generate Makefile-format dependencies from spec files
 """
 
 import argparse
-import argcomplete
+import glob
 import os
-import planex.spec as pkg
 import platform
 import sys
 import urlparse
-import glob
+
+import argcomplete
 from planex import mappkgname
-from planex.util import setup_sigint_handler
 from planex.util import add_common_parser_options
+from planex.util import setup_sigint_handler
+import planex.spec as pkg
 
 
 def build_type():

@@ -4,16 +4,17 @@
 Library of generic functions used by other planex components
 """
 
+import logging
+import __main__
+import os
+import pipes
+import signal
 import subprocess
 import sys
-import os
-import __main__
-import pipes
 import tempfile
-import yum
-import logging
-import signal
+
 import pkg_resources
+import yum
 
 
 def load_mock_config(cfg):

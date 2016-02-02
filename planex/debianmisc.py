@@ -3,12 +3,13 @@ Library of utility functions for generating Debian packages from RPM
 spec files.
 """
 
-import rpm
-from planex.tree import Tree
-from planex import mappkgname
 import os
 import re
+import rpm
+
+from planex import mappkgname
 from planex import rpmextra
+from planex.tree import Tree
 
 
 def conffiles_from_spec(spec, specpath):

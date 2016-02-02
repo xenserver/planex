@@ -5,11 +5,12 @@ Utility functions for generating Debian rules files from RPM
 spec files.
 """
 
-import rpm
-from planex import rpmextra
 import os
 import re
+import rpm
+
 from planex import mappkgname
+from planex import rpmextra
 from planex.tree import Tree
 
 
