@@ -5,17 +5,19 @@ planex-cache: A caching wrapper around mock for building RPMs
 """
 
 import argparse
-import argcomplete
 import hashlib
+import itertools
+import logging
 import os
 import rpm
 import shutil
 import sys
 import tempfile
+
+import argcomplete
 import yum
+
 from planex import util
-import itertools
-import logging
 
 PLANEX_CACHE_SALT = "planex-cache-1"
 

@@ -3,9 +3,10 @@ Utility functions for generating Debian control files from RPM
 spec files.
 """
 
+import textwrap
+
 from planex.tree import Tree
 from planex import mappkgname
-import textwrap
 
 
 STANDARDS_VERSION = "3.9.3"

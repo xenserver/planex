@@ -3,21 +3,22 @@ planex-pin: Generate a new override spec file for a given package
 """
 
 import argparse
-import argcomplete
-import os
-import sys
-import re
 import glob
-import logging
-import tempfile
 import hashlib
-import shutil
 import json
+import logging
+import os
+import re
 import rpm
-from planex.util import run
-from planex.util import setup_sigint_handler
+import shutil
+import sys
+import tempfile
+
 from planex.util import add_common_parser_options
+from planex.util import run
 from planex.util import setup_logging
+from planex.util import setup_sigint_handler
+import argcomplete
 
 
 def dotgitdir_of_path(repo):

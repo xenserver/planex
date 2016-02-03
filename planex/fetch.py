@@ -3,20 +3,21 @@ planex-fetch: Download sources referred to by a spec file
 """
 
 import argparse
-import argcomplete
-import os
-import shutil
-import planex.spec
-import urlparse
-import pycurl
-import sys
 import logging
-import pkg_resources
-from planex.util import setup_sigint_handler
-from planex.util import add_common_parser_options
-from planex.util import setup_logging
-from planex.util import run
+import os
+import pycurl
+import shutil
+import sys
+import urlparse
 
+from planex.util import add_common_parser_options
+from planex.util import run
+from planex.util import setup_logging
+from planex.util import setup_sigint_handler
+import planex.spec
+
+import argcomplete
+import pkg_resources
 
 # This should include all of the extensions in the Makefile.rules for fetch
 SUPPORTED_EXT_TO_MIME = {
