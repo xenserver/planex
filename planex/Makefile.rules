@@ -1,3 +1,4 @@
+# -*- MakeFile -*-
 ############################################################################
 # Configuration variables
 ############################################################################
@@ -169,4 +170,3 @@ $(DEPS): $(TOPDIR) SPECS/*.spec $(wildcard $(PINSFILE) $(PINDEPS) $(PINSDIR)/*.s
 -include $(DEPS)
 
 # vim:ft=make:
-# -*- MakeFile -*-
