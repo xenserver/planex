@@ -6,7 +6,7 @@
 import os
 import re
 import rpm
-import urlparse
+
 from planex import debianmisc
 
 # Could have a decorator / context manager to set and unset all the RPM macros
@@ -146,25 +146,16 @@ class Spec(object):
 
     def source_paths(self):
         """Return the filesystem paths to source files"""
-        sources = []
-        for source in self.source_urls():
-            url = urlparse.urlparse(source)
 
-            # Source comes from a remote HTTP server
-            if url.scheme in ["http", "https", "file"]:
-                sources.append(os.path.join(sourcedir(),
-                                            os.path.basename(url.path)))
+        # RPM only looks at the basename part of the Source URL - the
+        # part after the rightmost /.   We must match this behaviour.
+        #
+        # Examples:
+        #    http://www.example.com/foo/bar.tar.gz -> bar.tar.gz
+        #    http://www.example.com/foo/bar.cgi#/baz.tbz -> baz.tbz
 
-            # Source comes from a local file or directory
-            if url.scheme in ["git", "hg"]:
-                sources.append(
-                    os.path.join(sourcedir(), os.path.basename(url.fragment)))
-
-            # Source is an otherwise unqualified file, probably a patch
-            if url.scheme == "":
-                sources.append(os.path.join(sourcedir(), url.path))
-
-        return sources
+        return [os.path.join(sourcedir(), os.path.basename(url))
+                for url in self.source_urls()]
 
     # RPM build dependencies.   The 'requires' key for the *source* RPM is
     # actually the 'buildrequires' key from the spec
