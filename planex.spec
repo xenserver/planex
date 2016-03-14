@@ -1,6 +1,6 @@
 Summary: RPM/deb build tool
 Name: planex
-Version: 0.7.2
+Version: 0.7.3
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -45,6 +45,9 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Mon Mar 14 2016 Euan Harris <euan.harris@citrix.com> 0.7.3-1
+- planex-fetch: Handle Source URLs with fragments correctly
+
 * Tue Nov 10 2015 Euan Harris <euan.harris@citrix.com> - 0.7.2-1
 - planex-pin: It is now possible to pin to a bare Git repository
 - planex-cache: Use yum configuration but not mock configuration when
