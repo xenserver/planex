@@ -39,6 +39,7 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %{_bindir}/planex-init
 %{_bindir}/planex-makedeb
 %{_bindir}/planex-pin
+%{_bindir}/planex-make-srpm
 %{_datarootdir}/%{name}/Makefile.rules
 %{python_sitelib}/planex
 %{python_sitelib}/planex-*.egg-info

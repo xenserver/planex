@@ -18,9 +18,8 @@ PINSDIR = $(TOPDIR)/PINS
 FETCH ?= planex-fetch
 FETCH_FLAGS ?= --topdir $(TOPDIR) $(FETCH_EXTRA_FLAGS)
 
-RPMBUILD ?= rpmbuild
-RPMBUILD_FLAGS ?= --quiet --define "_topdir $(TOPDIR)" \
-                  --define "%dist $(DIST)"
+RPMBUILD ?= planex-make-srpm
+RPMBUILD_FLAGS ?= --quiet --topdir $(TOPDIR) --dist $(DIST)
 
 CREATEREPO ?= createrepo
 CREATEREPO_FLAGS ?= --quiet --update
@@ -90,7 +89,7 @@ $(TOPDIR):
 # (Fedora host) and foo-1.0.el6.x86_64.rpm (CentOS chroot).
 %.src.rpm:
 	@echo [RPMBUILD] $@ 
-	@$(RPMBUILD) $(RPMBUILD_FLAGS) -bs $<
+	@$(RPMBUILD) $(RPMBUILD_FLAGS) $^
 
 # Phony target to create repository metadata for the SRPMs.   This makes
 # it possible to add the SRPMS directory to yum.conf and use yumdownloader
