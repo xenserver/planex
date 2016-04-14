@@ -17,7 +17,6 @@ setup(name='planex',
               'planex-cache = planex.cache:_main',
               'planex-fetch = planex.fetch:_main',
               'planex-pin = planex.pin:_main',
-              'planex-makedeb = planex.makedeb:main',
               'planex-depend = planex.depend:main',
               'planex-make-srpm = planex.makesrpm:_main'
           ]

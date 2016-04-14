@@ -7,8 +7,6 @@ import os
 import re
 import rpm
 
-from planex import debianmisc
-
 # Could have a decorator / context manager to set and unset all the RPM macros
 # around methods such as 'provides'
 
@@ -48,18 +46,6 @@ def identity(name):
 def identity_list(name):
     """Identity mapping, injected into a list"""
     return [name]
-
-
-def map_arch_deb(arch):
-    """Map RPM package architecture to equivalent Deb architecture"""
-    if arch == "x86_64":
-        return "amd64"
-    elif arch == "armv7l":
-        return "armhf"
-    elif arch == "noarch":
-        return "all"
-    else:
-        return arch
 
 
 class SpecNameMismatch(Exception):
@@ -107,17 +93,9 @@ class Spec(object):
                     "spec file name '%s' does not match package name '%s'" %
                     (path, self.name()))
 
-        if target == "rpm":
-            self.rpmfilenamepat = rpm.expandMacro('%_build_name_fmt')
-            self.srpmfilenamepat = rpm.expandMacro('%_build_name_fmt')
-            self.map_arch = identity
-
-        else:
-            separator = '.' if debianmisc.is_native(self.spec) else '-'
-            basename = "%{NAME}_%{VERSION}" + separator
-            self.rpmfilenamepat = basename + "%{RELEASE}_%{ARCH}.deb"
-            self.srpmfilenamepat = basename + "%{RELEASE}.dsc"
-            self.map_arch = map_arch_deb
+        self.rpmfilenamepat = rpm.expandMacro('%_build_name_fmt')
+        self.srpmfilenamepat = rpm.expandMacro('%_build_name_fmt')
+        self.map_arch = identity
 
     def specpath(self):
         """Return the path to the spec file"""
