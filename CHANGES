@@ -1,3 +1,9 @@
+0.8
+* planex-make-srpm: Add a wrapper around rpmbuild which expands patchqueue
+  repositories as inline patches in the SRPM
+* Add initial support for running Planex in a Docker container
+* Remove unmaintained, experimental Debian package-generation scripts
+
 0.7.3
 * planex-fetch: Handle Source URLs with fragments correctly
 

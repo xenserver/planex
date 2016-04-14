@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.7.3
+Version: 0.8.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -46,6 +46,12 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Tue Jul 26 2016 Euan Harris <euan.harris@citrix.com> 0.8.0-1
+- planex-make-srpm: Add a wrapper around rpmbuild which expands patchqueue
+  repositories as inline patches in the SRPM
+- Add initial support for running Planex in a Docker container
+- Remove unmaintained, experimental Debian package-generation scripts
+
 * Mon Mar 14 2016 Euan Harris <euan.harris@citrix.com> 0.7.3-1
 - planex-fetch: Handle Source URLs with fragments correctly
 
