@@ -9,6 +9,7 @@ DEPS = $(TOPDIR)/deps
 PINSFILE = pins
 PINDEPS = $(TOPDIR)/pindeps
 PINSDIR = $(TOPDIR)/PINS
+ALLSPECS += $(wildcard SPECS/*.spec) $(wildcard $(PINSDIR)/*.spec)
 
 
 ############################################################################
@@ -162,9 +163,9 @@ $(PINDEPS): $(PINSFILE)
 # If dependency generation fails, the deps file is deleted to avoid
 # problems with empty, incomplete or corrupt deps.   
 .DELETE_ON_ERROR: $(DEPS)
-$(DEPS): $(TOPDIR) SPECS/*.spec $(wildcard $(PINSFILE) $(PINDEPS) $(PINSDIR)/*.spec)
+$(DEPS): $(ALLSPECS) $(PINDEPS)
 	@echo Updating dependencies...
-	@$(DEPEND) $(DEPEND_FLAGS) SPECS/*.spec > $@
+	@$(DEPEND) $(DEPEND_FLAGS) $(ALLSPECS) > $@
 
 -include $(DEPS)
 
