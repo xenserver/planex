@@ -1,4 +1,4 @@
-Summary: RPM/deb build tool
+Summary: RPM build tool
 Name: planex
 Version: 0.7.3
 Release: 1%{?dist}
@@ -16,8 +16,7 @@ Requires: rpm-build
 Requires: yum-plugin-priorities
 
 %description
-Planex is a tool for building RPMs and deb files. It manages interdependencies
-and caching.
+Planex is a tool for building RPMs. It manages interdependencies and caching.
 
 %prep
 %setup -q
@@ -37,7 +36,6 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %{_bindir}/planex-depend
 %{_bindir}/planex-fetch
 %{_bindir}/planex-init
-%{_bindir}/planex-makedeb
 %{_bindir}/planex-pin
 %{_bindir}/planex-make-srpm
 %{_datarootdir}/%{name}/Makefile.rules

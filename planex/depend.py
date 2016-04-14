@@ -7,31 +7,13 @@ planex-depend: Generate Makefile-format dependencies from spec files
 import argparse
 import glob
 import os
-import platform
 import sys
 import urlparse
 
 import argcomplete
-from planex import mappkgname
 from planex.util import add_common_parser_options
 from planex.util import setup_sigint_handler
 import planex.spec as pkg
-
-
-def build_type():
-    """
-    Discover appropriate build type for local host
-    """
-    debian_like = ["ubuntu", "debian", "linaro"]
-    rhel_like = ["fedora", "redhat", "centos"]
-
-    dist = platform.linux_distribution(full_distribution_name=False)[0].lower()
-    assert dist in debian_like + rhel_like
-
-    if dist in debian_like:
-        return "deb"
-    elif dist in rhel_like:
-        return "rpm"
 
 
 def build_srpm_from_spec(spec):
@@ -123,10 +105,6 @@ def parse_cmdline():
         "-r", "--repos_path", metavar="DIR", default="repos",
         help='Local path to the repositories')
     parser.add_argument(
-        "-p", "--packaging", metavar="PACKAGING",
-        choices=["rpm", "deb"], default=build_type(),
-        help='Packaging to use (rpm or deb): default %s' % build_type())
-    parser.add_argument(
         "--no-package-name-check", dest="check_package_names",
         action="store_false", default=True,
         help="Don't check that package name matches spec file name")
@@ -160,33 +138,17 @@ def main():
     if args.pins_dir:
         pins_glob = os.path.join(args.pins_dir, "*.spec")
         pin_paths = glob.glob(pins_glob)
-        if pin_paths and args.packaging == "deb":
-            sys.stderr.write("error: Pinning not supported for debian target")
-            sys.exit(1)
         for pin_path in pin_paths:
             spec = pkg.Spec(pin_path, target="rpm", dist=args.dist,
                             check_package_name=args.check_package_names,
                             topdir=args.topdir)
             pins[os.path.basename(pin_path)] = spec
 
-    os_type = platform.linux_distribution(
-        full_distribution_name=False)[1].lower()
     for spec_path in args.specs:
         try:
-            if args.packaging == "deb":
-
-                def map_name_fn(name):
-                    # pylint: disable=C0111
-                    return mappkgname.map_package(name, os_type)
-
-                spec = pkg.Spec(spec_path, target="deb", map_name=map_name_fn,
-                                check_package_name=args.check_package_names,
-                                topdir=args.topdir)
-
-            else:
-                spec = pkg.Spec(spec_path, target="rpm", dist=args.dist,
-                                check_package_name=args.check_package_names,
-                                topdir=args.topdir)
+            spec = pkg.Spec(spec_path, dist=args.dist,
+                            check_package_name=args.check_package_names,
+                            topdir=args.topdir)
             pkg_name = spec.name()
             if pkg_name in pkgs_to_ignore:
                 continue

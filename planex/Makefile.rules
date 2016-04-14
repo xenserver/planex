@@ -34,10 +34,6 @@ DEPEND ?= planex-depend
 DEPEND_FLAGS ?= -d $(DIST) --topdir $(TOPDIR) --ignore-from ignore \
                 --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
 
-COWBUILDER ?= sudo cowbuilder
-COWBUILDER_FLAGS ?= --build --configfile pbuilder/pbuilderrc \
-                    --buildresult RPMS
-
 ############################################################################
 # Main targets
 ############################################################################
@@ -115,34 +111,6 @@ srpm_repo: srpms
 	@flock --shared --timeout 300 ./$(TOPDIR)/RPMS $(MOCK) $(MOCK_FLAGS) --rebuild $<
 	@echo [CREATEREPO] $<
 	@flock --exclusive --timeout 300 ./$(TOPDIR)/RPMS $(CREATEREPO) $(CREATEREPO_FLAGS) ./$(TOPDIR)/RPMS
-
-
-############################################################################
-# Deb build rules
-############################################################################
-
-# Build a Debian source package from a Spec file and a tarball.
-# makedeb.py loads the Spec file, generates an equivalent Debian source
-# directory structure, then runs 'dpkg-source' to create the .dsc file.
-# The conversion is basic, but works fairly well for straightforward Spec
-# files.
-%.dsc: 
-	@echo [MAKEDEB] $@
-	@planex-makedeb $<
-	@echo [UPDATEREPO] $@
-	@flock --timeout 30 ./$(TOPDIR)/SRPMS scripts/deb/updaterepo sources $(TOPDIR)/SRPMS
-
-# Build one or more binary Debian packages from from a source package.
-# As with the RPM build, a typical source package might produce several
-# binary packages.  The repository metadata is updated after building a
-# binary package so that a subsequent build for a package which depends
-# on this one is able to find and install it.
-%.deb:
-	@echo [COWBUILDER] $@
-	@touch RPMS/Packages
-	@$(COWBUILDER) $(COWBUILDER_FLAGS) $<
-	@echo [UPDATEREPO] $@
-	@flock --timeout 30 ./RPMS scripts/deb/updaterepo packages RPMS
 
 
 ############################################################################
