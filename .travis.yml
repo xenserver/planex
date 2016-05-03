@@ -1,12 +1,14 @@
 language: python
 virtualenv: 
   system_site_packages: true
-sudo: false
+sudo: required
 addons:
   apt:
     packages:
     - yum
     - python-rpm
+before_script:
+  - apt-get install -y mock
 script: 
   - pep8 --show-source --show-pep8 setup.py planex tests
   - pylint setup.py planex
