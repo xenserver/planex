@@ -8,6 +8,8 @@ License: LGPLv2.1
 BuildArch: noarch
 BuildRequires: python-setuptools
 Requires: createrepo
+Requires: git
+Requires: make
 Requires: mock
 Requires: python-argcomplete
 Requires: python-argparse
