@@ -60,7 +60,7 @@ def setup_tmp_area():
     os.makedirs(tmp_build)
     os.makedirs(tmp_sources)
 
-    return (tmp_dirpath, tmp_sources)
+    return (tmp_dirpath, tmp_specs, tmp_sources)
 
 
 def extract_patches(tmp_specfile, patchqueue_filters, patchqueue_path,
@@ -115,8 +115,8 @@ def main(argv):
     intercepted_args, passthrough_args = parse_args_or_exit(argv)
     target = os.path.splitext(os.path.basename(passthrough_args[0]))[0]
     specfile = passthrough_args[0]
-    tmp_dirpath, tmp_sources = setup_tmp_area()
-    tmp_specfile = os.path.join(tmp_dirpath, specfile)
+    tmp_dirpath, tmp_specs, tmp_sources = setup_tmp_area()
+    tmp_specfile = os.path.join(tmp_specs, os.path.basename(specfile))
 
     try:
         # Copy files to temporary working area
