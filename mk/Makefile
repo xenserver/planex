@@ -18,6 +18,12 @@ buildrpms: conf_dir srpmutil
 	@cd .. && python setup.py install
 	echo confdir $(CONFIG_DIR)
 	chown -R root.root $(CONFIG_DIR)/*
+	# Temporarily fix for SCTX-2270(stunnel-4.15), will remove this after Yangtze(stunnel-4.56) hotfix
+	(\
+	cd /repos/ ;\
+	mkdir -p /repos/planex/mk/planex-build-root/SOURCES ;\
+	tar cf /repos/planex/mk/planex-build-root/SOURCES/stunnel-4.15.tar.gz stunnel/* ;\
+	)
 	planex-configure --config-dir=$(CONFIG_DIR) --use-distfiles
 	mkdir -p planex-build-root/RPMS
 	cp /output/openssl-xs/RPMS/**/*.rpm planex-build-root/RPMS
