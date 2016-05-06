@@ -86,6 +86,19 @@ def extract_patches(tmp_specfile, patchqueue_filters, patchqueue_path,
             print line,
 
 
+def extract_topdir(tmp_specfile, source):
+    """
+    Set the topdir name taken from the source tarball
+    """
+    for line in fileinput.input(tmp_specfile, inplace=True):
+        if 'autosetup' in line:
+            tar = tarfile.open(source)
+            topname = os.path.commonprefix(tar.getnames())
+            print "%s -n %s" % (line.strip(),topname)
+        else:
+            print line,
+
+
 def get_command_line(intercepted_args, tmp_sources, tmp_specfile):
     """
     Return rpmbuild command line and arguments
@@ -166,11 +179,15 @@ def main(argv):
         # Copy files to temporary working area
         copyfile(specfile, tmp_specfile)
         patchqueue_filters = ['.pg.', '.pq.']
+        tarball_filters = ['.tar.gz', '.tar.bz2']
 
         for source in passthrough_args[1:]:
             if any([ext in source for ext in patchqueue_filters]):
                 extract_patches(tmp_specfile, patchqueue_filters,
                                 source, tmp_sources, target)
+            elif any([ext in source for ext in tarball_filters]):
+                extract_topdir(tmp_specfile, source)
+                copyfile(source, os.path.join(tmp_dirpath, source))
             else:
                 copyfile(source, os.path.join(tmp_dirpath, source))
 
