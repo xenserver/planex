@@ -86,6 +86,63 @@ def extract_patches(tmp_specfile, patchqueue_filters, patchqueue_path,
             print line,
 
 
+def extract_topdir(tmp_specfile, source):
+    """
+    Set the topdir name taken from the source tarball
+    """
+    for line in fileinput.input(tmp_specfile, inplace=True):
+        if 'autosetup' in line:
+            tar = tarfile.open(source)
+            topname = os.path.commonprefix(tar.getnames())
+            print "%s -n %s" % (line.strip(),topname)
+        else:
+            print line,
+
+
+def get_command_line(intercepted_args, tmp_sources, tmp_specfile):
+    """
+    Return rpmbuild command line and arguments
+    """
+    cmd = ['rpmbuild']
+    if intercepted_args.quiet:
+        cmd.append('--quiet')
+    if intercepted_args.topdir is not None:
+        cmd.append('--define')
+        cmd.append('_topdir %s' % intercepted_args.topdir)
+    if intercepted_args.dist is not None:
+        cmd.append('--define')
+        cmd.append('%%dist %s' % intercepted_args.dist)
+    cmd.append('--define')
+    cmd.append('_sourcedir %s' % tmp_sources)
+    cmd.append('-bs')
+    cmd.append(tmp_specfile)
+
+    return cmd
+
+
+def extract_patches(tmp_specfile, patchqueue_filters, patchqueue_path,
+                    tmp_sources, target):
+    """
+    Extract patches and inject them into the specfile
+    """
+    for line in fileinput.input(tmp_specfile, inplace=True):
+        if any([ext in line for ext in patchqueue_filters]):
+            tar = tarfile.open(patchqueue_path)
+            for mem in tar.getmembers():
+                # Modify mem.name in place to change the name of the
+                # extracted file (and drop any leading paths)
+                mem.name = '%s-' % target + os.path.basename(mem.name)
+                tar.extract(mem, tmp_sources)
+            patches = parse_patchseries(os.path.join(tmp_sources,
+                                                     '%s-series' % target))
+            print "# Patches for %s" % target
+            for patch_num, patch in enumerate(patches):
+                if patch:
+                    print "Patch%s: %%{name}-%s" % (patch_num, patch)
+        else:
+            print line,
+
+
 def get_command_line(intercepted_args, tmp_sources, tmp_specfile):
     """
     Return rpmbuild command line and arguments
@@ -122,11 +179,15 @@ def main(argv):
         # Copy files to temporary working area
         copyfile(specfile, tmp_specfile)
         patchqueue_filters = ['.pg.', '.pq.']
+        tarball_filters = ['.tar.gz', '.tar.bz2']
 
         for source in passthrough_args[1:]:
             if any([ext in source for ext in patchqueue_filters]):
                 extract_patches(tmp_specfile, patchqueue_filters,
                                 source, tmp_sources, target)
+            elif any([ext in source for ext in tarball_filters]):
+                extract_topdir(tmp_specfile, source)
+                copyfile(source, os.path.join(tmp_dirpath, source))
             else:
                 copyfile(source, os.path.join(tmp_dirpath, source))
 
