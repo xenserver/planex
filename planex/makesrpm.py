@@ -125,6 +125,9 @@ def main(argv):
     Entry point arguments: component.spec Source0 Source1 ... Patch0 Patch1 ...
     The specfile must always be present and it has to be the first in the list
     """
+    if len(sys.argv) < 2:
+        sys.exit("ERROR: You need to specify the component specfile")
+
     intercepted_args, passthrough_args = parse_args_or_exit(argv)
     target = os.path.splitext(os.path.basename(passthrough_args[0]))[0]
     specfile = passthrough_args[0]
