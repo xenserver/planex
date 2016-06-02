@@ -29,6 +29,7 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 
 %install
 %{__python} setup.py install --single-version-externally-managed -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
+%{__install} -D -m 644 planex/planex.bash %{buildroot}%{_sysconfdir}/bash_completion.d/planex.bash
 
 %files
 %doc README.md
