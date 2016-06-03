@@ -30,9 +30,9 @@ yum install https://xenserver.github.io/planex-release/release/rpm/el/planex-rel
 yum install planex
 ```
 
-#### Fedora 21
+#### Fedora 23
 ```bash
-yum install https://xenserver.github.io/planex-release/release/rpm/fedora/planex-release-21-1.noarch.rpm
+yum install https://xenserver.github.io/planex-release/release/rpm/fedora/planex-release-23-1.noarch.rpm
 yum install planex
 ```
 
@@ -45,7 +45,7 @@ yum install planex
 yum install epel-release yum-utils
 yum-builddep planex.spec
 ```
-#### Fedora 22
+#### Fedora 23
 ```bash
 dnf builddep planex.spec
 ```
