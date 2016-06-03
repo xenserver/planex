@@ -12,9 +12,9 @@ import signal
 import subprocess
 import sys
 import tempfile
+import yum
 
 import pkg_resources
-import yum
 
 
 def load_mock_config(cfg):
