@@ -13,9 +13,9 @@ import rpm
 import shutil
 import sys
 import tempfile
+import yum
 
 import argcomplete
-import yum
 
 from planex import util
 
