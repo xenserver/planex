@@ -183,8 +183,9 @@ def update(args):
 
             tmpdir = tempfile.mkdtemp(prefix='planex-pin')
             tmp_archive = archive(repo, treeish, orig_version, tmpdir)
-            tar_name = os.path.basename(tmp_archive).replace(orig_version,
-                                                             src_version)
+            tar_name = os.path.basename(tmp_archive)
+            tar_name = tar_name.replace(orig_version,
+                                        orig_version+'-'+src_version)
             tar_path = os.path.join(args.pins_dir, tar_name)
             maybe_copy(tmp_archive, tar_path, args.force)
             shutil.rmtree(tmpdir)
