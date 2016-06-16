@@ -1,4 +1,6 @@
-#!/bin/sh -xe
+#!/bin/sh
+
+set -xe
 
 echo $@
 EXTUID=`stat -c %u /build`

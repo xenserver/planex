@@ -13,4 +13,4 @@ RUN python setup.py install
 WORKDIR /build
 RUN useradd build --groups mock,wheel --home-dir /build
 COPY entry.sh /entry.sh
-ENTRYPOINT ["/entry.sh"]
+ENTRYPOINT ["bash", "/entry.sh"]
