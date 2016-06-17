@@ -19,13 +19,14 @@ FETCH ?= planex-fetch
 FETCH_FLAGS ?= --topdir $(TOPDIR) $(FETCH_EXTRA_FLAGS)
 
 RPMBUILD ?= planex-make-srpm
-RPMBUILD_FLAGS ?= --quiet --topdir $(TOPDIR) --dist $(DIST)
+RPMBUILD_FLAGS ?= ${QUIET+--quiet} --topdir $(TOPDIR) --dist $(DIST)
 
 CREATEREPO ?= createrepo
-CREATEREPO_FLAGS ?= --quiet --update
+CREATEREPO_FLAGS ?= ${QUIET+--quiet} --update
 
 MOCK ?= mock
-MOCK_FLAGS ?= --configdir=$(TOPDIR)/mock --quiet \
+MOCK_FLAGS ?= ${QUIET+--quiet} \
+              --configdir=$(TOPDIR)/mock  \
               --resultdir=$(dir $@) --uniqueext=$(notdir $@) \
               --disable-plugin=package_state
 
@@ -58,8 +59,8 @@ $(TOPDIR):
 	@mkdir $(TOPDIR)/SRPMS
 	@ln -s $(TOPDIR)/RPMS RPMS
 	@ln -s $(TOPDIR)/SRPMS SRPMS
-	@$(CREATEREPO) --quiet RPMS
-	@$(CREATEREPO) --quiet SRPMS
+	@$(CREATEREPO) ${QUIET+--quiet} RPMS
+	@$(CREATEREPO) ${QUIET+--quiet} SRPMS
 	@echo done
 
 
