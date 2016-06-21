@@ -34,6 +34,10 @@ DEPEND ?= planex-depend
 DEPEND_FLAGS ?= -d $(DIST) --topdir $(TOPDIR) --ignore-from ignore \
                 --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
 
+ifdef QUIET
+AT = @
+endif
+
 ############################################################################
 # Main targets
 ############################################################################
@@ -59,8 +63,8 @@ $(TOPDIR):
 	@mkdir $(TOPDIR)/SRPMS
 	@ln -s $(TOPDIR)/RPMS RPMS
 	@ln -s $(TOPDIR)/SRPMS SRPMS
-	@$(CREATEREPO) ${QUIET+--quiet} RPMS
-	@$(CREATEREPO) ${QUIET+--quiet} SRPMS
+	$(AT)$(CREATEREPO) ${QUIET+--quiet} RPMS
+	$(AT)$(CREATEREPO) ${QUIET+--quiet} SRPMS
 	@echo done
 
 
@@ -72,7 +76,7 @@ $(TOPDIR):
 .DELETE_ON_ERROR: %.tar %.tar.gz %.tar.bz2 %.tgz %.tbz %.zip %.pdf
 %.tar %.tar.gz %.tar.bz2 %.tgz %.tbz %.zip %.pdf:
 	@echo [FETCH] $@
-	@$(FETCH) $(FETCH_FLAGS) $< $@
+	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
 
 ############################################################################
@@ -86,14 +90,14 @@ $(TOPDIR):
 # (Fedora host) and foo-1.0.el6.x86_64.rpm (CentOS chroot).
 %.src.rpm:
 	@echo [RPMBUILD] $@ 
-	@$(RPMBUILD) $(RPMBUILD_FLAGS) $^
+	$(AT)$(RPMBUILD) $(RPMBUILD_FLAGS) $^
 
 # Phony target to create repository metadata for the SRPMs.   This makes
 # it possible to add the SRPMS directory to yum.conf and use yumdownloader
 # to install source RPMs.
 srpm_repo: srpms
 	@echo [CREATEREPO] SRPMS
-	@flock --timeout 30 ./$(TOPDIR)/SRPMS $(CREATEREPO) $(CREATEREPO_FLAGS) ./$(TOPDIR)/SRPMS
+	$(AT)flock --timeout 30 ./$(TOPDIR)/SRPMS $(CREATEREPO) $(CREATEREPO_FLAGS) ./$(TOPDIR)/SRPMS
 
 # Build one or more binary RPMs from a source RPM.   A typical source RPM
 # might produce a base binary RPM, a -devel binary RPM containing library
@@ -108,9 +112,9 @@ srpm_repo: srpms
 # runs at the same time as a createrepo is updating the repo metadata.
 %.rpm:
 	@echo [MOCK] $<
-	@flock --shared --timeout 300 ./$(TOPDIR)/RPMS $(MOCK) $(MOCK_FLAGS) --rebuild $<
+	$(AT)flock --shared --timeout 300 ./$(TOPDIR)/RPMS $(MOCK) $(MOCK_FLAGS) --rebuild $<
 	@echo [CREATEREPO] $<
-	@flock --exclusive --timeout 300 ./$(TOPDIR)/RPMS $(CREATEREPO) $(CREATEREPO_FLAGS) ./$(TOPDIR)/RPMS
+	$(AT)flock --exclusive --timeout 300 ./$(TOPDIR)/RPMS $(CREATEREPO) $(CREATEREPO_FLAGS) ./$(TOPDIR)/RPMS
 
 
 ############################################################################
@@ -121,7 +125,7 @@ srpm_repo: srpms
 .DELETE_ON_ERROR: $(PINDEPS)
 $(PINDEPS): $(PINSFILE)
 	@echo Updating pinning rules...
-	@planex-pin --pins-file $< --pins-dir $(PINSDIR) rules $(DEPS) > $@
+	$(AT)planex-pin --pins-file $< --pins-dir $(PINSDIR) rules $(DEPS) > $@
 
 -include $(PINDEPS)
 
@@ -133,7 +137,7 @@ $(PINDEPS): $(PINSFILE)
 .DELETE_ON_ERROR: $(DEPS)
 $(DEPS): $(TOPDIR) SPECS/*.spec $(wildcard $(PINSFILE) $(PINDEPS) $(PINSDIR)/*.spec)
 	@echo Updating dependencies...
-	@$(DEPEND) $(DEPEND_FLAGS) SPECS/*.spec > $@
+	$(AT)$(DEPEND) $(DEPEND_FLAGS) SPECS/*.spec > $@
 
 -include $(DEPS)
 
