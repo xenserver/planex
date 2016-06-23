@@ -84,7 +84,11 @@ class Spec(object):
             self.dist = dist
 
         rpm.addMacro('dist', self.dist)
-        self.spec = rpm.ts().parseSpec(path)
+        try:
+            self.spec = rpm.ts().parseSpec(path)
+        except ValueError as exn:
+            exn.args = (exn.args[0].rstrip() + ' ' + path, )
+            raise
 
         if check_package_name:
             file_basename = os.path.basename(path).split(".")[0]
