@@ -29,6 +29,9 @@ def parse_args_or_exit(argv):
     parser.add_argument(
         "--dist", metavar="DIST", default=None,
         help="distribution tag (used in RPM filenames)")
+    parser.add_argument(
+        "--keeptmp", action="store_true",
+        help="keep temporary files")
     argcomplete.autocomplete(parser)
     return parser.parse_known_args(argv)
 
@@ -165,8 +168,9 @@ def main(argv):
         print "Exception: %s" % exc
 
     finally:
-        # Clean temporary area
-        rmtree(tmp_dirpath)
+        # Clean temporary area (unless debugging)
+        if not intercepted_args.keeptmp:
+            rmtree(tmp_dirpath)
 
 
 def _main():
