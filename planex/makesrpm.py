@@ -4,6 +4,7 @@
 planex-make-srpm: Wrapper around rpmbuild
 """
 
+import re
 import sys
 import subprocess
 import os
@@ -36,18 +37,28 @@ def parse_args_or_exit(argv):
     return parser.parse_known_args(argv)
 
 
-def parse_patchseries(series_file):
+def parse_patchseries(series, guard=''):
     """
     Parse series file and return the list of patches
     """
-    patches = []
-    with open(series_file) as series:
-        for line in series:
-            line = line.partition('#')[0].strip()
-            if line:
-                patches.append(line)
+    guard_re = re.compile(r'([\S]+)(\s#.*)?')
 
-    return patches
+    for line in series:
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+
+        match = guard_re.match(line)
+        if match.group(2):
+            gtype = match.group(2)[2]
+            guard_patch = match.group(2)[3:]
+
+            if gtype == '+' and guard != guard_patch:
+                continue
+            if gtype == '-' and guard == guard_patch:
+                continue
+
+        yield match.group(1)
 
 
 def setup_tmp_area():
@@ -79,12 +90,13 @@ def extract_patches(tmp_specfile, patchqueue_filters, patchqueue_path,
                 # extracted file (and drop any leading paths)
                 mem.name = '%s-' % target + os.path.basename(mem.name)
                 tar.extract(mem, tmp_sources)
-            patches = parse_patchseries(os.path.join(tmp_sources,
-                                                     '%s-series' % target))
-            print "# Patches for %s" % target
-            for patch_num, patch in enumerate(patches):
-                if patch:
-                    print "Patch%s: %%{name}-%s" % (patch_num, patch)
+            with open(os.path.join(tmp_sources,
+                                   '%s-series' % target)) as series:
+                patches = parse_patchseries(series)
+                print "# Patches for %s" % target
+                for patch_num, patch in enumerate(patches):
+                    if patch:
+                        print "Patch%s: %%{name}-%s" % (patch_num, patch)
         else:
             print line,
 
