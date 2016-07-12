@@ -123,6 +123,8 @@ def main():
     args = parse_cmdline()
     specs = {}
 
+    print "# -*- makefile -*-"
+    print "# vim:ft=make:"
     pkgs_to_ignore = args.ignore
     for ignore_from in args.ignore_from:
         try:
