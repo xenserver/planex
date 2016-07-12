@@ -9,16 +9,17 @@ import json
 import logging
 import os
 import re
-import rpm
 import shutil
 import sys
 import tempfile
+
+import argcomplete
+import rpm
 
 from planex.util import add_common_parser_options
 from planex.util import run
 from planex.util import setup_logging
 from planex.util import setup_sigint_handler
-import argcomplete
 
 
 def dotgitdir_of_path(repo):

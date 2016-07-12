@@ -5,7 +5,6 @@ Library of generic functions used by other planex components
 """
 
 import logging
-import __main__
 import os
 import pipes
 import signal
@@ -15,6 +14,8 @@ import tempfile
 import yum
 
 import pkg_resources
+
+import __main__
 
 
 def load_mock_config(cfg):
