@@ -9,13 +9,13 @@ import hashlib
 import itertools
 import logging
 import os
-import rpm
 import shutil
 import sys
 import tempfile
 import yum
 
 import argcomplete
+import rpm
 
 from planex import util
 
