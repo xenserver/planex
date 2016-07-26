@@ -1,11 +1,8 @@
 FROM centos:7.2.1511
 MAINTAINER Euan Harris <euan.harris@citrix.com>
-# planex.spec will list make and git as requirements in later releases
 RUN yum -y install \
   epel-release \
-  git \
   https://xenserver.github.io/planex-release/unstable/rpm/el/planex-unstable-7-1.noarch.rpm \
-  make \
   sudo
 RUN yum -y install planex
 RUN useradd build --groups mock,wheel --home-dir /build
