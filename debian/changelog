@@ -1,3 +1,12 @@
+planex (0.8.0-1) trusty; urgency=low
+
+* planex-make-srpm: Add a wrapper around rpmbuild which expands patchqueue
+  repositories as inline patches in the SRPM
+* Add initial support for running Planex in a Docker container
+* Remove unmaintained, experimental Debian package-generation scripts
+
+ -- Euan Harris <euan.harris@citrix.com>  Tue, 26 Jul 2016 10:35:00 +0000
+
 planex (0.7.2-1) trusty; urgency=low
 
   * planex-pin: It is now possible to pin to a bare Git repository
