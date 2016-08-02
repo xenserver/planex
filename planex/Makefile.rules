@@ -18,6 +18,9 @@ PINSDIR = $(TOPDIR)/PINS
 FETCH ?= planex-fetch
 FETCH_FLAGS ?= --topdir $(TOPDIR) $(FETCH_EXTRA_FLAGS)
 
+EXTRACT ?= planex-extract
+EXTRACT_FLAGS ?= --topdir $(TOPDIR) $(EXTRACT_EXTRA_FLAGS)
+
 RPMBUILD ?= planex-make-srpm
 RPMBUILD_FLAGS ?= ${QUIET+--quiet} --topdir $(TOPDIR) --dist $(DIST)
 
@@ -82,6 +85,15 @@ $(TOPDIR):
 .PRECIOUS: SOURCES/%.patches.tar
 SOURCES/%.patches.tar: SPECS/%.lnk
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
+
+
+############################################################################
+# Patch extraction rules
+############################################################################
+
+# Extract a spec file from a patch tarball.
+$(TOPDIR)/SPECS/%.spec: SPECS/%.lnk SOURCES/%.patches.tar
+	$(AT)$(EXTRACT) $(EXTRACT_FLAGS) --output $@ --link $^
 
 
 ############################################################################
