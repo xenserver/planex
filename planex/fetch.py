@@ -3,6 +3,7 @@ planex-fetch: Download sources referred to by a spec file
 """
 
 import argparse
+import json
 import logging
 import os
 import shutil
@@ -155,7 +156,7 @@ def parse_args_or_exit(argv=None):
     """
     parser = argparse.ArgumentParser(description='Download package sources')
     add_common_parser_options(parser)
-    parser.add_argument('spec', help='RPM Spec file')
+    parser.add_argument('spec_or_link', help='RPM Spec or link file')
     parser.add_argument("sources", metavar="SOURCE", nargs="+",
                         help="Source file to fetch")
     parser.add_argument('--retries', '-r',
@@ -173,17 +174,13 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
-def main(argv):
+def fetch_sources(args):
     """
-    Main function.  Parse spec file and iterate over its sources, downloading
-    them as appropriate.
+    Parse spec file and iterate over its sources, downloading them as
+    appropriate.
     """
-    setup_sigint_handler()
-    args = parse_args_or_exit(argv)
-    setup_logging(args)
-
     try:
-        sources = [url_for_source(args.spec, s, args.topdir,
+        sources = [url_for_source(args.spec_or_link, s, args.topdir,
                                   args.check_package_names)
                    for s in args.sources]
     except KeyError as exn:
@@ -220,6 +217,51 @@ def main(argv):
             # its timestamp to placate make, but don't try to download it.
             logging.debug("Refreshing timestamp for local source %s", path)
             os.utime(path, None)
+
+
+def fetch_via_link(args):
+    """
+    Parse link file and download patch tarball.
+    """
+    try:
+        with open(args.spec_or_link) as fileh:
+            link = json.load(fileh)
+
+    except IOError as exn:
+        # IO error loading JSON file
+        sys.exit("%s: %s: %s" %
+                 (sys.argv[0], exn.strerror, exn.filename))
+
+    url = urlparse.urlparse(str(link['URL']))
+    try:
+        fetch_http(url, args.sources[0], args.retries + 1)
+
+    except pycurl.error as exn:
+        # Curl download failed
+        sys.exit("%s: Failed to fetch %s: %s" %
+                 (sys.argv[0], urlparse.urlunparse(url), exn.args[1]))
+
+    except IOError as exn:
+        # IO error saving source file
+        sys.exit("%s: %s: %s" %
+                 (sys.argv[0], exn.strerror, exn.filename))
+
+
+def main(argv):
+    """
+    Main function.  Fetch sources directly or via a link file.
+    """
+    setup_sigint_handler()
+    args = parse_args_or_exit(argv)
+    setup_logging(args)
+
+    if args.spec_or_link.endswith('.spec'):
+        fetch_sources(args)
+    elif args.spec_or_link.endswith('.lnk'):
+        fetch_via_link(args)
+    else:
+        sys.exit("%s: Unsupported file type: %s" % (sys.argv[0],
+                                                    args.spec_or_link))
 
 
 def _main():
