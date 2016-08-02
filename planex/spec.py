@@ -186,3 +186,10 @@ class Spec(object):
             rpm.delMacro('ARCH')
             return os.path.join(rpmdir(), rpmname)
         return [rpm_name_from_header(pkg.header) for pkg in self.spec.packages]
+
+    def highest_patch(self):
+        """Return the number the highest numbered patch or -1"""
+        patches = [num for (_, num, sourcetype) in self.spec.sources
+                   if sourcetype == 2]
+        patches.append(-1)
+        return max(patches)
