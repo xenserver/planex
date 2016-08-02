@@ -78,6 +78,11 @@ $(TOPDIR):
 	@echo [FETCH] $@
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
+# Fetch a patch tarball listed in a link file.
+.PRECIOUS: SOURCES/%.patches.tar
+SOURCES/%.patches.tar: SPECS/%.lnk
+	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
+
 
 ############################################################################
 # RPM build rules
