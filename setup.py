@@ -16,6 +16,7 @@ setup(name='planex',
               'planex-fetch = planex.fetch:_main',
               'planex-pin = planex.pin:_main',
               'planex-depend = planex.depend:main',
+              'planex-extract = planex.extract:_main',
               'planex-make-srpm = planex.makesrpm:_main'
           ]
       })

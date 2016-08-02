@@ -37,6 +37,7 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %doc CHANGES
 %{_bindir}/planex-cache
 %{_bindir}/planex-depend
+%{_bindir}/planex-extract
 %{_bindir}/planex-fetch
 %{_bindir}/planex-init
 %{_bindir}/planex-pin
