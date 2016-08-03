@@ -5,6 +5,7 @@
 
 import os
 import re
+import urlparse
 import rpm
 
 # Could have a decorator / context manager to set and unset all the RPM macros
@@ -193,3 +194,8 @@ class Spec(object):
                    if sourcetype == 2]
         patches.append(-1)
         return max(patches)
+
+    def all_sources(self):
+        """Get all sources defined in the spec file"""
+        urls = [urlparse.urlparse(url) for url in self.source_urls()]
+        return zip(self.source_paths(), urls)

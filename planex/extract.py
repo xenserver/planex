@@ -10,7 +10,6 @@ import os.path
 import re
 import sys
 import tarfile
-import urlparse
 
 from contextlib import closing
 
@@ -20,16 +19,6 @@ from planex.util import add_common_parser_options
 from planex.util import setup_logging
 from planex.util import setup_sigint_handler
 import planex.spec
-
-
-def all_sources(spec, topdir, check_package_names):
-    """
-    Get all sources defined in the spec file
-    """
-    spec = planex.spec.Spec(spec, topdir=topdir,
-                            check_package_name=check_package_names)
-    urls = [urlparse.urlparse(url) for url in spec.source_urls()]
-    return zip(spec.source_paths(), urls)
 
 
 def extract_file(tar, name_in, name_out):
@@ -155,8 +144,9 @@ def main(argv):
                  (sys.argv[0], args.link))
 
     # Extract sources contained in the tarball
-    for path, url in all_sources(args.output, args.topdir,
-                                 args.check_package_names):
+    spec = planex.spec.Spec(args.output, topdir=args.topdir,
+                            check_package_name=args.check_package_names)
+    for path, url in spec.all_sources():
         if url.netloc == '':
             src_path = os.path.join(patch_dir, url.path)
             if src_path not in tar.getnames():

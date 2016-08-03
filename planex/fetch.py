@@ -117,16 +117,6 @@ def fetch_http(url, filename, retries):
                 raise
 
 
-def all_sources(spec, topdir, check_package_names):
-    """
-    Get all sources defined in the spec file
-    """
-    spec = planex.spec.Spec(spec, topdir=topdir,
-                            check_package_name=check_package_names)
-    urls = [urlparse.urlparse(url) for url in spec.source_urls()]
-    return zip(spec.source_paths(), urls)
-
-
 def check_supported_url(url):
     """
     Checks that the URL we've been asked to fetch is a supported protocol.
@@ -142,8 +132,10 @@ def url_for_source(spec, source, topdir, check_package_names):
     Find the URL from which source should be downloaded
     """
     source_basename = os.path.basename(source)
+    spec = planex.spec.Spec(spec, topdir=topdir,
+                            check_package_name=check_package_names)
 
-    for path, url in all_sources(spec, topdir, check_package_names):
+    for path, url in spec.all_sources():
         if path.endswith(source_basename):
             return path, url
 
