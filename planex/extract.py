@@ -131,29 +131,27 @@ def main(argv):
                  (sys.argv[0], exn.strerror, exn.filename))
 
     # Extract the spec file
-    tar = tarfile.open(args.tarball)
-    extract_file(tar, str(link['specfile']), args.output)
+    with tarfile.open(args.tarball) as tar:
+        extract_file(tar, str(link['specfile']), args.output)
 
-    if 'patchqueue' in link:
-        patch_dir = str(link['patchqueue'])
-        expand_patchqueue(args, tar, os.path.join(patch_dir, 'series'))
-    elif 'patches' in link:
-        patch_dir = str(link['patches'])
-    else:
-        sys.exit("%s: %s: Expected one of 'patchqueue' or 'patches'" %
-                 (sys.argv[0], args.link))
+        if 'patchqueue' in link:
+            patch_dir = str(link['patchqueue'])
+            expand_patchqueue(args, tar, os.path.join(patch_dir, 'series'))
+        elif 'patches' in link:
+            patch_dir = str(link['patches'])
+        else:
+            sys.exit("%s: %s: Expected one of 'patchqueue' or 'patches'" %
+                     (sys.argv[0], args.link))
 
-    # Extract sources contained in the tarball
-    spec = planex.spec.Spec(args.output, topdir=args.topdir,
-                            check_package_name=args.check_package_names)
-    for path, url in spec.all_sources():
-        if url.netloc == '':
-            src_path = os.path.join(patch_dir, url.path)
-            if src_path not in tar.getnames():
-                src_path = url.path
-            extract_file(tar, src_path, path)
-
-    tar.close()
+        # Extract sources contained in the tarball
+        spec = planex.spec.Spec(args.output, topdir=args.topdir,
+                                check_package_name=args.check_package_names)
+        for path, url in spec.all_sources():
+            if url.netloc == '':
+                src_path = os.path.join(patch_dir, url.path)
+                if src_path not in tar.getnames():
+                    src_path = url.path
+                extract_file(tar, src_path, path)
 
 
 def _main():
