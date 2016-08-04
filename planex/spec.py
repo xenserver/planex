@@ -5,6 +5,7 @@
 
 import os
 import re
+import urlparse
 import rpm
 
 # Could have a decorator / context manager to set and unset all the RPM macros
@@ -186,3 +187,15 @@ class Spec(object):
             rpm.delMacro('ARCH')
             return os.path.join(rpmdir(), rpmname)
         return [rpm_name_from_header(pkg.header) for pkg in self.spec.packages]
+
+    def highest_patch(self):
+        """Return the number the highest numbered patch or -1"""
+        patches = [num for (_, num, sourcetype) in self.spec.sources
+                   if sourcetype == 2]
+        patches.append(-1)
+        return max(patches)
+
+    def all_sources(self):
+        """Get all sources defined in the spec file"""
+        urls = [urlparse.urlparse(url) for url in self.source_urls()]
+        return zip(self.source_paths(), urls)

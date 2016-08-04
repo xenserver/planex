@@ -4,7 +4,6 @@
 planex-make-srpm: Wrapper around rpmbuild
 """
 
-import re
 import sys
 import subprocess
 import os
@@ -37,30 +36,6 @@ def parse_args_or_exit(argv):
     return parser.parse_known_args(argv)
 
 
-def parse_patchseries(series, guard=''):
-    """
-    Parse series file and return the list of patches
-    """
-    guard_re = re.compile(r'([\S]+)(\s#.*)?')
-
-    for line in series:
-        line = line.strip()
-        if not line or line.startswith('#'):
-            continue
-
-        match = guard_re.match(line)
-        if match.group(2):
-            gtype = match.group(2)[2]
-            guard_patch = match.group(2)[3:]
-
-            if gtype == '+' and guard != guard_patch:
-                continue
-            if gtype == '-' and guard == guard_patch:
-                continue
-
-        yield match.group(1)
-
-
 def setup_tmp_area():
     """
     Create temporary working area
@@ -75,30 +50,6 @@ def setup_tmp_area():
     os.makedirs(tmp_sources)
 
     return (tmp_dirpath, tmp_specs, tmp_sources)
-
-
-def extract_patches(tmp_specfile, patchqueue_filters, patchqueue_path,
-                    tmp_sources, target):
-    """
-    Extract patches and inject them into the specfile
-    """
-    for line in fileinput.input(tmp_specfile, inplace=True):
-        if any([ext in line for ext in patchqueue_filters]):
-            tar = tarfile.open(patchqueue_path)
-            for mem in tar.getmembers():
-                # Modify mem.name in place to change the name of the
-                # extracted file (and drop any leading paths)
-                mem.name = '%s-' % target + os.path.basename(mem.name)
-                tar.extract(mem, tmp_sources)
-            with open(os.path.join(tmp_sources,
-                                   '%s-series' % target)) as series:
-                patches = parse_patchseries(series)
-                print "# Patches for %s" % target
-                for patch_num, patch in enumerate(patches):
-                    if patch:
-                        print "Patch%s: %%{name}-%s" % (patch_num, patch)
-        else:
-            print line,
 
 
 def extract_topdir(tmp_specfile, source):
@@ -147,7 +98,6 @@ def main(argv):
         sys.exit("ERROR: You need to specify the component specfile")
 
     intercepted_args, passthrough_args = parse_args_or_exit(argv)
-    target = os.path.splitext(os.path.basename(passthrough_args[0]))[0]
     specfile = passthrough_args[0]
     tmp_dirpath, tmp_specs, tmp_sources = setup_tmp_area()
     tmp_specfile = os.path.join(tmp_specs, os.path.basename(specfile))
@@ -155,14 +105,10 @@ def main(argv):
     try:
         # Copy files to temporary working area
         copyfile(specfile, tmp_specfile)
-        patchqueue_filters = ['.pg.', '.pq.']
         tarball_filters = ['.tar.gz', '.tar.bz2']
 
         for source in passthrough_args[1:]:
-            if any([ext in source for ext in patchqueue_filters]):
-                extract_patches(tmp_specfile, patchqueue_filters,
-                                source, tmp_sources, target)
-            elif any([ext in source for ext in tarball_filters]):
+            if any([ext in source for ext in tarball_filters]):
                 extract_topdir(tmp_specfile, source)
                 copyfile(source, os.path.join(tmp_dirpath, source))
             else:
