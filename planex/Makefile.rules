@@ -152,7 +152,8 @@ $(PINDEPS): $(PINSFILE)
 # If dependency generation fails, the deps file is deleted to avoid
 # problems with empty, incomplete or corrupt deps.   
 .DELETE_ON_ERROR: $(DEPS)
-$(DEPS): $(TOPDIR) $(wildcard $(TOPDIR)/SPECS/*.spec $(PINSFILE) $(PINDEPS) $(PINSDIR)/*.spec)
+$(DEPS): $(TOPDIR) $(wildcard $(TOPDIR)/SPECS/*.spec $(PINSFILE) $(PINDEPS) $(PINSDIR)/*.spec) \
+		$(patsubst SPECS/%.lnk,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.lnk))
 	@echo Updating dependencies...
 	$(AT)$(DEPEND) $(DEPEND_FLAGS) $(TOPDIR)/SPECS/*.spec > $@
 
