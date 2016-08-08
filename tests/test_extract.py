@@ -47,6 +47,6 @@ class BasicTests(unittest.TestCase):
         with open(outfile) as fh:
             spec = fh.read(4096).split('\n')
 
-        self.assertIn("Patch0: first.patch", spec)
-        self.assertIn("Patch1: second.patch", spec)
-        self.assertIn("Patch2: third.patch", spec)
+        self.assertIn("Patch0: %{name}-first.patch", spec)
+        self.assertIn("Patch1: %{name}-second.patch", spec)
+        self.assertIn("Patch2: %{name}-third.patch", spec)
