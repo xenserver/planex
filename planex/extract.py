@@ -93,6 +93,15 @@ def expand_patchqueue(args, tar, seriesfile):
     os.rename(args.output + ".new", args.output)
 
 
+def archive_root(tar):
+    """
+    Return the name of the top level directory of the tarball
+    """
+    if tar.firstmember.type == tarfile.DIRTYPE:
+        return tar.firstmember.name
+    return ''
+
+
 def parse_args_or_exit(argv=None):
     """
     Parse command line options
@@ -132,13 +141,15 @@ def main(argv):
 
     # Extract the spec file
     with tarfile.open(args.tarball) as tar:
-        extract_file(tar, str(link['specfile']), args.output)
+        tar_root = archive_root(tar)
+        extract_file(tar, os.path.join(tar_root, str(link['specfile'])),
+                     args.output)
 
         if 'patchqueue' in link:
-            patch_dir = str(link['patchqueue'])
+            patch_dir = os.path.join(tar_root, str(link['patchqueue']))
             expand_patchqueue(args, tar, os.path.join(patch_dir, 'series'))
         elif 'patches' in link:
-            patch_dir = str(link['patches'])
+            patch_dir = os.path.join(tar_root, str(link['patches']))
         else:
             sys.exit("%s: %s: Expected one of 'patchqueue' or 'patches'" %
                      (sys.argv[0], args.link))
@@ -150,7 +161,7 @@ def main(argv):
             if url.netloc == '':
                 src_path = os.path.join(patch_dir, url.path)
                 if src_path not in tar.getnames():
-                    src_path = url.path
+                    src_path = os.path.join(tar_root, url.path)
                 extract_file(tar, src_path, path)
 
 
