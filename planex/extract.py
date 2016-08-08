@@ -68,7 +68,8 @@ def rewrite_spec(spec_in, spec_out, patches, patchnum):
                 if not done and line.upper().startswith('SOURCE'):
                     for patch in patches:
                         patchnum += 1
-                        fh_out.write("Patch%d: %s\n" % (patchnum, patch))
+                        fh_out.write("Patch%d: %%{name}-%s\n" %
+                                     (patchnum, patch))
                     done = True
                 fh_out.write(line)
 
@@ -159,7 +160,13 @@ def main(argv):
                                 check_package_name=args.check_package_names)
         for path, url in spec.all_sources():
             if url.netloc == '':
-                src_path = os.path.join(patch_dir, url.path)
+                if 'patchqueue' in link:
+                    # trim off prefix
+                    src_path = os.path.join(patch_dir,
+                                            url.path[len(spec.name()) + 1:])
+                else:
+                    src_path = os.path.join(patch_dir, url.path)
+
                 if src_path not in tar.getnames():
                     src_path = os.path.join(tar_root, url.path)
                 extract_file(tar, src_path, path)
