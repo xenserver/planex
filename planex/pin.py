@@ -164,6 +164,8 @@ def update(args):
     Refreshes all the pins from the pin definition file, updating the source
     tarball and spec file only if required.
     """
+    # pylint: disable=R0914
+
     if os.path.exists(args.pins_dir):
         if not os.path.isdir(args.pins_dir):
             raise Exception(

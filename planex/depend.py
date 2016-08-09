@@ -119,6 +119,8 @@ def main():
     """
     Entry point
     """
+    # pylint: disable=R0912, R0914
+
     setup_sigint_handler()
     args = parse_cmdline()
     specs = {}
