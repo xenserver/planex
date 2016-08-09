@@ -48,8 +48,7 @@ class SpecNameMismatch(Exception):
 class Spec(object):
     """Represents an RPM spec file"""
 
-    def __init__(self, path, target="rpm", dist="",
-                 check_package_name=True, topdir=None):
+    def __init__(self, path, dist="", check_package_name=True, topdir=None):
 
         # _topdir defaults to $HOME/rpmbuild
         if topdir:
@@ -66,11 +65,8 @@ class Spec(object):
         # the binary package).   We must override it on the host,
         # otherwise the names of packages in the dependencies won't
         # match the files actually produced by mock.
-        self.dist = ""
-        if target == "rpm":
-            self.dist = dist
+        rpm.addMacro('dist', dist)
 
-        rpm.addMacro('dist', self.dist)
         try:
             self.spec = rpm.ts().parseSpec(path)
         except ValueError as exn:
