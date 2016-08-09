@@ -13,12 +13,6 @@ def get_rpm_machine():
     return 'i386'
 
 
-def get_deb_machine():
-    if platform.machine() == 'x86_64':
-        return 'amd64'
-    return 'i386'
-
-
 class RpmTests(unittest.TestCase):
     # unittest.TestCase has more methods than Pylint permits
     # pylint: disable=R0904
