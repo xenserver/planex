@@ -107,7 +107,7 @@ $(TOPDIR)/SPECS/%.spec: SPECS/%.lnk SOURCES/%.patches.tar
 # (Fedora host) and foo-1.0.el6.x86_64.rpm (CentOS chroot).
 %.src.rpm:
 	@echo [RPMBUILD] $@ 
-	$(AT)$(RPMBUILD) $(RPMBUILD_FLAGS) $^
+	$(AT)$(RPMBUILD) $(RPMBUILD_FLAGS) $(patsubst %,'%',$^)
 
 # Phony target to create repository metadata for the SRPMs.   This makes
 # it possible to add the SRPMS directory to yum.conf and use yumdownloader
