@@ -1,7 +1,12 @@
 FROM centos:7.2.1511
 MAINTAINER Euan Harris <euan.harris@citrix.com>
+
+# Install basic prerequisites for building planex
+# yum-plugin-ovl works around problems on OverlayFS-backed containers:
+#   https://github.com/docker/docker/issues/10180
 RUN yum -y install \
   epel-release \
+  yum-plugin-ovl \
   yum-utils
 
 # Copy spec file and install dependencies.
