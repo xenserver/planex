@@ -7,7 +7,8 @@ MAINTAINER Euan Harris <euan.harris@citrix.com>
 RUN yum -y install \
   epel-release \
   yum-plugin-ovl \
-  yum-utils
+  yum-utils \
+  && yum clean all
 
 # Copy spec file and install dependencies.
 # The spec file rarely changes, so the dependency installation layers
@@ -16,6 +17,7 @@ WORKDIR /usr/src
 COPY planex.spec planex/
 RUN yum-builddep -y planex/planex.spec \
   && awk '/^Requires:/ { print $2 }' planex/planex.spec | xargs yum -y install \
+  && yum clean all \
   && useradd build --groups mock,wheel --home-dir /build
 
 # Copy source, build and install it.
