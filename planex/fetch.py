@@ -122,7 +122,7 @@ def check_supported_url(url):
     Checks that the URL we've been asked to fetch is a supported protocol.
     This function causes the program to exit with an error if not.
     """
-    if url.scheme and url.scheme not in ["http", "https", "file"]:
+    if url.scheme and url.scheme not in ["http", "https", "file", "ftp"]:
         sys.exit("%s: Unimplemented protocol: %s" %
                  (sys.argv[0], url.scheme))
 
@@ -180,7 +180,7 @@ def fetch_sources(args):
 
     for path, url in sources:
         check_supported_url(url)
-        if url.scheme in ["http", "https", "file"]:
+        if url.scheme in ["http", "https", "file", "ftp"]:
             if url.scheme != "file" and args.mirror:
                 if not urlparse.urlparse(args.mirror).scheme:
                     args.mirror = "file://" + args.mirror
@@ -209,6 +209,10 @@ def fetch_sources(args):
             # its timestamp to placate make, but don't try to download it.
             logging.debug("Refreshing timestamp for local source %s", path)
             os.utime(path, None)
+
+        else:
+            sys.exit("%s: Unsupported url scheme %s" %
+                     (sys.argv[0], url.scheme))
 
 
 def fetch_via_link(args):
