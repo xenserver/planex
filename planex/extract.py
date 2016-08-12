@@ -98,7 +98,7 @@ def archive_root(tar):
     """
     Return the name of the top level directory of the tarball
     """
-    if tar.firstmember.type == tarfile.DIRTYPE:
+    if len(tar.members) == 1 and tar.members[0].isdir():
         return tar.firstmember.name
     return ''
 
