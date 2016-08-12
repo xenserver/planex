@@ -31,7 +31,7 @@ def download_rpm_sources(spec):
     """
     for (url, path) in zip(spec.source_urls(), spec.source_paths()):
         source = urlparse.urlparse(url)
-        if source.scheme in ["http", "https", "file"]:
+        if source.scheme in ["http", "https", "file", "ftp"]:
             # Source can be fetched by fetch
             print '%s: %s' % (path, spec.specpath())
 
