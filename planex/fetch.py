@@ -33,6 +33,8 @@ SUPPORTED_EXT_TO_MIME = {
     '.patch': 'text/x-diff'
 }
 
+SUPPORTED_URL_SCHEMES = ["http", "https", "file", "ftp"]
+
 
 def curl_get(url_string, out_file):
     """
@@ -122,7 +124,7 @@ def check_supported_url(url):
     Checks that the URL we've been asked to fetch is a supported protocol.
     This function causes the program to exit with an error if not.
     """
-    if url.scheme and url.scheme not in ["http", "https", "file", "ftp"]:
+    if url.scheme and url.scheme not in SUPPORTED_URL_SCHEMES:
         sys.exit("%s: Unimplemented protocol: %s" %
                  (sys.argv[0], url.scheme))
 
@@ -180,7 +182,7 @@ def fetch_sources(args):
 
     for path, url in sources:
         check_supported_url(url)
-        if url.scheme in ["http", "https", "file", "ftp"]:
+        if url.scheme in SUPPORTED_URL_SCHEMES:
             if url.scheme != "file" and args.mirror:
                 if not urlparse.urlparse(args.mirror).scheme:
                     args.mirror = "file://" + args.mirror
