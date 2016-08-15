@@ -119,6 +119,8 @@ def main():
     """
     Entry point
     """
+    # pylint: disable=R0912, R0914
+
     setup_sigint_handler()
     args = parse_cmdline()
     specs = {}
@@ -141,7 +143,7 @@ def main():
         pins_glob = os.path.join(args.pins_dir, "*.spec")
         pin_paths = glob.glob(pins_glob)
         for pin_path in pin_paths:
-            spec = pkg.Spec(pin_path, target="rpm", dist=args.dist,
+            spec = pkg.Spec(pin_path, dist=args.dist,
                             check_package_name=args.check_package_names,
                             topdir=args.topdir)
             pins[os.path.basename(pin_path)] = spec
