@@ -60,8 +60,10 @@ def extract_topdir(tmp_specfile, source):
         if 'autosetup' in line:
             tar = tarfile.open(source)
             topname = os.path.commonprefix(tar.getnames())
-            if topname:
-                print "%s -n %s" % (line.strip(), topname)
+            if topname in tar.getnames():
+                top_element = tar.getmember(topname)
+                if top_element.isdir():
+                    print "%s -n %s" % (line.strip(), topname)
             else:
                 print "%s -c" % line.strip()
         else:
