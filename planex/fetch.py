@@ -129,14 +129,11 @@ def check_supported_url(url):
                  (sys.argv[0], url.scheme))
 
 
-def url_for_source(spec, source, topdir, check_package_names):
+def url_for_source(spec, source):
     """
     Find the URL from which source should be downloaded
     """
     source_basename = os.path.basename(source)
-    spec = planex.spec.Spec(spec, topdir=topdir,
-                            check_package_name=check_package_names)
-
     for path, url in spec.all_sources():
         if path.endswith(source_basename):
             return path, url
@@ -173,10 +170,11 @@ def fetch_sources(args):
     Parse spec file and iterate over its sources, downloading them as
     appropriate.
     """
+    spec = planex.spec.Spec(args.spec_or_link, topdir=args.topdir,
+                            check_package_name=args.check_package_names)
+
     try:
-        sources = [url_for_source(args.spec_or_link, s, args.topdir,
-                                  args.check_package_names)
-                   for s in args.sources]
+        sources = [url_for_source(spec, source) for source in args.sources]
     except KeyError as exn:
         sys.exit("%s: No source corresponding to %s" % (sys.argv[0], exn))
 
