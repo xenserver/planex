@@ -26,6 +26,7 @@ SUPPORTED_EXT_TO_MIME = {
     '.tar': 'application/x-tar',
     '.gz': 'application/x-gzip',
     '.tgz': 'application/x-gzip',
+    '.txz': 'application/x-gzip',
     '.bz2': 'application/x-bzip2',
     '.tbz': 'application/x-bzip2',
     '.zip': 'application/zip',
