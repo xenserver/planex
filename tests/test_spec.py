@@ -49,8 +49,8 @@ class RpmTests(unittest.TestCase):
     def test_source_paths(self):
         self.assertEqual(
             self.spec.source_paths(),
-            ["./SOURCES/ocaml-cohttp-0.9.8.tar.gz",
-             "./SOURCES/ocaml-cohttp-init"])
+            ["./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz",
+             "./SOURCES/ocaml-cohttp/ocaml-cohttp-init"])
 
     def test_buildrequires(self):
         self.assertEqual(

@@ -25,15 +25,15 @@ class BasicTests(unittest.TestCase):
             sys.stdout.getvalue(),
             "./SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
             "tests/data/ocaml-cohttp.spec "
-            "./SOURCES/ocaml-cohttp-0.9.8.tar.gz "
-            "./SOURCES/ocaml-cohttp-init\n")
+            "./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz "
+            "./SOURCES/ocaml-cohttp/ocaml-cohttp-init\n")
 
     def test_download_rpm_sources(self):
         planex.depend.download_rpm_sources(self.spec)
 
         self.assertEqual(
             sys.stdout.getvalue(),
-            "./SOURCES/ocaml-cohttp-0.9.8.tar.gz: "
+            "./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz: "
             "tests/data/ocaml-cohttp.spec\n")
 
     def test_build_rpm_from_srpm(self):

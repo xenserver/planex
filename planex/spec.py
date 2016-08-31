@@ -29,11 +29,6 @@ def specdir():
     return rpm.expandMacro('%_specdir')
 
 
-def sourcedir():
-    """Return the expanded value of the RPM %_sourcedir macro"""
-    return rpm.expandMacro('%_sourcedir')
-
-
 def flatten(lst):
     """Flatten a list of lists"""
     return sum(lst, [])
@@ -118,8 +113,15 @@ class Spec(object):
         #    http://www.example.com/foo/bar.tar.gz -> bar.tar.gz
         #    http://www.example.com/foo/bar.cgi#/baz.tbz -> baz.tbz
 
-        return [os.path.join(sourcedir(), os.path.basename(url))
-                for url in self.source_urls()]
+        hdr = self.spec.sourceHeader
+        rpm.addMacro('name', hdr['name'])
+        rpm.addMacro('_sourcedir', "%_topdir/SOURCES/%name")
+        paths = [os.path.join(rpm.expandMacro("%_sourcedir"),
+                              os.path.basename(url))
+                 for url in self.source_urls()]
+        rpm.delMacro('_sourcedir')
+        rpm.delMacro('name')
+        return paths
 
     # RPM build dependencies.   The 'requires' key for the *source* RPM is
     # actually the 'buildrequires' key from the spec
