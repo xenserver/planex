@@ -79,8 +79,8 @@ $(TOPDIR):
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
 # Fetch a patch tarball listed in a link file.
-.PRECIOUS: SOURCES/%.patches.tar
-SOURCES/%.patches.tar: SPECS/%.lnk
+.PRECIOUS: SOURCES/%/patches.tar
+SOURCES/%/patches.tar: SPECS/%.lnk
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
 
@@ -89,7 +89,7 @@ SOURCES/%.patches.tar: SPECS/%.lnk
 ############################################################################
 
 # Extract a spec file from a patch tarball.
-$(TOPDIR)/SPECS/%.spec: SPECS/%.lnk SOURCES/%.patches.tar
+$(TOPDIR)/SPECS/%.spec: SPECS/%.lnk SOURCES/%/patches.tar
 	$(AT)$(EXTRACT) $(EXTRACT_FLAGS) --output $@ --link $^
 
 
