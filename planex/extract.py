@@ -31,6 +31,7 @@ def extract_file(tar, name_in, name_out):
     mem = tar.getmember(name_in)
     mem.name = os.path.basename(name_out)
     tar.extract(mem, os.path.dirname(name_out))
+    os.utime(name_out, None)
 
 
 def parse_patchseries(series, guard=None):
