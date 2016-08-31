@@ -42,11 +42,9 @@ def setup_tmp_area():
     """
     tmp_dirpath = tempfile.mkdtemp()
     tmp_specs = os.path.join(tmp_dirpath, 'SPECS')
-    tmp_build = os.path.join(tmp_dirpath, '_build')
-    tmp_sources = os.path.join(tmp_build, 'SOURCES')
+    tmp_sources = os.path.join(tmp_dirpath, 'SOURCES')
 
     os.makedirs(tmp_specs)
-    os.makedirs(tmp_build)
     os.makedirs(tmp_sources)
 
     return (tmp_dirpath, tmp_specs, tmp_sources)
@@ -113,9 +111,8 @@ def main(argv):
         for source in passthrough_args[1:]:
             if any([ext in source for ext in tarball_filters]):
                 extract_topdir(tmp_specfile, source)
-                copyfile(source, os.path.join(tmp_dirpath, source))
-            else:
-                copyfile(source, os.path.join(tmp_dirpath, source))
+            dest = os.path.join(tmp_sources, os.path.basename(source))
+            copyfile(source, dest)
 
         cmd = get_command_line(intercepted_args, tmp_sources, tmp_specfile)
         return_value = subprocess.call(cmd)
