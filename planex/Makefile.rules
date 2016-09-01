@@ -45,13 +45,13 @@ endif
 # Main targets
 ############################################################################
 
-.PHONY: all rpms srpms srpm_repo
+.PHONY: all rpms
 
 all: $(TOPDIR) rpms
 
 .PHONY: clean
 clean:
-	rm -rf $(TOPDIR) SRPMS RPMS
+	rm -rf $(TOPDIR) RPMS
 
 
 .DELETE_ON_ERROR: $(TOPDIR)
@@ -63,11 +63,8 @@ $(TOPDIR):
 	@ln -s ../SOURCES $(TOPDIR)/SOURCES
 	@ln -s ../mock $(TOPDIR)/mock
 	@mkdir $(TOPDIR)/RPMS
-	@mkdir $(TOPDIR)/SRPMS
 	@ln -s $(TOPDIR)/RPMS RPMS
-	@ln -s $(TOPDIR)/SRPMS SRPMS
 	$(AT)$(CREATEREPO) ${QUIET+--quiet} RPMS
-	$(AT)$(CREATEREPO) ${QUIET+--quiet} SRPMS
 	@echo done
 
 
@@ -82,8 +79,8 @@ $(TOPDIR):
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
 # Fetch a patch tarball listed in a link file.
-.PRECIOUS: SOURCES/%.patches.tar
-SOURCES/%.patches.tar: SPECS/%.lnk
+.PRECIOUS: SOURCES/%/patches.tar
+SOURCES/%/patches.tar: SPECS/%.lnk
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
 
@@ -92,7 +89,7 @@ SOURCES/%.patches.tar: SPECS/%.lnk
 ############################################################################
 
 # Extract a spec file from a patch tarball.
-$(TOPDIR)/SPECS/%.spec: SPECS/%.lnk SOURCES/%.patches.tar
+$(TOPDIR)/SPECS/%.spec: SPECS/%.lnk SOURCES/%/patches.tar
 	$(AT)$(EXTRACT) $(EXTRACT_FLAGS) --output $@ --link $^
 
 
@@ -108,13 +105,6 @@ $(TOPDIR)/SPECS/%.spec: SPECS/%.lnk SOURCES/%.patches.tar
 %.src.rpm:
 	@echo [RPMBUILD] $@ 
 	$(AT)$(RPMBUILD) $(RPMBUILD_FLAGS) $^
-
-# Phony target to create repository metadata for the SRPMs.   This makes
-# it possible to add the SRPMS directory to yum.conf and use yumdownloader
-# to install source RPMs.
-srpm_repo: srpms
-	@echo [CREATEREPO] SRPMS
-	$(AT)flock --timeout 30 ./$(TOPDIR)/SRPMS $(CREATEREPO) $(CREATEREPO_FLAGS) ./$(TOPDIR)/SRPMS
 
 # Build one or more binary RPMs from a source RPM.   A typical source RPM
 # might produce a base binary RPM, a -devel binary RPM containing library
