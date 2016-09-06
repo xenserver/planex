@@ -59,13 +59,22 @@ $(TOPDIR):
 	@echo -n Populating build directory: $(TOPDIR)...
 	@mkdir -p $(TOPDIR)
 	@mkdir -p SPECS SOURCES
-	@ln -s ../SPECS $(TOPDIR)/SPECS
 	@ln -s ../SOURCES $(TOPDIR)/SOURCES
 	@ln -s ../mock $(TOPDIR)/mock
 	@mkdir $(TOPDIR)/RPMS
+	@mkdir $(TOPDIR)/SPECS
 	@ln -s $(TOPDIR)/RPMS RPMS
 	$(AT)$(CREATEREPO) ${QUIET+--quiet} RPMS
 	@echo done
+
+
+############################################################################
+# Spec file transformation rules
+############################################################################
+
+# Placeholder
+$(TOPDIR)/SPECS/%.spec: SPECS/%.spec
+	@cp -lf $^ $@
 
 
 ############################################################################
@@ -142,7 +151,8 @@ $(PINDEPS): $(PINSFILE)
 # If dependency generation fails, the deps file is deleted to avoid
 # problems with empty, incomplete or corrupt deps.   
 .DELETE_ON_ERROR: $(DEPS)
-$(DEPS): $(TOPDIR) $(wildcard $(TOPDIR)/SPECS/*.spec $(PINSFILE) $(PINDEPS) $(PINSDIR)/*.spec) \
+$(DEPS): $(TOPDIR) $(wildcard $(PINSFILE) $(PINSDIR)/*.spec) \
+		$(patsubst SPECS/%.spec,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.spec)) \
 		$(patsubst SPECS/%.lnk,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.lnk))
 	@echo Updating dependencies...
 	$(AT)$(DEPEND) $(DEPEND_FLAGS) $(TOPDIR)/SPECS/*.spec > $@
