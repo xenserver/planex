@@ -58,13 +58,15 @@ def parse_patchseries(series, guard=None):
         yield match.group(1)
 
 
-def rewrite_spec(spec_in, spec_out, patches, patchnum):
+def rewrite_spec(spec_in, spec_out, patches, patchnum, branch):
     """
     Expand a patchqueue as a sequence of patches in a spec file
     """
     done = False
     with open(spec_in) as fh_in:
         with open(spec_out, 'w') as fh_out:
+            if branch:
+                fh_out.write("%%define branch %s\n" % branch)
             for line in fh_in:
                 if not done and line.upper().startswith('SOURCE'):
                     for patch in patches:
@@ -75,7 +77,7 @@ def rewrite_spec(spec_in, spec_out, patches, patchnum):
                 fh_out.write(line)
 
 
-def expand_patchqueue(args, tar, seriesfile):
+def expand_patchqueue(args, tar, seriesfile, branch):
     """
     Create a list of patches from a patchqueue and update the spec file
     """
@@ -88,7 +90,7 @@ def expand_patchqueue(args, tar, seriesfile):
     patchnum = spec.highest_patch()
 
     # Rewrite the spec file to include the patches
-    rewrite_spec(args.output, args.output + ".new", patches, patchnum)
+    rewrite_spec(args.output, args.output + ".new", patches, patchnum, branch)
 
     # Switch extracted spec file with new specfile
     os.rename(args.output, args.output + ".old")
@@ -153,7 +155,8 @@ def main(argv):
 
         if 'patchqueue' in link:
             patch_dir = os.path.join(tar_root, str(link['patchqueue']))
-            expand_patchqueue(args, tar, os.path.join(patch_dir, 'series'))
+            expand_patchqueue(args, tar, os.path.join(patch_dir, 'series'),
+                              str(link.get('branch')))
         elif 'patches' in link:
             patch_dir = os.path.join(tar_root, str(link['patches']))
         else:
