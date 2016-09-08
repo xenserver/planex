@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.8.0
+Version: 0.9.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -47,7 +47,20 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
-* Tue Jul 26 2016 Euan Harris <euan.harris@citrix.com> 0.8.0-1
+* Thu Sep 08 2016 Euan Harris <euan.harris@citrix.com> - 0.9.0-1
+- Add planex-extract, which extracts and processes files from tarballs
+- Planex-fetch: Add support for fetching over FTP and for tar.xz files
+- planex-fetch: Teach planex-planex-fetch about links
+- planex-fetch: Add support for fetching specs and sources from remote
+  repositories
+- planex-make-srpm: Remove patchqueue expansion, now handled by
+  planex-extract
+- planex-make-srpm: Don't create _build directory in temporary working
+  space
+- Makefile.rules: Don't link SRPMS to _build/SRPMS
+- Docker: Rewrite Dockerfile to reduce image size and support Docker Hub
+
+* Tue Jul 26 2016 Euan Harris <euan.harris@citrix.com> - 0.8.0-1
 - planex-make-srpm: Add a wrapper around rpmbuild which expands patchqueue
   repositories as inline patches in the SRPM
 - Add initial support for running Planex in a Docker container

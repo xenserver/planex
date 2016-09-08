@@ -1,4 +1,17 @@
-0.8
+0.9.0
+* Add planex-extract, which extracts and processes files from tarballs
+* Planex-fetch: Add support for fetching over FTP and for tar.xz files
+* planex-fetch: Teach planex-planex-fetch about links
+* planex-fetch: Add support for fetching specs and sources from remote
+  repositories
+* planex-make-srpm: Remove patchqueue expansion, now handled by
+  planex-extract
+* planex-make-srpm: Don't create _build directory in temporary working
+  space
+* Makefile.rules: Don't link SRPMS to _build/SRPMS
+* Docker: Rewrite Dockerfile to reduce image size and support Docker Hub
+
+0.8.0
 * planex-make-srpm: Add a wrapper around rpmbuild which expands patchqueue
   repositories as inline patches in the SRPM
 * Add initial support for running Planex in a Docker container
