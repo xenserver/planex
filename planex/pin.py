@@ -4,7 +4,6 @@ planex-pin: Generate a new override spec file for a given package
 
 import argparse
 import glob
-import hashlib
 import json
 import logging
 import os
@@ -18,6 +17,7 @@ import rpm
 
 from planex import git
 from planex.util import add_common_parser_options
+from planex.util import maybe_copy
 from planex.util import setup_logging
 from planex.util import setup_sigint_handler
 
@@ -70,25 +70,6 @@ def version_of_spec_file(path):
     """
     spec = rpm.ts().parseSpec(path)
     return spec.sourceHeader['version']
-
-
-def hash_of_file(path):
-    """
-    Return the md5sum of the contents of a file at a given path.
-    """
-    md5sum = hashlib.md5()
-    with open(path, 'r') as in_f:
-        md5sum.update(in_f.read())
-    return md5sum.digest()
-
-
-def maybe_copy(src, dst, force=False):
-    """
-    Copy a file from src to dst only if their contents differ.
-    """
-    if force or not (os.path.exists(dst) and
-                     hash_of_file(src) == hash_of_file(dst)):
-        shutil.copy(src, dst)
 
 
 def update(args):
