@@ -26,7 +26,7 @@ def dotgitdir_of_path(repo):
                      repo + ".git"]
     matches = [x for x in possibilities if
                os.path.exists(os.path.join(x, "HEAD"))]
-    if len(matches) == 1:
+    if matches:
         return matches[0]
     else:
         raise Exception("Not a git repository: '%s'" % repo)
