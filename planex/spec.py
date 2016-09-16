@@ -63,7 +63,15 @@ class Spec(object):
         rpm.addMacro('dist', dist)
 
         try:
-            self.spec = rpm.ts().parseSpec(path)
+            # silence errors about missing sources
+            with open(os.devnull, "w") as nullfh:
+                errcpy = os.dup(2)
+                try:
+                    os.dup2(nullfh.fileno(), 2)
+                    self.spec = rpm.ts().parseSpec(path)
+                finally:
+                    os.dup2(errcpy, 2)
+                    os.close(errcpy)
         except ValueError as exn:
             exn.args = (exn.args[0].rstrip() + ' ' + path, )
             raise
