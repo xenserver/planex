@@ -6,6 +6,9 @@
 import os
 import re
 import urlparse
+import sys
+import tempfile
+
 import rpm
 
 # Could have a decorator / context manager to set and unset all the RPM macros
@@ -62,9 +65,10 @@ class Spec(object):
         # match the files actually produced by mock.
         rpm.addMacro('dist', dist)
 
-        try:
-            # silence errors about missing sources
-            with open(os.devnull, "w") as nullfh:
+        with tempfile.TemporaryFile() as nullfh:
+            try:
+                # collect all output to stderr then filter out
+                # errors about missing sources
                 errcpy = os.dup(2)
                 try:
                     os.dup2(nullfh.fileno(), 2)
@@ -72,9 +76,14 @@ class Spec(object):
                 finally:
                     os.dup2(errcpy, 2)
                     os.close(errcpy)
-        except ValueError as exn:
-            exn.args = (exn.args[0].rstrip() + ' ' + path, )
-            raise
+            except ValueError as exn:
+                nullfh.seek(0, os.SEEK_SET)
+                for line in nullfh:
+                    line = line.strip()
+                    if not line.endswith(': No such file or directory'):
+                        print >>sys.stderr, line
+                exn.args = (exn.args[0].rstrip() + ' ' + path, )
+                raise
 
         if check_package_name:
             file_basename = os.path.basename(path).split(".")[0]
