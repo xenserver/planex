@@ -1,0 +1,14 @@
+[
+    {
+	"URL": "http://hg.uk.xensource.com/git/carbon/trunk/xsconsole.git/snapshot/refs/heads/master#/xsconsole.tar.bz2",
+	"clone_URL": "git://hg.uk.xensource.com/carbon/trunk/xsconsole.git",
+	"branch": "master",
+	"tag": null
+    },
+    {
+	"URL": "http://hg.uk.xensource.com/git/carbon/trunk-ring0/driver-emulex-be2net.git/snapshot/refs/tags/11.0.235.4.tar.gz#/emulex-be2net-11.0.235.4.tar.gz",
+	"clone_URL": "git://hg.uk.xensource.com/carbon/trunk-ring0/driver-emulex-be2net.git",
+	"branch": null,
+	"tag": "11.0.235.4"
+    }
+]
