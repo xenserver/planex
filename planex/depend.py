@@ -168,6 +168,7 @@ def main():
         all_rpms.append(rpm_path)
         all_srpms.append(spec.source_package_path())
         print "%s: %s" % (spec.name(), rpm_path)
+        print "%s.srpm: %s" % (spec.name(), spec.source_package_path())
     print ""
 
     print "rpms: " + " \\\n\t".join(all_rpms)
