@@ -34,7 +34,7 @@ MOCK_FLAGS ?= ${QUIET+--quiet} \
               --disable-plugin=package_state
 
 DEPEND ?= planex-depend
-DEPEND_FLAGS ?= -d $(DIST) --topdir $(TOPDIR) --ignore-from ignore \
+DEPEND_FLAGS ?= -d $(DIST) --topdir $(TOPDIR) \
                 --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
 
 ifdef QUIET
