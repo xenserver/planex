@@ -91,12 +91,6 @@ def parse_cmdline():
     add_common_parser_options(parser)
     parser.add_argument("specs", metavar="SPEC", nargs="+", help="spec file")
     parser.add_argument(
-        "-i", "--ignore", metavar="PKG", action="append", default=[],
-        help="package name to ignore")
-    parser.add_argument(
-        "-I", "--ignore-from", metavar="FILE", action="append", default=[],
-        help="file of package names to be ignored")
-    parser.add_argument(
         "-P", "--pins-dir", help="Directory containing pin overlays")
     parser.add_argument(
         "-d", "--dist", metavar="DIST", default="",
@@ -127,16 +121,6 @@ def main():
 
     print "# -*- makefile -*-"
     print "# vim:ft=make:"
-    pkgs_to_ignore = args.ignore
-    for ignore_from in args.ignore_from:
-        try:
-            with open(ignore_from) as ignore_file:
-                for name in ignore_file.readlines():
-                    pkgs_to_ignore.append(name.strip())
-        except IOError:
-            pass
-    for i in pkgs_to_ignore:
-        print "# Will ignore: %s" % i
 
     pins = {}
     if args.pins_dir:
@@ -154,8 +138,6 @@ def main():
                             check_package_name=args.check_package_names,
                             topdir=args.topdir)
             pkg_name = spec.name()
-            if pkg_name in pkgs_to_ignore:
-                continue
 
             spec_name = os.path.basename(spec_path)
             if spec_name in pins:
