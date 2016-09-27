@@ -138,11 +138,14 @@ def parse_args_or_exit(argv=None):
     parser.add_argument("-o", "--output", metavar="SPEC",
                         help="Output spec file")
     parser.add_argument("-t", "--topdir", metavar="DIR", default=None,
-                        help="Set rpmbuild toplevel directory")
+                        help="Set rpmbuild toplevel directory [deprecated]")
     parser.add_argument("--no-package-name-check", dest="check_package_names",
                         action="store_false", default=True,
                         help="Don't check that package name matches spec "
                         "file name")
+    parser.add_argument("-D", "--define", default=[], action="append",
+                        help="--define='MACRO EXPR' define MACRO with "
+                        "value EXPR")
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
@@ -151,6 +154,8 @@ def main(argv):
     """
     Main function.  Fetch sources directly or via a link file.
     """
+    # pylint: disable=R0914
+
     setup_sigint_handler()
     args = parse_args_or_exit(argv)
     setup_logging(args)
@@ -170,10 +175,24 @@ def main(argv):
         extract_file(tar, os.path.join(tar_root, str(link['specfile'])),
                      args.output + '.tmp')
 
+        macros = [tuple(macro.split(' ', 1)) for macro in args.define]
+
+        if any(len(macro) != 2 for macro in macros):
+            _err = [macro for macro in macros if len(macro) != 2]
+            print "error: malformed macro passed to --define: %r" % _err
+            sys.exit(1)
+
+        # When using deprecated arguments, we want them at the top of the
+        # macros list
+        if args.topdir is not None:
+            print "# warning: --topdir is deprecated"
+            macros.insert(0, ('_topdir', args.topdir))
+
         with open(args.output, "w") as spec_fh:
             check_names = args.check_package_names
-            spec = planex.spec.Spec(args.output + '.tmp', topdir=args.topdir,
-                                    check_package_name=check_names)
+            spec = planex.spec.Spec(args.output + '.tmp',
+                                    check_package_name=check_names,
+                                    defines=macros)
             write_manifest(spec_fh, spec, link)
             if 'branch' in link:
                 spec_fh.write("%%define branch %s\n" % link['branch'])
@@ -190,8 +209,9 @@ def main(argv):
                          (sys.argv[0], args.link))
 
         # Extract sources contained in the tarball
-        spec = planex.spec.Spec(args.output, topdir=args.topdir,
-                                check_package_name=args.check_package_names)
+        spec = planex.spec.Spec(args.output,
+                                check_package_name=args.check_package_names,
+                                defines=macros)
         for path, url in spec.all_sources():
             if url.netloc == '':
                 if 'patchqueue' in link:

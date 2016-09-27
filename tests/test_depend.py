@@ -16,7 +16,8 @@ class BasicTests(unittest.TestCase):
     # pylint: disable=R0904
     def setUp(self):
         self.spec = planex.spec.Spec("tests/data/ocaml-cohttp.spec",
-                                     dist=".el6", topdir=".")
+                                     defines=[("dist", ".el6"),
+                                              ("_topdir", ".")])
 
     def test_build_srpm_from_spec(self):
         planex.depend.build_srpm_from_spec(self.spec)
@@ -50,7 +51,7 @@ class BasicTests(unittest.TestCase):
         # other packages, the test data directory contains only ocaml-uri and
         # ocaml-cstruct.
         spec_paths = glob.glob(os.path.join("tests/data", "ocaml-*.spec"))
-        specs = [planex.spec.Spec(spec_path, dist='.el6')
+        specs = [planex.spec.Spec(spec_path, defines=[('dist', '.el6')])
                  for spec_path in spec_paths]
 
         planex.depend.buildrequires_for_rpm(
