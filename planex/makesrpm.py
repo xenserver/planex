@@ -24,11 +24,14 @@ def parse_args_or_exit(argv):
     parser = argparse.ArgumentParser(description='Planex SRPM building')
     add_common_parser_options(parser)
     parser.add_argument(
+        "-D", "--define", default=[], action="append",
+        help="--define='MACRO EXPR' define MACRO with value EXPR")
+    parser.add_argument(
         "--topdir", metavar="DIR", default=None,
-        help='Set rpmbuild toplevel directory')
+        help='Set rpmbuild toplevel directory [deprecated]')
     parser.add_argument(
         "--dist", metavar="DIST", default=None,
-        help="distribution tag (used in RPM filenames)")
+        help="distribution tag (used in RPM filenames) [deprecated]")
     parser.add_argument(
         "--keeptmp", action="store_true",
         help="keep temporary files")
@@ -82,6 +85,9 @@ def get_command_line(intercepted_args, tmp_sources, tmp_specfile):
     if intercepted_args.dist is not None:
         cmd.append('--define')
         cmd.append('%%dist %s' % intercepted_args.dist)
+    for define in intercepted_args.define:
+        cmd.append('--define')
+        cmd.append(define)
     cmd.append('--define')
     cmd.append('_sourcedir %s' % tmp_sources)
     cmd.append('-bs')
