@@ -93,8 +93,8 @@ def parse_cmdline():
     parser.add_argument(
         "-P", "--pins-dir", help="Directory containing pin overlays")
     parser.add_argument(
-        "-d", "--dist", metavar="DIST", default="",
-        help="distribution tag (used in RPM filenames)")
+        "-d", "--dist", metavar="DIST", default=None,
+        help="distribution tag (used in RPM filenames) [deprecated]")
     parser.add_argument(
         "-r", "--repos_path", metavar="DIR", default="repos",
         help='Local path to the repositories')
@@ -104,7 +104,10 @@ def parse_cmdline():
         help="Don't check that package name matches spec file name")
     parser.add_argument(
         "-t", "--topdir", metavar="DIR", default=None,
-        help='Set rpmbuild toplevel directory')
+        help='Set rpmbuild toplevel directory [deprecated]')
+    parser.add_argument(
+        "-D", "--define", default=[], action="append",
+        help="--define='MACRO EXPR' define MACRO with value EXPR")
     argcomplete.autocomplete(parser)
     return parser.parse_args()
 
@@ -113,7 +116,7 @@ def main():
     """
     Entry point
     """
-    # pylint: disable=R0912, R0914
+    # pylint: disable=R0912, R0914, R0915
 
     setup_sigint_handler()
     args = parse_cmdline()
@@ -122,21 +125,37 @@ def main():
     print "# -*- makefile -*-"
     print "# vim:ft=make:"
 
+    macros = [tuple(macro.split(' ', 1)) for macro in args.define]
+
+    if any(len(macro) != 2 for macro in macros):
+        _err = [macro for macro in macros if len(macro) != 2]
+        print "error: malformed macro passed to --define: %r" % _err
+        sys.exit(1)
+
+    # When using deprecated arguments, we want them at the top of the
+    # macros list
+    if args.topdir is not None:
+        print "# warning: --topdir is deprecated"
+        macros.insert(0, ('_topdir', args.topdir))
+    if args.dist is not None:
+        print "# warning: --dist is deprecated"
+        macros.insert(1, ('dist', args.dist))
+
     pins = {}
     if args.pins_dir:
         pins_glob = os.path.join(args.pins_dir, "*.spec")
         pin_paths = glob.glob(pins_glob)
         for pin_path in pin_paths:
-            spec = pkg.Spec(pin_path, dist=args.dist,
+            spec = pkg.Spec(pin_path,
                             check_package_name=args.check_package_names,
-                            topdir=args.topdir)
+                            defines=macros)
             pins[os.path.basename(pin_path)] = spec
 
     for spec_path in args.specs:
         try:
-            spec = pkg.Spec(spec_path, dist=args.dist,
+            spec = pkg.Spec(spec_path,
                             check_package_name=args.check_package_names,
-                            topdir=args.topdir)
+                            defines=macros)
             pkg_name = spec.name()
 
             spec_name = os.path.basename(spec_path)

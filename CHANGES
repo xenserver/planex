@@ -1,3 +1,9 @@
+HEAD
+* planex-depend, planex-fetch, planex-extract: add --define mimicking the 
+  analogous rpmbuild option
+* planex-depend, planex-fetch, planex-extract: deprecate --topdir and --dist
+* Makefile.rules: use the new --define syntax
+
 0.8
 * planex-make-srpm: Add a wrapper around rpmbuild which expands patchqueue
   repositories as inline patches in the SRPM
