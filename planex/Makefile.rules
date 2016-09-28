@@ -16,13 +16,13 @@ PINSDIR = $(TOPDIR)/PINS
 ############################################################################
 
 FETCH ?= planex-fetch
-FETCH_FLAGS ?= --topdir $(TOPDIR) $(FETCH_EXTRA_FLAGS)
+FETCH_FLAGS ?= --define="_topdir $(TOPDIR)" $(FETCH_EXTRA_FLAGS)
 
 EXTRACT ?= planex-extract
-EXTRACT_FLAGS ?= --topdir $(TOPDIR) $(EXTRACT_EXTRA_FLAGS)
+EXTRACT_FLAGS ?= --define="_topdir $(TOPDIR)" $(EXTRACT_EXTRA_FLAGS)
 
 RPMBUILD ?= planex-make-srpm
-RPMBUILD_FLAGS ?= ${QUIET+--quiet} --topdir $(TOPDIR) --dist $(DIST)
+RPMBUILD_FLAGS ?= ${QUIET+--quiet} --define="_topdir $(TOPDIR)" --define="dist $(DIST)"
 
 CREATEREPO ?= createrepo
 CREATEREPO_FLAGS ?= ${QUIET+--quiet} --update
@@ -34,7 +34,7 @@ MOCK_FLAGS ?= ${QUIET+--quiet} \
               --disable-plugin=package_state
 
 DEPEND ?= planex-depend
-DEPEND_FLAGS ?= -d $(DIST) --topdir $(TOPDIR) --ignore-from ignore \
+DEPEND_FLAGS ?= --define="dist $(DIST)" --define="_topdir $(TOPDIR)" \
                 --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
 
 ifdef QUIET
@@ -59,13 +59,22 @@ $(TOPDIR):
 	@echo -n Populating build directory: $(TOPDIR)...
 	@mkdir -p $(TOPDIR)
 	@mkdir -p SPECS SOURCES
-	@ln -s ../SPECS $(TOPDIR)/SPECS
 	@ln -s ../SOURCES $(TOPDIR)/SOURCES
 	@ln -s ../mock $(TOPDIR)/mock
 	@mkdir $(TOPDIR)/RPMS
+	@mkdir $(TOPDIR)/SPECS
 	@ln -s $(TOPDIR)/RPMS RPMS
 	$(AT)$(CREATEREPO) ${QUIET+--quiet} RPMS
 	@echo done
+
+
+############################################################################
+# Spec file transformation rules
+############################################################################
+
+# Placeholder
+$(TOPDIR)/SPECS/%.spec: SPECS/%.spec
+	@cp -lf $^ $@
 
 
 ############################################################################
@@ -79,8 +88,8 @@ $(TOPDIR):
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
 # Fetch a patch tarball listed in a link file.
-.PRECIOUS: SOURCES/%.patches.tar
-SOURCES/%.patches.tar: SPECS/%.lnk
+.PRECIOUS: SOURCES/%/patches.tar
+SOURCES/%/patches.tar: SPECS/%.lnk
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
 
@@ -89,7 +98,7 @@ SOURCES/%.patches.tar: SPECS/%.lnk
 ############################################################################
 
 # Extract a spec file from a patch tarball.
-$(TOPDIR)/SPECS/%.spec: SPECS/%.lnk SOURCES/%.patches.tar
+$(TOPDIR)/SPECS/%.spec: SPECS/%.lnk SOURCES/%/patches.tar
 	$(AT)$(EXTRACT) $(EXTRACT_FLAGS) --output $@ --link $^
 
 
@@ -142,7 +151,8 @@ $(PINDEPS): $(PINSFILE)
 # If dependency generation fails, the deps file is deleted to avoid
 # problems with empty, incomplete or corrupt deps.   
 .DELETE_ON_ERROR: $(DEPS)
-$(DEPS): $(TOPDIR) $(wildcard $(TOPDIR)/SPECS/*.spec $(PINSFILE) $(PINDEPS) $(PINSDIR)/*.spec) \
+$(DEPS): $(TOPDIR) $(wildcard $(PINSFILE) $(PINSDIR)/*.spec) \
+		$(patsubst SPECS/%.spec,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.spec)) \
 		$(patsubst SPECS/%.lnk,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.lnk))
 	@echo Updating dependencies...
 	$(AT)$(DEPEND) $(DEPEND_FLAGS) $(TOPDIR)/SPECS/*.spec > $@

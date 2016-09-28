@@ -34,6 +34,23 @@ def extract_file(tar, name_in, name_out):
     os.utime(name_out, None)
 
 
+def write_manifest(spec_fh, spec, link):
+    """
+    Record the URLs of all remote sources in the spec file
+    """
+    branch = link.get('branch')
+    spec_fh.write("### manifest start\n")
+    spec_fh.write("# %s\n" % link['URL'])
+
+    for url in spec.source_urls():
+        if '://' in url:
+            if branch:
+                url = url.replace("%{branch}", branch)
+            spec_fh.write("# %s\n" % url)
+
+    spec_fh.write("### manifest end\n")
+
+
 def parse_patchseries(series, guard=None):
     """
     Parse series file and return the list of patches
@@ -58,24 +75,23 @@ def parse_patchseries(series, guard=None):
         yield match.group(1)
 
 
-def rewrite_spec(spec_in, spec_out, patches, patchnum):
+def rewrite_spec(spec_in, spec_fh, patches, patchnum):
     """
     Expand a patchqueue as a sequence of patches in a spec file
     """
     done = False
     with open(spec_in) as fh_in:
-        with open(spec_out, 'w') as fh_out:
-            for line in fh_in:
-                if not done and line.upper().startswith('SOURCE'):
-                    for patch in patches:
-                        patchnum += 1
-                        fh_out.write("Patch%d: %%{name}-%s\n" %
-                                     (patchnum, patch))
-                    done = True
-                fh_out.write(line)
+        for line in fh_in:
+            if not done and line.upper().startswith('SOURCE'):
+                for patch in patches:
+                    patchnum += 1
+                    spec_fh.write("Patch%d: %%{name}-%s\n" %
+                                  (patchnum, patch))
+                done = True
+            spec_fh.write(line)
 
 
-def expand_patchqueue(args, tar, seriesfile):
+def expand_patchqueue(spec_fh, spec, spec_in, tar, seriesfile):
     """
     Create a list of patches from a patchqueue and update the spec file
     """
@@ -83,16 +99,10 @@ def expand_patchqueue(args, tar, seriesfile):
     with closing(tar.extractfile(seriesfile)) as series:
         patches = list(parse_patchseries(series))
 
-    spec = planex.spec.Spec(args.output, topdir=args.topdir,
-                            check_package_name=args.check_package_names)
     patchnum = spec.highest_patch()
 
     # Rewrite the spec file to include the patches
-    rewrite_spec(args.output, args.output + ".new", patches, patchnum)
-
-    # Switch extracted spec file with new specfile
-    os.rename(args.output, args.output + ".old")
-    os.rename(args.output + ".new", args.output)
+    rewrite_spec(spec_in, spec_fh, patches, patchnum)
 
 
 def archive_root(tar):
@@ -108,6 +118,15 @@ def archive_root(tar):
     return ''
 
 
+def copy_spec(spec_in, spec_out):
+    """
+    Copy contents of file named by spec_in to the file handle spec_out
+    """
+    with open(spec_in) as fh_in:
+        for line in fh_in:
+            spec_out.write(line)
+
+
 def parse_args_or_exit(argv=None):
     """
     Parse command line options
@@ -119,11 +138,14 @@ def parse_args_or_exit(argv=None):
     parser.add_argument("-o", "--output", metavar="SPEC",
                         help="Output spec file")
     parser.add_argument("-t", "--topdir", metavar="DIR", default=None,
-                        help="Set rpmbuild toplevel directory")
+                        help="Set rpmbuild toplevel directory [deprecated]")
     parser.add_argument("--no-package-name-check", dest="check_package_names",
                         action="store_false", default=True,
                         help="Don't check that package name matches spec "
                         "file name")
+    parser.add_argument("-D", "--define", default=[], action="append",
+                        help="--define='MACRO EXPR' define MACRO with "
+                        "value EXPR")
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
@@ -132,6 +154,8 @@ def main(argv):
     """
     Main function.  Fetch sources directly or via a link file.
     """
+    # pylint: disable=R0914
+
     setup_sigint_handler()
     args = parse_args_or_exit(argv)
     setup_logging(args)
@@ -149,20 +173,45 @@ def main(argv):
     with tarfile.open(args.tarball) as tar:
         tar_root = archive_root(tar)
         extract_file(tar, os.path.join(tar_root, str(link['specfile'])),
-                     args.output)
+                     args.output + '.tmp')
 
-        if 'patchqueue' in link:
-            patch_dir = os.path.join(tar_root, str(link['patchqueue']))
-            expand_patchqueue(args, tar, os.path.join(patch_dir, 'series'))
-        elif 'patches' in link:
-            patch_dir = os.path.join(tar_root, str(link['patches']))
-        else:
-            sys.exit("%s: %s: Expected one of 'patchqueue' or 'patches'" %
-                     (sys.argv[0], args.link))
+        macros = [tuple(macro.split(' ', 1)) for macro in args.define]
+
+        if any(len(macro) != 2 for macro in macros):
+            _err = [macro for macro in macros if len(macro) != 2]
+            print "error: malformed macro passed to --define: %r" % _err
+            sys.exit(1)
+
+        # When using deprecated arguments, we want them at the top of the
+        # macros list
+        if args.topdir is not None:
+            print "# warning: --topdir is deprecated"
+            macros.insert(0, ('_topdir', args.topdir))
+
+        with open(args.output, "w") as spec_fh:
+            check_names = args.check_package_names
+            spec = planex.spec.Spec(args.output + '.tmp',
+                                    check_package_name=check_names,
+                                    defines=macros)
+            write_manifest(spec_fh, spec, link)
+            if 'branch' in link:
+                spec_fh.write("%%define branch %s\n" % link['branch'])
+
+            if 'patchqueue' in link:
+                patch_dir = os.path.join(tar_root, str(link['patchqueue']))
+                expand_patchqueue(spec_fh, spec, args.output + '.tmp',
+                                  tar, os.path.join(patch_dir, 'series'))
+            elif 'patches' in link:
+                patch_dir = os.path.join(tar_root, str(link['patches']))
+                copy_spec(args.output + '.tmp', spec_fh)
+            else:
+                sys.exit("%s: %s: Expected one of 'patchqueue' or 'patches'" %
+                         (sys.argv[0], args.link))
 
         # Extract sources contained in the tarball
-        spec = planex.spec.Spec(args.output, topdir=args.topdir,
-                                check_package_name=args.check_package_names)
+        spec = planex.spec.Spec(args.output,
+                                check_package_name=args.check_package_names,
+                                defines=macros)
         for path, url in spec.all_sources():
             if url.netloc == '':
                 if 'patchqueue' in link:

@@ -2,10 +2,15 @@
    are mostly just wrappers around rpm.rpm, adding information which
    the rpm library does not currently provide."""
 
+from collections import OrderedDict
 
+import contextlib
 import os
 import re
 import urlparse
+import sys
+import tempfile
+
 import rpm
 
 # Could have a decorator / context manager to set and unset all the RPM macros
@@ -29,14 +34,37 @@ def specdir():
     return rpm.expandMacro('%_specdir')
 
 
-def sourcedir():
-    """Return the expanded value of the RPM %_sourcedir macro"""
-    return rpm.expandMacro('%_sourcedir')
-
-
 def flatten(lst):
     """Flatten a list of lists"""
     return sum(lst, [])
+
+
+@contextlib.contextmanager
+def rpm_macros(macros):
+    """Context manager to add and remove all macros in the dictionary"""
+    if macros is None:
+        macros = OrderedDict()
+
+    for key, value in macros.items():
+        rpm.addMacro(key, value)
+    yield
+    for key, _ in reversed(macros.items()):
+        rpm.delMacro(key)
+
+
+def append_macros(macros1, macros2):
+    """Return an ordered dict, making sure that the macros of macros2 apppear
+    after the macros in macros1, preserving their order."""
+    new_dict = OrderedDict((k, v) for k, v in macros1.items())
+
+    for key, value in macros2.items():
+        # To append to an ordered dict we must first delete the duplicate key
+        # if present
+        if key in new_dict:
+            del new_dict[key]
+        new_dict[key] = value
+
+    return new_dict
 
 
 class SpecNameMismatch(Exception):
@@ -48,40 +76,61 @@ class SpecNameMismatch(Exception):
 class Spec(object):
     """Represents an RPM spec file"""
 
-    def __init__(self, path, dist="", check_package_name=True, topdir=None):
+    def __init__(self, path, check_package_name=True, defines=None):
+
+        self.macros = OrderedDict(defines) if defines else OrderedDict()
 
         # _topdir defaults to $HOME/rpmbuild
-        if topdir:
-            rpm.addMacro('_topdir', topdir)
-
-        rpm.addMacro('_specdir', os.path.dirname(path))
-
-        self.path = os.path.join(specdir(), os.path.basename(path))
-        with open(path) as spec:
-            self.spectext = spec.readlines()
+        # If present, it needs to be applied once at the beginning
+        if '_topdir' in self.macros:
+            rpm.addMacro('_topdir', self.macros['_topdir'])
 
         # '%dist' in the host (where we build the source package)
         # might not match '%dist' in the chroot (where we build
         # the binary package).   We must override it on the host,
         # otherwise the names of packages in the dependencies won't
         # match the files actually produced by mock.
-        rpm.addMacro('dist', dist)
+        if 'dist' not in self.macros:
+            self.macros['dist'] = ""
 
-        try:
-            self.spec = rpm.ts().parseSpec(path)
-        except ValueError as exn:
-            exn.args = (exn.args[0].rstrip() + ' ' + path, )
-            raise
+        hardcoded_macros = OrderedDict([
+            ('_specdir', os.path.dirname(path))
+        ])
 
-        if check_package_name:
-            file_basename = os.path.basename(path).split(".")[0]
-            if file_basename != self.name():
-                raise SpecNameMismatch(
-                    "spec file name '%s' does not match package name '%s'" %
-                    (path, self.name()))
+        with rpm_macros(append_macros(self.macros, hardcoded_macros)):
+            self.path = os.path.join(specdir(), os.path.basename(path))
+            with open(path) as spec:
+                self.spectext = spec.readlines()
 
-        self.rpmfilenamepat = rpm.expandMacro('%_build_name_fmt')
-        self.srpmfilenamepat = rpm.expandMacro('%_build_name_fmt')
+            with tempfile.TemporaryFile() as nullfh:
+                try:
+                    # collect all output to stderr then filter out
+                    # errors about missing sources
+                    errcpy = os.dup(2)
+                    try:
+                        os.dup2(nullfh.fileno(), 2)
+                        self.spec = rpm.ts().parseSpec(path)
+                    finally:
+                        os.dup2(errcpy, 2)
+                        os.close(errcpy)
+                except ValueError as exn:
+                    nullfh.seek(0, os.SEEK_SET)
+                    for line in nullfh:
+                        line = line.strip()
+                        if not line.endswith(': No such file or directory'):
+                            print >>sys.stderr, line
+                    exn.args = (exn.args[0].rstrip() + ' ' + path, )
+                    raise
+
+            if check_package_name:
+                file_basename = os.path.basename(path).split(".")[0]
+                if file_basename != self.name():
+                    raise SpecNameMismatch(
+                        "spec file name '%s' does not match package name '%s'"
+                        % (path, self.name()))
+
+            self.rpmfilenamepat = rpm.expandMacro('%_build_name_fmt')
+            self.srpmfilenamepat = rpm.expandMacro('%_build_name_fmt')
 
     def specpath(self):
         """Return the path to the spec file"""
@@ -118,8 +167,19 @@ class Spec(object):
         #    http://www.example.com/foo/bar.tar.gz -> bar.tar.gz
         #    http://www.example.com/foo/bar.cgi#/baz.tbz -> baz.tbz
 
-        return [os.path.join(sourcedir(), os.path.basename(url))
-                for url in self.source_urls()]
+        hdr = self.spec.sourceHeader
+        hardcoded_macros = OrderedDict([
+            ('name', hdr['name']),
+            ('_sourcedir', "%_topdir/SOURCES/%name")
+        ])
+
+        # apply custom macros and then append the harcoded overrides
+        with rpm_macros(append_macros(self.macros, hardcoded_macros)):
+            paths = [os.path.join(rpm.expandMacro("%_sourcedir"),
+                                  os.path.basename(url))
+                     for url in self.source_urls()]
+
+        return paths
 
     # RPM build dependencies.   The 'requires' key for the *source* RPM is
     # actually the 'buildrequires' key from the spec
@@ -132,40 +192,42 @@ class Spec(object):
         """Return the path of the source package which building this
            spec will produce"""
         hdr = self.spec.sourceHeader
-        rpm.addMacro('NAME', hdr['name'])
-        rpm.addMacro('VERSION', hdr['version'])
-        rpm.addMacro('RELEASE', hdr['release'])
-        rpm.addMacro('ARCH', 'src')
+        hardcoded_macros = OrderedDict([
+            ('NAME', hdr['name']),
+            ('VERSION', hdr['version']),
+            ('RELEASE', hdr['release']),
+            ('ARCH', 'src')
+        ])
 
-        # There doesn't seem to be a macro for the name of the source
-        # rpm, but the name appears to be the same as the rpm name format.
-        # Unfortunately expanding that macro gives us a leading 'src' that we
-        # don't want, so we strip that off
+        with rpm_macros(append_macros(self.macros, hardcoded_macros)):
+            # There doesn't seem to be a macro for the name of the source
+            # rpm, but the name appears to be the same as the rpm name
+            # format. Unfortunately expanding that macro gives us a leading
+            # 'src' that we don't want, so we strip that off
+            srpmname = os.path.basename(rpm.expandMacro(self.srpmfilenamepat))
+            result = os.path.join(srpmdir(), srpmname)
 
-        srpmname = os.path.basename(rpm.expandMacro(self.srpmfilenamepat))
-
-        rpm.delMacro('NAME')
-        rpm.delMacro('VERSION')
-        rpm.delMacro('RELEASE')
-        rpm.delMacro('ARCH')
-
-        return os.path.join(srpmdir(), srpmname)
+        return result
 
     def binary_package_paths(self):
         """Return a list of binary packages built by this spec"""
         def rpm_name_from_header(hdr):
             """Return the name of the binary package file which
                will be built from hdr"""
-            rpm.addMacro('NAME', hdr['name'])
-            rpm.addMacro('VERSION', hdr['version'])
-            rpm.addMacro('RELEASE', hdr['release'])
-            rpm.addMacro('ARCH', hdr['arch'])
-            rpmname = rpm.expandMacro(self.rpmfilenamepat)
-            rpm.delMacro('NAME')
-            rpm.delMacro('VERSION')
-            rpm.delMacro('RELEASE')
-            rpm.delMacro('ARCH')
-            return os.path.join(rpmdir(), rpmname)
+
+            hardcoded_macros = OrderedDict([
+                ('NAME', hdr['name']),
+                ('VERSION', hdr['version']),
+                ('RELEASE', hdr['release']),
+                ('ARCH', hdr['arch'])
+            ])
+
+            with rpm_macros(append_macros(self.macros, hardcoded_macros)):
+                rpmname = rpm.expandMacro(self.rpmfilenamepat)
+                result = os.path.join(rpmdir(), rpmname)
+
+            return result
+
         return [rpm_name_from_header(pkg.header) for pkg in self.spec.packages]
 
     def highest_patch(self):

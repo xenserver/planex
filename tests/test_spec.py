@@ -19,7 +19,8 @@ class RpmTests(unittest.TestCase):
 
     def setUp(self):
         self.spec = planex.spec.Spec("tests/data/ocaml-cohttp.spec",
-                                     dist=".el6", topdir=".")
+                                     defines=[("dist", ".el6"),
+                                              ("_topdir", ".")])
 
     def test_bad_filename(self):
         self.assertRaises(planex.spec.SpecNameMismatch, planex.spec.Spec,
@@ -49,8 +50,8 @@ class RpmTests(unittest.TestCase):
     def test_source_paths(self):
         self.assertEqual(
             self.spec.source_paths(),
-            ["./SOURCES/ocaml-cohttp-0.9.8.tar.gz",
-             "./SOURCES/ocaml-cohttp-init"])
+            ["./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz",
+             "./SOURCES/ocaml-cohttp/ocaml-cohttp-init"])
 
     def test_buildrequires(self):
         self.assertEqual(

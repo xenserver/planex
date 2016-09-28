@@ -42,8 +42,9 @@ class BasicTests(unittest.TestCase):
     def test_rewrite_spec(self):
         patches = ("first.patch", "second.patch", "third.patch")
         outfile = os.path.join(self.test_dir, "out.spec")
-        planex.extract.rewrite_spec("tests/data/ocaml-uri.spec", outfile,
-                                    patches, -1)
+        with open(outfile, "w") as fh:
+            planex.extract.rewrite_spec("tests/data/ocaml-uri.spec", fh,
+                                        patches, -1)
         with open(outfile) as fh:
             spec = fh.read(4096).split('\n')
 
