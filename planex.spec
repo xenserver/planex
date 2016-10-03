@@ -1,7 +1,7 @@
 Summary: RPM build tool
 Name: planex
 Version: 0.9.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
 License: LGPLv2.1
@@ -30,6 +30,7 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %install
 %{__python} setup.py install --single-version-externally-managed -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 %{__install} -D -m 644 planex/planex.bash %{buildroot}%{_sysconfdir}/bash_completion.d/planex.bash
+%{__install} -D -m 644 planex/Makefile.rules %{buildroot}%{_datadir}/planex/Makefile.rules
 
 %files
 %doc README.md
@@ -44,9 +45,13 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %{_bindir}/planex-make-srpm
 %{python_sitelib}/planex
 %{python_sitelib}/planex-*.egg-info
+%{_datadir}/planex/Makefile.rules
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Mon Oct 03 2016 Euan Harris <euan.harris@citrix.com> - 0.9.0-2
+- Install Makefile.rules in /usr/share/planex for backwards compatibility
+
 * Thu Sep 08 2016 Euan Harris <euan.harris@citrix.com> - 0.9.0-1
 - Add planex-extract, which extracts and processes files from tarballs
 - Planex-fetch: Add support for fetching over FTP and for tar.xz files
