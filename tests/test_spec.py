@@ -18,9 +18,11 @@ class RpmTests(unittest.TestCase):
     # pylint: disable=R0904
 
     def setUp(self):
+        rpm_defines = [("dist", ".el6"),
+                       ("_topdir", "."),
+                       ("_sourcedir", "%_topdir/SOURCES/%name")]
         self.spec = planex.spec.Spec("tests/data/ocaml-cohttp.spec",
-                                     defines=[("dist", ".el6"),
-                                              ("_topdir", ".")])
+                                     defines=rpm_defines)
 
     def test_bad_filename(self):
         self.assertRaises(planex.spec.SpecNameMismatch, planex.spec.Spec,
