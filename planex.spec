@@ -1,7 +1,7 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.9.0
-Release: 2%{?dist}
+Version: 0.10.0
+Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
 License: LGPLv2.1
@@ -49,6 +49,14 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Mon Oct 03 2016 Euan Harris <euan.harris@citrix.com> - 0.10.0-1
+- Several commands can now accept multiple --define arguments to
+  set or override RPM macro definitions
+- planex-depend: Generate short name targets for SRPMS
+- planex-depend: Remove --ignore and --ignore-from flags
+- planex-extract: prepend manifest of sources (and branch variable)
+- Makefile.rules: make _build/SPECS a directory, not a symlink
+
 * Mon Oct 03 2016 Euan Harris <euan.harris@citrix.com> - 0.9.0-2
 - Install Makefile.rules in /usr/share/planex for backwards compatibility
 
