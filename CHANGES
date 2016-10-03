@@ -1,8 +1,10 @@
-HEAD
-* planex-depend, planex-fetch, planex-extract: add --define mimicking the 
-  analogous rpmbuild option
-* planex-depend, planex-fetch, planex-extract: deprecate --topdir and --dist
-* Makefile.rules: use the new --define syntax
+0.10.0
+* Several commands can now accept multiple --define arguments to
+  set or override RPM macro definitions
+* planex-depend: Generate short name targets for SRPMS
+* planex-depend: Remove --ignore and --ignore-from flags
+* planex-extract: prepend manifest of sources (and branch variable)
+* Makefile.rules: make _build/SPECS a directory, not a symlink
 
 0.9.0
 * Add planex-extract, which extracts and processes files from tarballs
