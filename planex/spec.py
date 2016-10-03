@@ -170,7 +170,6 @@ class Spec(object):
         hdr = self.spec.sourceHeader
         hardcoded_macros = OrderedDict([
             ('name', hdr['name']),
-            ('_sourcedir', "%_topdir/SOURCES/%name")
         ])
 
         # apply custom macros and then append the harcoded overrides

@@ -9,6 +9,9 @@ DEPS = $(TOPDIR)/deps
 PINSFILE = pins
 PINDEPS = $(TOPDIR)/pindeps
 PINSDIR = $(TOPDIR)/PINS
+RPM_DEFINES ?= --define="_topdir $(TOPDIR)" \
+               --define="dist $(DIST)" \
+               $(RPM_EXTRA_DEFINES)
 
 
 ############################################################################
@@ -16,13 +19,13 @@ PINSDIR = $(TOPDIR)/PINS
 ############################################################################
 
 FETCH ?= planex-fetch
-FETCH_FLAGS ?= --define="_topdir $(TOPDIR)" $(FETCH_EXTRA_FLAGS)
+FETCH_FLAGS ?= $(RPM_DEFINES) $(FETCH_EXTRA_FLAGS)
 
 EXTRACT ?= planex-extract
-EXTRACT_FLAGS ?= --define="_topdir $(TOPDIR)" $(EXTRACT_EXTRA_FLAGS)
+EXTRACT_FLAGS ?= $(RPM_DEFINES) $(EXTRACT_EXTRA_FLAGS)
 
 RPMBUILD ?= planex-make-srpm
-RPMBUILD_FLAGS ?= ${QUIET+--quiet} --define="_topdir $(TOPDIR)" --define="dist $(DIST)"
+RPMBUILD_FLAGS ?= ${QUIET+--quiet} $(RPM_DEFINES)
 
 CREATEREPO ?= createrepo
 CREATEREPO_FLAGS ?= ${QUIET+--quiet} --update
@@ -34,8 +37,7 @@ MOCK_FLAGS ?= ${QUIET+--quiet} \
               --disable-plugin=package_state
 
 DEPEND ?= planex-depend
-DEPEND_FLAGS ?= --define="dist $(DIST)" --define="_topdir $(TOPDIR)" \
-                --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
+DEPEND_FLAGS ?= $(RPM_DEFINES) --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
 
 ifdef QUIET
 AT = @

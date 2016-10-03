@@ -15,9 +15,11 @@ class BasicTests(unittest.TestCase):
     # unittest.TestCase has more methods than Pylint permits
     # pylint: disable=R0904
     def setUp(self):
+        rpm_defines = [("dist", ".el6"),
+                       ("_topdir", "."),
+                       ("_sourcedir", "%_topdir/SOURCES/%name")]
         self.spec = planex.spec.Spec("tests/data/ocaml-cohttp.spec",
-                                     defines=[("dist", ".el6"),
-                                              ("_topdir", ".")])
+                                     defines=rpm_defines)
 
     def test_build_srpm_from_spec(self):
         planex.depend.build_srpm_from_spec(self.spec)
