@@ -76,6 +76,7 @@ $(TOPDIR):
 
 # Placeholder
 $(TOPDIR)/SPECS/%.spec: SPECS/%.spec
+	@mkdir -p $(dir $@)
 	@cp -lf $^ $@
 
 
