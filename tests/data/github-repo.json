@@ -1,0 +1,8 @@
+[
+    {
+	"URL": "https://github.com/xapi-project/xen-api/archive/v1.10.1/xen-api-1.10.1.tar.gz",
+	"clone_URL": "ssh://git@github.com/xapi-project/xen-api.git",
+	"branch": null,
+	"tag": "v1.10.1"
+    }
+]

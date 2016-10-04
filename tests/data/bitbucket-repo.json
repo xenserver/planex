@@ -1,0 +1,20 @@
+[
+    {
+	"URL": "https://code.citrite.net/rest/archive/latest/projects/~SIMONR/repos/brocade-bna/archive?format=tgz#/Brocade-bna-3.2.1.1.tar.gz",
+	"clone_URL": "ssh://git@code.citrite.net/~SIMONR/brocade-bna.git",
+	"branch": "master",
+	"tag": null
+    },
+    {
+	"URL": "https://code.citrite.net/rest/archive/latest/projects/XS/repos/linux-firmware/archive?at=refs%2Ftags%2F20160622&format=tar.gz#/linux-firmware.tar.gz",
+	"clone_URL": "ssh://git@code.citrite.net/XS/linux-firmware.git",
+	"branch": null,
+	"tag": "20160622"
+    },
+    {
+	"URL": "https://code.citrite.net/rest/archive/latest/projects/XS/repos/lvm2/archive?at=refs%2Fheads%2Fxenserver_patches&format=tar#/lvm2.patches.tar",
+	"clone_URL": "ssh://git@code.citrite.net/XS/lvm2.git",
+	"branch": "xenserver_patches",
+	"tag": null
+    }
+]
