@@ -151,5 +151,6 @@ def maybe_copy(src, dst, force=False):
     Copy a file from src to dst only if their contents differ.
     """
     if force or not (os.path.exists(dst) and
+                     os.stat(src).st_size == os.stat(dst).st_size and
                      hash_of_file(src) == hash_of_file(dst)):
         shutil.copy(src, dst)
