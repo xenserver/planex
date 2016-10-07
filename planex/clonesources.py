@@ -1,5 +1,5 @@
 """
-planex-clone: Checkout remote sources referred to by a spec (and link) file
+planex-clone-sources: Checkout sources referred to by a spec (and link) file
 """
 
 import argparse
