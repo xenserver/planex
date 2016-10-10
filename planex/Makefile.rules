@@ -30,11 +30,10 @@ RPMBUILD_FLAGS ?= ${QUIET+--quiet} $(RPM_DEFINES)
 CREATEREPO ?= createrepo
 CREATEREPO_FLAGS ?= ${QUIET+--quiet} --update
 
-MOCK ?= mock
+MOCK ?= planex-build-mock
 MOCK_FLAGS ?= ${QUIET+--quiet} \
-              --configdir=$(TOPDIR)/mock  \
-              --resultdir=$(dir $@) --uniqueext=$(notdir $@) \
-              --disable-plugin=package_state
+              --configdir=$(TOPDIR)/mock \
+              --resultdir=$(dir $@)
 
 DEPEND ?= planex-depend
 DEPEND_FLAGS ?= $(RPM_DEFINES) --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
@@ -130,7 +129,7 @@ $(TOPDIR)/SPECS/%.spec: SPECS/%.lnk SOURCES/%/patches.tar
 # runs at the same time as a createrepo is updating the repo metadata.
 %.rpm:
 	@echo [MOCK] $<
-	$(AT)flock --shared --timeout 300 ./$(TOPDIR)/RPMS $(MOCK) $(MOCK_FLAGS) --rebuild $<
+	$(AT)flock --shared --timeout 300 ./$(TOPDIR)/RPMS $(MOCK) $(MOCK_FLAGS) $<
 	@echo [CREATEREPO] $<
 	$(AT)flock --exclusive --timeout 300 ./$(TOPDIR)/RPMS $(CREATEREPO) $(CREATEREPO_FLAGS) ./$(TOPDIR)/RPMS
 
