@@ -73,3 +73,25 @@ def archive(repo, commit_hash, prefix, target_dir):
     run(["gzip", "--no-name", "-f", path])
 
     return path + ".gz"
+
+
+def tags(repo):
+    """
+    Return a list of all tags defined on repo.
+    """
+    dotgitdir = dotgitdir_of_path(repo)
+    return run(["git", "--git-dir=%s" % dotgitdir, "tag"])['stdout'].split()
+
+
+def format_patch(repo, startref, endref, target_dir):
+    """
+    Write patches from ref to HEAD out to target_dir.
+    Returns a list of patch filenames which can be used to create a
+    series file.
+    """
+    dotgitdir = dotgitdir_of_path(repo)
+
+    commit_range = "%s..%s" % (startref, endref)
+    res = run(["git", "--git-dir=%s" % dotgitdir, "format-patch",
+               "--no-renames", commit_range, "--output-directory", target_dir])
+    return res['stdout'].split()
