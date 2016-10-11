@@ -4,6 +4,7 @@
 Library of generic functions used by other planex components
 """
 
+import errno
 import hashlib
 import logging
 import os
@@ -154,3 +155,18 @@ def maybe_copy(src, dst, force=False):
                      os.stat(src).st_size == os.stat(dst).st_size and
                      hash_of_file(src) == hash_of_file(dst)):
         shutil.copy(src, dst)
+
+
+def makedirs(path):
+    """
+    Recursively create path.  Do not raise an error if path already exists.
+    """
+    if not path:
+        return
+    try:
+        os.makedirs(path)
+    except OSError as err:
+        if err.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
