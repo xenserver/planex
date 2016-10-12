@@ -8,6 +8,9 @@ docker create \
   -v /var/cache/yum \
   $PLANEX_CONTAINER /bin/true
 
+# Make sure that we have the latest version of the container
+docker pull $PLANEX_CONTAINER
+
 # Fill in volumes automatically from the pins file
 # Chicken and egg - need to fill it in when pinning as well
 docker run \
