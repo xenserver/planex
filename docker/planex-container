@@ -1,0 +1,21 @@
+#!/bin/sh
+
+: ${PLANEX_CONTAINER:="xenserver/planex:latest"}
+
+# _obj is used for the mock cache, so that the chroot does not have to
+# be rebuilt for each run
+mkdir -p _obj/var/cache/mock _obj/var/cache/yum
+chmod +rwx _obj/var/cache/mock _obj/var/cache/yum
+
+# Make sure that we have the latest version of the container
+docker pull $PLANEX_CONTAINER
+
+# Run the container, mounting _obj and the current specs 
+# This should be run from the root of the specfile directory
+docker run \
+  --privileged \
+  --rm -i -t \
+  -v ${PWD}/_obj/var/cache/mock:/var/cache/mock \
+  -v ${PWD}/_obj/var/cache/yum:/var/cache/yum \
+  -v ${PWD}:/build \
+  $PLANEX_CONTAINER "$*"
