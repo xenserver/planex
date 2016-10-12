@@ -13,6 +13,7 @@ setup(name='planex',
           'console_scripts': [
               'planex-init = planex.init:_main',
               'planex-cache = planex.cache:_main',
+              'planex-chroot = planex.chroot:_main',
               'planex-clone-sources = planex.clonesources:_main',
               'planex-fetch = planex.fetch:_main',
               'planex-pin = planex.pin:_main',
