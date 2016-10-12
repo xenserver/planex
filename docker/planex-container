@@ -2,20 +2,20 @@
 
 : ${PLANEX_CONTAINER:="xenserver/planex:latest"}
 
-docker create \
-  --name planex-persist \
-  -v /var/cache/mock \
-  -v /var/cache/yum \
-  $PLANEX_CONTAINER /bin/true
+# _obj is used for the mock cache, so that the chroot does not have to
+# be rebuilt for each run
+mkdir -p _obj/var/cache/mock _obj/var/cache/yum
+chmod +rwx _obj/var/cache/mock _obj/var/cache/yum
 
 # Make sure that we have the latest version of the container
 docker pull $PLANEX_CONTAINER
 
-# Fill in volumes automatically from the pins file
-# Chicken and egg - need to fill it in when pinning as well
+# Run the container, mounting _obj and the current specs 
+# This should be run from the root of the specfile directory
 docker run \
   --privileged \
   --rm -i -t \
-  --volumes-from planex-persist \
+  -v ${PWD}/_obj/var/cache/mock:/var/cache/mock \
+  -v ${PWD}/_obj/var/cache/yum:/var/cache/yum \
   -v ${PWD}:/build \
   $PLANEX_CONTAINER "$*"
