@@ -23,6 +23,9 @@ def parse_args_or_exit(argv):
     """
     parser = argparse.ArgumentParser(description='Planex SRPM building')
     add_common_parser_options(parser)
+    parser.add_argument("spec", metavar="SPEC", help="Spec file")
+    parser.add_argument("sources", metavar="SOURCES", nargs='*',
+                        help="Source files")
     parser.add_argument(
         "-D", "--define", default=[], action="append",
         help="--define='MACRO EXPR' define MACRO with value EXPR")
@@ -36,7 +39,7 @@ def parse_args_or_exit(argv):
         "--keeptmp", action="store_true",
         help="keep temporary files")
     argcomplete.autocomplete(parser)
-    return parser.parse_known_args(argv)
+    return parser.parse_args(argv)
 
 
 def setup_tmp_area():
@@ -72,20 +75,20 @@ def extract_topdir(tmp_specfile, source):
             print line,
 
 
-def get_command_line(intercepted_args, tmp_sources, tmp_specfile):
+def get_command_line(args, tmp_sources, tmp_specfile):
     """
     Return rpmbuild command line and arguments
     """
     cmd = ['rpmbuild']
-    if intercepted_args.quiet:
+    if args.quiet:
         cmd.append('--quiet')
-    if intercepted_args.topdir is not None:
+    if args.topdir is not None:
         cmd.append('--define')
-        cmd.append('_topdir %s' % intercepted_args.topdir)
-    if intercepted_args.dist is not None:
+        cmd.append('_topdir %s' % args.topdir)
+    if args.dist is not None:
         cmd.append('--define')
-        cmd.append('%%dist %s' % intercepted_args.dist)
-    for define in intercepted_args.define:
+        cmd.append('%%dist %s' % args.dist)
+    for define in args.define:
         cmd.append('--define')
         cmd.append(define)
     cmd.append('--define')
@@ -98,29 +101,25 @@ def get_command_line(intercepted_args, tmp_sources, tmp_specfile):
 
 def main(argv):
     """
-    Entry point arguments: component.spec Source0 Source1 ... Patch0 Patch1 ...
-    The specfile must always be present and it has to be the first in the list
+    Entry point
     """
-    if len(sys.argv) < 2:
-        sys.exit("ERROR: You need to specify the component specfile")
 
-    intercepted_args, passthrough_args = parse_args_or_exit(argv)
-    specfile = passthrough_args[0]
+    args = parse_args_or_exit(argv)
     tmp_dirpath, tmp_specs, tmp_sources = setup_tmp_area()
-    tmp_specfile = os.path.join(tmp_specs, os.path.basename(specfile))
+    tmp_specfile = os.path.join(tmp_specs, os.path.basename(args.spec))
 
     try:
         # Copy files to temporary working area
-        copyfile(specfile, tmp_specfile)
+        copyfile(args.spec, tmp_specfile)
         tarball_filters = ['.tar.gz', '.tar.bz2']
 
-        for source in passthrough_args[1:]:
+        for source in args.sources:
             if any([ext in source for ext in tarball_filters]):
                 extract_topdir(tmp_specfile, source)
             dest = os.path.join(tmp_sources, os.path.basename(source))
             copyfile(source, dest)
 
-        cmd = get_command_line(intercepted_args, tmp_sources, tmp_specfile)
+        cmd = get_command_line(args, tmp_sources, tmp_specfile)
         return_value = subprocess.call(cmd)
         sys.exit(return_value)
 
@@ -133,7 +132,9 @@ def main(argv):
 
     finally:
         # Clean temporary area (unless debugging)
-        if not intercepted_args.keeptmp:
+        if args.keeptmp:
+            print "Working directory retained at %s" % tmp_dirpath
+        else:
             rmtree(tmp_dirpath)
 
 
