@@ -6,11 +6,18 @@ echo $@
 EXTUID=`stat -c %u /build`
 EXTGID=`stat -c %g /build`
 
-# Change 'build' UID in the container to match the owner of the
+# Create 'build' user in the container to match the owner of the
 # build directory, so that built packages will have the correct
 # owner outside the container.
-usermod --non-unique -u $EXTUID build
-groupmod --non-unique -g $EXTGID build
+groupadd build --gid $EXTGID      \
+               --non-unique
+useradd build --groups mock,wheel \
+              --home-dir /build   \
+              --uid $EXTUID       \
+              --gid $EXTGID       \
+              --no-create-home    \
+              --non-unique
+
 if [ -z "$1" ]; then
     exec su - build
 else

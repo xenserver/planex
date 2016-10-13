@@ -5,6 +5,6 @@ RUN yum -y install \
   https://xenserver.github.io/planex-release/release/rpm/el/planex-release-7-1.noarch.rpm \
   sudo
 RUN yum -y install planex
-RUN useradd build --groups mock,wheel --home-dir /build
+RUN mkdir /build
 COPY entry.sh /entry.sh
 ENTRYPOINT ["bash", "/entry.sh"]

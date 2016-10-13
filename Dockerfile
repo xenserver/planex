@@ -18,7 +18,7 @@ COPY planex.spec planex/
 RUN yum-builddep -y planex/planex.spec \
   && awk '/^Requires:/ { print $2 }' planex/planex.spec | xargs yum -y install \
   && yum clean all \
-  && useradd build --groups mock,wheel --home-dir /build
+  && mkdir /build
 
 # Copy source, build and install it.
 COPY . planex/
