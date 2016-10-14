@@ -170,3 +170,25 @@ def makedirs(path):
             pass
         else:
             raise
+
+
+def start_container(path_maps, command):
+    """
+    Start the planex docker container.
+    """
+
+    # Add standard path maps
+    path_maps.append((os.getcwd(), "/build"))
+
+    cmd = ["docker", "run", "--privileged", "--rm", "-i", "-t",
+           "--volumes-from", "planex-persist"]
+
+    for (local, container) in path_maps:
+        cmd += ("-v", "%s:%s" % (os.path.realpath(local), container))
+
+    cmd += ("xenserver/planex:latest",)
+    cmd += command
+
+    logging.debug("running command: %s",
+                  (" ".join([pipes.quote(word) for word in cmd])))
+    subprocess.call(cmd)

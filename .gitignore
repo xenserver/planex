@@ -2,6 +2,7 @@ MANIFEST
 build
 dist
 .rpmmacros
+planex.egg-info
 planex-build-root
 *.pyc
 srpmutil/srpmutil
