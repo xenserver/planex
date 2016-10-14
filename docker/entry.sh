@@ -11,4 +11,8 @@ EXTGID=`stat -c %g /build`
 # owner outside the container.
 usermod --non-unique -u $EXTUID build
 groupmod --non-unique -g $EXTGID build
-su - build -c "$*"
+if [ -z "$1" ]; then
+    exec su - build
+else
+    exec su - build -c "$@"
+fi
