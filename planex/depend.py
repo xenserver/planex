@@ -13,7 +13,22 @@ import urlparse
 import argcomplete
 from planex.util import add_common_parser_options
 from planex.util import setup_sigint_handler
+from planex import manifest
 import planex.spec as pkg
+
+
+def create_manifest_deps(spec):
+    """
+    Create depependencies for package manifest
+    """
+    prereqs = spec.specpath()
+    spec_name = spec.name()
+    lnk_path = 'SPECS/{}.lnk'.format(spec_name)
+
+    if os.path.isfile(lnk_path):
+        prereqs += ' ' + lnk_path
+
+    print '{}: {}'.format(manifest.get_path(spec_name), prereqs)
 
 
 def build_srpm_from_spec(spec):
@@ -21,8 +36,9 @@ def build_srpm_from_spec(spec):
     Generate rules to build SRPM from spec
     """
     srpmpath = spec.source_package_path()
-    print '%s: %s %s' % (srpmpath, spec.specpath(),
-                         " ".join(spec.source_paths()))
+    print '%s: %s %s %s' % (srpmpath, spec.specpath(),
+                            " ".join(spec.source_paths()),
+                            manifest.get_path(spec.name()))
 
 
 def download_rpm_sources(spec):
@@ -173,6 +189,7 @@ def main():
     provides_to_rpm = package_to_rpm_map(specs.values())
 
     for spec in specs.itervalues():
+        create_manifest_deps(spec)
         build_srpm_from_spec(spec)
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
