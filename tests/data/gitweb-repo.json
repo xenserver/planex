@@ -3,12 +3,16 @@
 	"URL": "http://hg.uk.xensource.com/git/carbon/trunk/xsconsole.git/snapshot/refs/heads/master#/xsconsole.tar.bz2",
 	"clone_URL": "git://hg.uk.xensource.com/carbon/trunk/xsconsole.git",
 	"branch": "master",
-	"tag": null
+	"tag": null,
+	"git_ls_remote_out": "bc485b12d68ed2f675165051b0f484e844275222\trefs/heads/master\n",
+	"sha1": "bc485b12d68ed2f675165051b0f484e844275222"
     },
     {
 	"URL": "http://hg.uk.xensource.com/git/carbon/trunk-ring0/driver-emulex-be2net.git/snapshot/refs/tags/11.0.235.4.tar.gz#/emulex-be2net-11.0.235.4.tar.gz",
 	"clone_URL": "git://hg.uk.xensource.com/carbon/trunk-ring0/driver-emulex-be2net.git",
 	"branch": null,
-	"tag": "11.0.235.4"
+	"tag": "11.0.235.4",
+	"git_ls_remote_out": "7efa24559d3d26eea3e3744a6a789eb7b5322e28\trefs/tags/11.0.235.4\n",
+	"sha1": "7efa24559d3d26eea3e3744a6a789eb7b5322e28"
     }
 ]

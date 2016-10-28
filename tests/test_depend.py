@@ -29,7 +29,8 @@ class BasicTests(unittest.TestCase):
             "./SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
             "tests/data/ocaml-cohttp.spec "
             "./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz "
-            "./SOURCES/ocaml-cohttp/ocaml-cohttp-init\n")
+            "./SOURCES/ocaml-cohttp/ocaml-cohttp-init "
+            "./MANIFESTS/ocaml-cohttp.json\n")
 
     def test_download_rpm_sources(self):
         planex.depend.download_rpm_sources(self.spec)

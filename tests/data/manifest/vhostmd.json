@@ -1,0 +1,12 @@
+{
+    "spec": {
+        "source0": {
+            "url": "https://repo.citrite.net/xs-local-contrib/vhostmd/vhostmd-0.4.tar.gz", 
+            "sha1": null
+        }
+    }, 
+    "lnk": {
+        "url": "https://code.citrite.net/rest/archive/latest/projects/XS/repos/vhostmd/archive?at=refs%2Fheads%2Fxenserver_patches&format=tar#/vhostmd.patches.tar", 
+        "sha1": "8c25514011ff2081ccb6b988f2395d2be83570e7"
+    }
+}

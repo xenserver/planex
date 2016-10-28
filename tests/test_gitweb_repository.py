@@ -4,6 +4,7 @@
 
 import json
 import unittest
+import mock
 
 import planex.repository
 
@@ -16,9 +17,12 @@ class BasicTests(unittest.TestCase):
         with open("tests/data/gitweb-repo.json") as fileh:
             self.data = json.load(fileh)
 
-    def test_urls(self):
+    @mock.patch('planex.repository.git_ls_remote')
+    def test_urls(self, mock_git_ls_remote):
         for tcase in self.data:
+            mock_git_ls_remote.return_value = tcase['git_ls_remote_out']
             repo = planex.repository.Repository(tcase['URL'])
             self.assertEqual(repo.clone_url, tcase['clone_URL'])
             self.assertEqual(repo.branch, tcase['branch'])
             self.assertEqual(repo.tag, tcase['tag'])
+            self.assertEqual(repo.sha1, tcase['sha1'])

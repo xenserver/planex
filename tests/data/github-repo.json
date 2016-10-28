@@ -3,6 +3,8 @@
 	"URL": "https://github.com/xapi-project/xen-api/archive/v1.10.1/xen-api-1.10.1.tar.gz",
 	"clone_URL": "ssh://git@github.com/xapi-project/xen-api.git",
 	"branch": null,
-	"tag": "v1.10.1"
+	"tag": "v1.10.1",
+	"git_ls_remote_out": "15ab3b9221b5dbf0831edac6ecb64659d8c66786\trefs/tags/v1.10.1\n",
+	"sha1": "15ab3b9221b5dbf0831edac6ecb64659d8c66786"
     }
 ]
