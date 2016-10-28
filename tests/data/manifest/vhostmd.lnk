@@ -1,0 +1,5 @@
+{
+    "URL": "https://code.citrite.net/rest/archive/latest/projects/XS/repos/vhostmd/archive?at=refs%2Fheads%2Fxenserver_patches&format=tar#/vhostmd.patches.tar",
+    "specfile": "SPECS/vhostmd.spec",
+    "patches": "SOURCES"
+}

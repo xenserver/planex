@@ -3,18 +3,24 @@
 	"URL": "https://code.citrite.net/rest/archive/latest/projects/~SIMONR/repos/brocade-bna/archive?format=tgz#/Brocade-bna-3.2.1.1.tar.gz",
 	"clone_URL": "ssh://git@code.citrite.net/~SIMONR/brocade-bna.git",
 	"branch": "master",
-	"tag": null
+	"tag": null,
+	"git_ls_remote_out": "7cdf99ff799b4bd1f33bcde2c79ac56e603f2c23\trefs/heads/master\n",
+	"sha1": "7cdf99ff799b4bd1f33bcde2c79ac56e603f2c23"
     },
     {
 	"URL": "https://code.citrite.net/rest/archive/latest/projects/XS/repos/linux-firmware/archive?at=refs%2Ftags%2F20160622&format=tar.gz#/linux-firmware.tar.gz",
 	"clone_URL": "ssh://git@code.citrite.net/XS/linux-firmware.git",
 	"branch": null,
-	"tag": "20160622"
+	"tag": "20160622",
+	"git_ls_remote_out": "dca884016afa9f954baa69e3e28b8f2aab3b6921\trefs/tags/20160622\n",
+	"sha1": "dca884016afa9f954baa69e3e28b8f2aab3b6921"
     },
     {
 	"URL": "https://code.citrite.net/rest/archive/latest/projects/XS/repos/lvm2/archive?at=refs%2Fheads%2Fxenserver_patches&format=tar#/lvm2.patches.tar",
 	"clone_URL": "ssh://git@code.citrite.net/XS/lvm2.git",
 	"branch": "xenserver_patches",
-	"tag": null
+	"tag": null,
+	"git_ls_remote_out": "dc69fe697517ce922de8dca822d75c9bb7b59b70\trefs/heads/xenserver_patches\n",
+	"sha1": "dc69fe697517ce922de8dca822d75c9bb7b59b70"
     }
 ]

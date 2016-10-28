@@ -38,6 +38,9 @@ MOCK_FLAGS ?= ${QUIET+--quiet} \
 DEPEND ?= planex-depend
 DEPEND_FLAGS ?= $(RPM_DEFINES) --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
 
+MANIFEST ?= planex-manifest
+MANIFEST_FLAGS ?=
+
 ifdef QUIET
 AT = @
 endif
@@ -64,7 +67,9 @@ $(TOPDIR):
 	@ln -s ../mock $(TOPDIR)/mock
 	@mkdir $(TOPDIR)/RPMS
 	@mkdir $(TOPDIR)/SPECS
+	@mkdir $(TOPDIR)/MANIFESTS
 	@ln -s $(TOPDIR)/RPMS RPMS
+	@ln -s $(TOPDIR)/MANIFESTS MANIFESTS
 	$(AT)$(CREATEREPO) ${QUIET+--quiet} RPMS
 	@echo done
 
@@ -78,6 +83,14 @@ $(TOPDIR)/SPECS/%.spec: SPECS/%.spec
 	@mkdir -p $(dir $@)
 	@cp -lf $^ $@
 
+
+############################################################################
+# Manifest creation rules
+############################################################################
+
+MANIFESTS/%.json:
+	@echo [MANIFEST] $@
+	$(AT)$(MANIFEST) $(MANIFEST_FLAGS) $^ > $@
 
 ############################################################################
 # Source download rules

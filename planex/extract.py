@@ -34,23 +34,6 @@ def extract_file(tar, name_in, name_out):
     os.utime(name_out, None)
 
 
-def write_manifest(spec_fh, spec, link):
-    """
-    Record the URLs of all remote sources in the spec file
-    """
-    branch = link.get('branch')
-    spec_fh.write("### manifest start\n")
-    spec_fh.write("# %s\n" % link['URL'])
-
-    for url in spec.source_urls():
-        if '://' in url:
-            if branch:
-                url = url.replace("%{branch}", branch)
-            spec_fh.write("# %s\n" % url)
-
-    spec_fh.write("### manifest end\n")
-
-
 def parse_patchseries(series, guard=None):
     """
     Parse series file and return the list of patches
@@ -193,7 +176,7 @@ def main(argv):
             spec = planex.spec.Spec(args.output + '.tmp',
                                     check_package_name=check_names,
                                     defines=macros)
-            write_manifest(spec_fh, spec, link)
+
             if 'branch' in link:
                 spec_fh.write("%%define branch %s\n" % link['branch'])
 

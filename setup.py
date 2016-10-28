@@ -19,6 +19,7 @@ setup(name='planex',
               'planex-depend = planex.depend:main',
               'planex-extract = planex.extract:_main',
               'planex-make-srpm = planex.makesrpm:_main',
+              'planex-manifest = planex.manifest:main',
               'planex-build-mock = planex.mock:_main'
           ]
       })
