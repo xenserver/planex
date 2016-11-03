@@ -22,5 +22,13 @@
 	"tag": null,
 	"git_ls_remote_out": "dc69fe697517ce922de8dca822d75c9bb7b59b70\trefs/heads/xenserver_patches\n",
 	"sha1": "dc69fe697517ce922de8dca822d75c9bb7b59b70"
+    },
+    {
+	"URL": "https://code.citrite.net/rest/archive/latest/projects/XS/repos/linux-4.x.pg/archive?at=b17a2301da0&format=tar#/kernel.patches.tar",
+	"clone_URL": "ssh://git@code.citrite.net/XS/linux-4.x.pg.git",
+	"branch": null,
+	"tag": "b17a2301da0",
+	"git_ls_remote_out": "",
+	"sha1": ""
     }
 ]

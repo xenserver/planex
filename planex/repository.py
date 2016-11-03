@@ -138,18 +138,19 @@ class Repository(object):
         )
 
         self.dir_name = path[7]
-        query_str = urlparse.unquote(self.url.query)
-        if query_str.startswith('at='):
-            query = query_str[3:]
-            if '&' in query:
-                query = query[:query.find('&')]
-            query_path = query.split('/')
-            if query_path[1] == 'tags':
-                self.tag = query_path[2]
-            elif query_path[1] == 'heads':
-                self.branch = query_path[2]
+        query_dict = urlparse.parse_qs(self.url.query)
+        if 'at' in query_dict:
+            query = query_dict['at'][0]
+            if '/' in query:
+                query_path = query.split('/')
+                if query_path[1] == 'tags':
+                    self.tag = query_path[2]
+                elif query_path[1] == 'heads':
+                    self.branch = query_path[2]
+                else:
+                    self.branch = 'master'
             else:
-                self.branch = 'master'
+                self.tag = query
         else:
             self.branch = 'master'
 
