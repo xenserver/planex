@@ -172,6 +172,6 @@ $(DEPS): $(TOPDIR) $(wildcard $(PINSFILE) $(PINSDIR)/*.spec) \
 	@echo Updating dependencies...
 	$(AT)$(DEPEND) $(DEPEND_FLAGS) $(TOPDIR)/SPECS/*.spec > $@
 
--include $(DEPS)
+include $(DEPS)
 
 # vim:ft=make:
