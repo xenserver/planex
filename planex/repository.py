@@ -119,7 +119,7 @@ class Repository(object):
 
         remote_ref = git_ls_remote(self._query_url, path[4])
 
-        if remote_ref.split('/', 2)[1] == 'tags':
+        if remote_ref and remote_ref.split('/', 2)[1] == 'tags':
             self.tag = path[4]
         else:
             self.branch = path[4]
