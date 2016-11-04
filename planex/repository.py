@@ -20,6 +20,7 @@ class Repository(object):
         self.dir_name = ''
         self.branch = None
         self.tag = None
+        self.commitish = None
         self.sha1 = None
         if self.url.netloc in self.parsers:
             self.parsers[self.url.netloc](self)
@@ -65,9 +66,15 @@ class Repository(object):
         if self.tag:
             option = '-t'
             ref = self.tag
-        else:
+        elif self.branch:
             option = '-h'
             ref = self.branch
+        elif self.commitish:
+            option = ''
+            ref = self.commitish
+        else:
+            self.sha1 = ''
+            return
 
         # Example command:
         # git ls-remote -t \
@@ -150,7 +157,7 @@ class Repository(object):
                 else:
                     self.branch = 'master'
             else:
-                self.tag = query
+                self.commitish = query
         else:
             self.branch = 'master'
 
