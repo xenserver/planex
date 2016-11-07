@@ -6,12 +6,15 @@ import os.path
 import subprocess
 import urlparse
 import re
+import requests
 
 from planex.util import git_ls_remote
 
 
 class Repository(object):
     """Represents a specific branch or tag of a repository"""
+
+    # pylint: disable=R0902
 
     def __init__(self, url):
         self.url = urlparse.urlparse(url)
@@ -32,7 +35,7 @@ class Repository(object):
             out_dir = os.path.join(topdir, dirname)
         else:
             out_dir = os.path.join(topdir, self.dir_name)
-        branch_or_tag = self.tag or self.branch
+        branch_or_tag = self.tag or self.branch or self.commitish
         cmd = ['git', 'clone']
         if branch_or_tag:
             cmd += ['--branch', branch_or_tag]
@@ -53,6 +56,8 @@ class Repository(object):
             ret += "&branch=" + self.branch
         if self.tag:
             ret += "&tag=" + self.tag
+        if self.commitish:
+            ret += "&id=" + self.commitish
         return ret
 
     def _populate_sha1(self):
@@ -69,9 +74,10 @@ class Repository(object):
         elif self.branch:
             option = '-h'
             ref = self.branch
-        elif self.commitish:
-            option = ''
-            ref = self.commitish
+        elif self.commitish and self.url.netloc in self.commitish_to_sha1s:
+            commitish_to_sha1 = self.commitish_to_sha1s[self.url.netloc]
+            self.sha1 = commitish_to_sha1(self, self.commitish)
+            return
         else:
             self.sha1 = ''
             return
@@ -161,6 +167,16 @@ class Repository(object):
         else:
             self.branch = 'master'
 
+    def commitish_to_sha1_bitbucket(self, commitish):
+        """Convert a commitish to a full SHA1 using the BitBucket API"""
+        path = self.url.path.split('/')
+        url = "https://%s/rest/api/1.0/projects/%s/repos/%s/commits/%s" % \
+            (self.url.netloc, path[5], path[7], commitish)
+        api_response = requests.get(url)
+        api_response.raise_for_status()
+        data = api_response.json()
+        return data['id']
+
     def parse_gitweb(self):
         """Parse GitWeb source URL"""
         path = self.url.path.split('/')
@@ -180,3 +196,6 @@ class Repository(object):
         'code.citrite.net': parse_bitbucket,
         'hg.uk.xensource.com': parse_gitweb,
         }
+    commitish_to_sha1s = {
+        'code.citrite.net': commitish_to_sha1_bitbucket
+    }

@@ -4,7 +4,9 @@
 	"clone_URL": "ssh://git@code.citrite.net/~SIMONR/brocade-bna.git",
 	"branch": "master",
 	"tag": null,
+	"commitish": null,
 	"git_ls_remote_out": "7cdf99ff799b4bd1f33bcde2c79ac56e603f2c23\trefs/heads/master\n",
+	"requests_get_out": null,
 	"sha1": "7cdf99ff799b4bd1f33bcde2c79ac56e603f2c23"
     },
     {
@@ -12,7 +14,9 @@
 	"clone_URL": "ssh://git@code.citrite.net/XS/linux-firmware.git",
 	"branch": null,
 	"tag": "20160622",
+	"commitish": null,
 	"git_ls_remote_out": "dca884016afa9f954baa69e3e28b8f2aab3b6921\trefs/tags/20160622\n",
+	"requests_get_out": null,
 	"sha1": "dca884016afa9f954baa69e3e28b8f2aab3b6921"
     },
     {
@@ -20,15 +24,19 @@
 	"clone_URL": "ssh://git@code.citrite.net/XS/lvm2.git",
 	"branch": "xenserver_patches",
 	"tag": null,
+	"commitish": null,
 	"git_ls_remote_out": "dc69fe697517ce922de8dca822d75c9bb7b59b70\trefs/heads/xenserver_patches\n",
+	"requests_get_out": null,
 	"sha1": "dc69fe697517ce922de8dca822d75c9bb7b59b70"
     },
     {
 	"URL": "https://code.citrite.net/rest/archive/latest/projects/XS/repos/linux-4.x.pg/archive?at=b17a2301da0&format=tar#/kernel.patches.tar",
 	"clone_URL": "ssh://git@code.citrite.net/XS/linux-4.x.pg.git",
 	"branch": null,
-	"tag": "b17a2301da0",
+	"tag": null,
+	"commitish": "b17a2301da0",
 	"git_ls_remote_out": "",
-	"sha1": ""
+	"requests_get_out": {"id": "b17a2301da054897d134bd20b66a0c70ed5bc5a5"},
+	"sha1": "b17a2301da054897d134bd20b66a0c70ed5bc5a5"
     }
 ]
