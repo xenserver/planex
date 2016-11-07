@@ -14,6 +14,7 @@ Requires: mock
 Requires: python-argcomplete
 Requires: python-argparse
 Requires: python-setuptools
+Requires: python-requests
 Requires: rpm-build
 Requires: yum-plugin-priorities
 
