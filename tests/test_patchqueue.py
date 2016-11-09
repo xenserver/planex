@@ -10,7 +10,8 @@ import sys
 import tempfile
 import unittest
 
-import planex.extract
+import planex.patchqueue
+from planex.spec import Spec
 
 
 class BasicTests(unittest.TestCase):
@@ -32,7 +33,7 @@ class BasicTests(unittest.TestCase):
                   "patch_with_a_negative_guard #-aguard\n",
                   )
 
-        applied = list(planex.extract.parse_patchseries(series))
+        applied = list(planex.patchqueue.parse_patchseries(series))
 
         self.assertIn("patch_no_guard_or_comment", applied)
         self.assertIn("patch_with_a_comment", applied)
@@ -40,14 +41,9 @@ class BasicTests(unittest.TestCase):
         self.assertIn("patch_with_a_negative_guard", applied)
 
     def test_rewrite_spec(self):
-        patches = ("first.patch", "second.patch", "third.patch")
-        outfile = os.path.join(self.test_dir, "out.spec")
-        with open(outfile, "w") as fh:
-            planex.extract.rewrite_spec("tests/data/ocaml-uri.spec", fh,
-                                        patches, -1)
-        with open(outfile) as fh:
-            spec = fh.read(4096).split('\n')
-
-        self.assertIn("Patch0: first.patch", spec)
-        self.assertIn("Patch1: second.patch", spec)
-        self.assertIn("Patch2: third.patch", spec)
+        spec = Spec("tests/data/ocaml-uri.spec", check_package_name=False)
+        patches = ["first.patch", "second.patch", "third.patch"]
+        rewritten = planex.patchqueue.expand_patchqueue(spec, patches)
+        self.assertIn("Patch0: first.patch\n", rewritten)
+        self.assertIn("Patch1: second.patch\n", rewritten)
+        self.assertIn("Patch2: third.patch\n", rewritten)
