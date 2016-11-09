@@ -157,6 +157,16 @@ class Spec(object):
         """Return the URLs from which the sources can be downloaded"""
         return [source for (source, _, _) in reversed(self.spec.sources)]
 
+    def expand_macro(self, macro):
+        """Return the value of macro, expanded in the package's context"""
+        hdr = self.spec.sourceHeader
+        hardcoded_macros = OrderedDict([
+            ('name', hdr['name']),
+        ])
+
+        with rpm_macros(append_macros(self.macros, hardcoded_macros)):
+            return rpm.expandMacro(macro)
+
     def source_paths(self):
         """Return the filesystem paths to source files"""
 
