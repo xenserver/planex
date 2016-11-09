@@ -7,25 +7,30 @@ planex-make-srpm: Wrapper around rpmbuild
 import sys
 import subprocess
 import os
-from shutil import copyfile, rmtree
-import fileinput
+import shutil
 import tarfile
 import tempfile
 
 import argparse
 import argcomplete
 from planex.util import add_common_parser_options
+from planex.spec import Spec
+from planex.link import Link
+from planex.patchqueue import Patchqueue
+from planex.tarball import extract_topdir
+from planex.tarball import Tarball
 
 
 def parse_args_or_exit(argv):
     """
     Parse command line options
     """
-    parser = argparse.ArgumentParser(description='Planex SRPM building')
+    parser = argparse.ArgumentParser(
+        description='Pack sources and patchqueues into a source RPM')
     add_common_parser_options(parser)
     parser.add_argument("spec", metavar="SPEC", help="Spec file")
-    parser.add_argument("sources", metavar="SOURCES", nargs='*',
-                        help="Source files")
+    parser.add_argument("sources", metavar="SOURCE/PATCHQUEUE", nargs='*',
+                        help="Source and patchqueue files")
     parser.add_argument(
         "-D", "--define", default=[], action="append",
         help="--define='MACRO EXPR' define MACRO with value EXPR")
@@ -39,45 +44,24 @@ def parse_args_or_exit(argv):
         "--keeptmp", action="store_true",
         help="keep temporary files")
     argcomplete.autocomplete(parser)
-    return parser.parse_args(argv)
+
+    parsed_args = parser.parse_args(argv)
+    links = [arg for arg in argv if arg.endswith(".lnk")]
+    parsed_args.link = None
+    if links:
+        parsed_args.link = links[0]
+
+    patchqueues = [arg for arg in argv if arg.endswith("patches.tar")]
+    parsed_args.patchqueue = None
+    if patchqueues:
+        parsed_args.patchqueue = patchqueues[0]
+
+    return parsed_args
 
 
-def setup_tmp_area():
+def rpmbuild(args, tmpdir, specfile):
     """
-    Create temporary working area
-    """
-    tmp_dirpath = tempfile.mkdtemp()
-    tmp_specs = os.path.join(tmp_dirpath, 'SPECS')
-    tmp_sources = os.path.join(tmp_dirpath, 'SOURCES')
-
-    os.makedirs(tmp_specs)
-    os.makedirs(tmp_sources)
-
-    return (tmp_dirpath, tmp_specs, tmp_sources)
-
-
-def extract_topdir(tmp_specfile, source):
-    """
-    Set the topdir name taken from the source tarball
-    """
-    for line in fileinput.input(tmp_specfile, inplace=True):
-        if 'autosetup' in line:
-            tar = tarfile.open(source)
-            names = tar.getnames()
-            topname = os.path.commonprefix(names)
-            if topname in names:
-                top_element = tar.getmember(topname)
-                if top_element.isdir():
-                    print "%s -n %s" % (line.strip(), topname)
-            else:
-                print "%s -c" % line.strip()
-        else:
-            print line,
-
-
-def get_command_line(args, tmp_sources, tmp_specfile):
-    """
-    Return rpmbuild command line and arguments
+    Run rpmbuild on working directory
     """
     cmd = ['rpmbuild']
     if args.quiet:
@@ -92,11 +76,11 @@ def get_command_line(args, tmp_sources, tmp_specfile):
         cmd.append('--define')
         cmd.append(define)
     cmd.append('--define')
-    cmd.append('_sourcedir %s' % tmp_sources)
+    cmd.append('_sourcedir %s' % tmpdir)
     cmd.append('-bs')
-    cmd.append(tmp_specfile)
+    cmd.append(specfile)
 
-    return cmd
+    return subprocess.call(cmd)
 
 
 def main(argv):
@@ -105,27 +89,44 @@ def main(argv):
     """
 
     args = parse_args_or_exit(argv)
-    tmp_dirpath, tmp_specs, tmp_sources = setup_tmp_area()
-    tmp_specfile = os.path.join(tmp_specs, os.path.basename(args.spec))
+    tmpdir = tempfile.mkdtemp()
+    tmp_specfile = os.path.join(tmpdir, os.path.basename(args.spec))
+
+    link = None
+    if args.link:
+        link = Link(args.link)
 
     try:
-        # Copy files to temporary working area
-        copyfile(args.spec, tmp_specfile)
-        tarball_filters = ['.tar.gz', '.tar.bz2']
+        # Copy spec to working area
+        shutil.copyfile(args.spec, tmp_specfile)
 
+        # Copy sources to working area, rewriting spec as needed
+        tarball_filters = ['.tar.gz', '.tar.bz2']
         for source in args.sources:
             if any([ext in source for ext in tarball_filters]):
                 extract_topdir(tmp_specfile, source)
-            dest = os.path.join(tmp_sources, os.path.basename(source))
-            copyfile(source, dest)
+            shutil.copy(source, tmpdir)
 
-        cmd = get_command_line(args, tmp_sources, tmp_specfile)
-        return_value = subprocess.call(cmd)
-        sys.exit(return_value)
+        spec = Spec(tmp_specfile, check_package_name=False)
 
-    except IOError as exc:
-        print "Copyfile: destination location must be writable"
-        print "Exception: %s" % exc
+        # Expand patchqueue to working area, rewriting spec as needed
+        if args.link and args.patchqueue:
+            # Extract patches
+            if link.patchqueue():
+                with Patchqueue(args.patchqueue,
+                                branch=link.patchqueue()) as patches:
+                    patches.extract_all(tmpdir)
+                    patches.add_to_spec(spec, tmp_specfile)
+
+            # Extract non-patchqueue sources
+            if link.patchqueue() or link.patches():
+                with Tarball(args.patchqueue,
+                             prefix=link.patches()) as tarball:
+                    for path in spec.local_sources():
+                        tarball.extract(path, tmpdir)
+
+        sys.exit(rpmbuild(args, tmpdir, tmp_specfile))
+
     except (tarfile.TarError, tarfile.ReadError) as exc:
         print "Error when extracting patchqueue from tarfile"
         print "Exception: %s" % exc
@@ -133,9 +134,9 @@ def main(argv):
     finally:
         # Clean temporary area (unless debugging)
         if args.keeptmp:
-            print "Working directory retained at %s" % tmp_dirpath
+            print "Working directory retained at %s" % tmpdir
         else:
-            rmtree(tmp_dirpath)
+            shutil.rmtree(tmpdir)
 
 
 def _main():
