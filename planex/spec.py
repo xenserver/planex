@@ -247,6 +247,16 @@ class Spec(object):
         return max(patches)
 
     def all_sources(self):
-        """Get all sources defined in the spec file"""
+        """List all sources defined in the spec file"""
         urls = [urlparse.urlparse(url) for url in self.source_urls()]
         return zip(self.source_paths(), urls)
+
+    def remote_sources(self):
+        """List all sources with remote URLs defined in the spec file"""
+        return [(path, url) for (path, url) in self.all_sources()
+                if url.netloc != '']
+
+    def local_sources(self):
+        """List all local sources defined in the spec file"""
+        return [url.path for (_, url) in self.all_sources()
+                if url.netloc == '']
