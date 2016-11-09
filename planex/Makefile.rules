@@ -169,7 +169,7 @@ $(DEPS): $(TOPDIR) $(wildcard $(PINSFILE) $(PINSDIR)/*.spec) \
 		$(patsubst SPECS/%.spec,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.spec)) \
 		$(patsubst SPECS/%.lnk,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.lnk))
 	@echo Updating dependencies...
-	$(AT)$(DEPEND) $(DEPEND_FLAGS) $(TOPDIR)/SPECS/*.spec > $@
+	$(AT)$(DEPEND) $(DEPEND_FLAGS) SPECS/*.lnk $(TOPDIR)/SPECS/*.spec > $@
 
 include $(DEPS)
 
