@@ -63,7 +63,6 @@ $(TOPDIR):
 	@echo -n Populating build directory: $(TOPDIR)...
 	@mkdir -p $(TOPDIR)
 	@mkdir -p SPECS SOURCES
-	@ln -s ../SOURCES $(TOPDIR)/SOURCES
 	@ln -s ../mock $(TOPDIR)/mock
 	@mkdir $(TOPDIR)/RPMS
 	@mkdir $(TOPDIR)/SPECS
