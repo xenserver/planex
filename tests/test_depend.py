@@ -16,7 +16,7 @@ class BasicTests(unittest.TestCase):
     # pylint: disable=R0904
     def setUp(self):
         rpm_defines = [("dist", ".el6"),
-                       ("_topdir", "."),
+                       ("_topdir", "_build"),
                        ("_sourcedir", "%_topdir/SOURCES/%name")]
         self.spec = planex.spec.Spec("tests/data/ocaml-cohttp.spec",
                                      defines=rpm_defines)
@@ -26,18 +26,21 @@ class BasicTests(unittest.TestCase):
 
         self.assertEqual(
             sys.stdout.getvalue(),
-            "./SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
-            "tests/data/ocaml-cohttp.spec "
-            "./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz "
-            "./SOURCES/ocaml-cohttp/ocaml-cohttp-init "
-            "./MANIFESTS/ocaml-cohttp.json\n")
+            "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
+            "tests/data/ocaml-cohttp.spec\n"
+            "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
+            "./MANIFESTS/ocaml-cohttp.json\n"
+            "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
+            "_build/SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz\n"
+            "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
+            "SOURCES/ocaml-cohttp/ocaml-cohttp-init\n")
 
     def test_download_rpm_sources(self):
         planex.depend.download_rpm_sources(self.spec)
 
         self.assertEqual(
             sys.stdout.getvalue(),
-            "./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz: "
+            "_build/SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz: "
             "tests/data/ocaml-cohttp.spec\n")
 
     def test_build_rpm_from_srpm(self):
@@ -45,8 +48,8 @@ class BasicTests(unittest.TestCase):
 
         self.assertEqual(
             sys.stdout.getvalue(),
-            "./RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
-            "./SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm\n")
+            "_build/RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
+            "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm\n")
 
     def test_buildrequires_for_rpm(self):
         # N.B. buildrequires_for_rpm only generates rules for other packages
@@ -62,7 +65,7 @@ class BasicTests(unittest.TestCase):
 
         self.assertEqual(
             sys.stdout.getvalue(),
-            "./RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
-            "./RPMS/x86_64/ocaml-uri-devel-1.6.0-1.el6.x86_64.rpm\n"
-            "./RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
-            "./RPMS/x86_64/ocaml-cstruct-devel-1.4.0-1.el6.x86_64.rpm\n")
+            "_build/RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
+            "_build/RPMS/x86_64/ocaml-uri-devel-1.6.0-1.el6.x86_64.rpm\n"
+            "_build/RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
+            "_build/RPMS/x86_64/ocaml-cstruct-devel-1.4.0-1.el6.x86_64.rpm\n")

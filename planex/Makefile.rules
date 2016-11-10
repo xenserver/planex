@@ -63,7 +63,6 @@ $(TOPDIR):
 	@echo -n Populating build directory: $(TOPDIR)...
 	@mkdir -p $(TOPDIR)
 	@mkdir -p SPECS SOURCES
-	@ln -s ../SOURCES $(TOPDIR)/SOURCES
 	@ln -s ../mock $(TOPDIR)/mock
 	@mkdir $(TOPDIR)/RPMS
 	@mkdir $(TOPDIR)/SPECS
@@ -103,8 +102,8 @@ MANIFESTS/%.json:
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
 # Fetch a patch tarball listed in a link file.
-.PRECIOUS: SOURCES/%/patches.tar
-SOURCES/%/patches.tar: SPECS/%.lnk
+.PRECIOUS: $(TOPDIR)/SOURCES/%/patches.tar
+$(TOPDIR)/SOURCES/%/patches.tar: SPECS/%.lnk
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
 
@@ -113,7 +112,7 @@ SOURCES/%/patches.tar: SPECS/%.lnk
 ############################################################################
 
 # Extract a spec file from a patch tarball.
-$(TOPDIR)/SPECS/%.spec: SPECS/%.lnk SOURCES/%/patches.tar
+$(TOPDIR)/SPECS/%.spec: SPECS/%.lnk $(TOPDIR)/SOURCES/%/patches.tar
 	$(AT)$(EXTRACT) $(EXTRACT_FLAGS) --output $@ --link $^
 
 
@@ -170,7 +169,7 @@ $(DEPS): $(TOPDIR) $(wildcard $(PINSFILE) $(PINSDIR)/*.spec) \
 		$(patsubst SPECS/%.spec,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.spec)) \
 		$(patsubst SPECS/%.lnk,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.lnk))
 	@echo Updating dependencies...
-	$(AT)$(DEPEND) $(DEPEND_FLAGS) $(TOPDIR)/SPECS/*.spec > $@
+	$(AT)$(DEPEND) $(DEPEND_FLAGS) SPECS/*.lnk $(TOPDIR)/SPECS/*.spec > $@
 
 include $(DEPS)
 

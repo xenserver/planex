@@ -31,14 +31,21 @@ def create_manifest_deps(spec):
     print '{}: {}'.format(manifest.get_path(spec_name), prereqs)
 
 
-def build_srpm_from_spec(spec):
+def build_srpm_from_spec(spec, lnk=False):
     """
     Generate rules to build SRPM from spec
     """
     srpmpath = spec.source_package_path()
-    print '%s: %s %s %s' % (srpmpath, spec.specpath(),
-                            " ".join(spec.source_paths()),
-                            manifest.get_path(spec.name()))
+    print '%s: %s' % (srpmpath, spec.specpath())
+    print '%s: %s' % (srpmpath, manifest.get_path(spec.name()))
+    for (url, path) in zip(spec.source_urls(), spec.source_paths()):
+        source = urlparse.urlparse(url)
+        if source.scheme in ["http", "https", "file", "ftp"]:
+            # Source was downloaded to _build/SOURCES
+            print '%s: %s' % (srpmpath, path)
+        elif not lnk:
+            # Source is local
+            print '%s: %s' % (srpmpath, "/".join(path.split("/")[1:]))
 
 
 def download_rpm_sources(spec):
@@ -128,6 +135,13 @@ def parse_cmdline():
     return parser.parse_args()
 
 
+def pkgname(path):
+    """
+    Return the name of the package at path
+    """
+    return os.path.splitext(os.path.basename(path))[0]
+
+
 def main():
     """
     Entry point
@@ -167,7 +181,9 @@ def main():
                             defines=macros)
             pins[os.path.basename(pin_path)] = spec
 
-    for spec_path in args.specs:
+    links = {pkgname(lnk): lnk for lnk in args.specs if lnk.endswith(".lnk")}
+
+    for spec_path in [spec for spec in args.specs if spec.endswith(".spec")]:
         try:
             spec = pkg.Spec(spec_path,
                             check_package_name=args.check_package_names,
@@ -190,7 +206,13 @@ def main():
 
     for spec in specs.itervalues():
         create_manifest_deps(spec)
-        build_srpm_from_spec(spec)
+        build_srpm_from_spec(spec, (spec.name() in links))
+        if spec.name() in links:
+            srpmpath = spec.source_package_path()
+            patchpath = spec.expand_macro("%_sourcedir/patches.tar")
+            linkpath = "SPECS/%s.lnk" % spec.name()
+            print '%s: %s' % (srpmpath, patchpath)
+            print '%s: %s' % (srpmpath, linkpath)
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
         buildrequires_for_rpm(spec, provides_to_rpm)
