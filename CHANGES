@@ -1,3 +1,12 @@
+0.11.0
+* planex-clone-sources: Add a tool to check out source repositories
+* planex-manifest: Add a tool to record repository hashes
+* planex-build-mock: Add a wrapper around mock
+* planex-container: Add a wrapper to run planex in a Docker container
+* planex-extract: Don't prepend package name to patch filename
+* Add utility classes for links, patch queues, repositories and tarballs
+* Makefile.rules: Fail if _build/deps can't be rebuilt
+
 0.10.0
 * Several commands can now accept multiple --define arguments to
   set or override RPM macro definitions

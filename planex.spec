@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.10.0
+Version: 0.11.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -37,19 +37,31 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %doc README.md
 %doc LICENSE
 %doc CHANGES
+%{_bindir}/planex-build-mock
 %{_bindir}/planex-cache
+%{_bindir}/planex-clone-sources
 %{_bindir}/planex-depend
 %{_bindir}/planex-extract
 %{_bindir}/planex-fetch
 %{_bindir}/planex-init
-%{_bindir}/planex-pin
 %{_bindir}/planex-make-srpm
+%{_bindir}/planex-manifest
+%{_bindir}/planex-pin
 %{python_sitelib}/planex
 %{python_sitelib}/planex-*.egg-info
 %{_datadir}/planex/Makefile.rules
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Thu Nov 10 2016 Euan Harris <euan.harris@citrix.com> - 0.11.0-1
+- planex-clone-sources: Add a tool to check out source repositories
+- planex-manifest: Add a tool to record repository hashes
+- planex-build-mock: Add a wrapper around mock
+- planex-container: Add a wrapper to run planex in a Docker container
+- planex-extract: Don't prepend package name to patch filename
+- Add utility classes for links, patch queues, repositories and tarballs
+- Makefile.rules: Fail if _build/deps can't be rebuilt
+
 * Mon Oct 03 2016 Euan Harris <euan.harris@citrix.com> - 0.10.0-1
 - Several commands can now accept multiple --define arguments to
   set or override RPM macro definitions
