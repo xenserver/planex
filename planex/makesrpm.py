@@ -35,12 +35,6 @@ def parse_args_or_exit(argv):
         "-D", "--define", default=[], action="append",
         help="--define='MACRO EXPR' define MACRO with value EXPR")
     parser.add_argument(
-        "--topdir", metavar="DIR", default=None,
-        help='Set rpmbuild toplevel directory [deprecated]')
-    parser.add_argument(
-        "--dist", metavar="DIST", default=None,
-        help="distribution tag (used in RPM filenames) [deprecated]")
-    parser.add_argument(
         "--keeptmp", action="store_true",
         help="keep temporary files")
     argcomplete.autocomplete(parser)
@@ -66,12 +60,6 @@ def rpmbuild(args, tmpdir, specfile):
     cmd = ['rpmbuild']
     if args.quiet:
         cmd.append('--quiet')
-    if args.topdir is not None:
-        cmd.append('--define')
-        cmd.append('_topdir %s' % args.topdir)
-    if args.dist is not None:
-        cmd.append('--define')
-        cmd.append('%%dist %s' % args.dist)
     for define in args.define:
         cmd.append('--define')
         cmd.append(define)
