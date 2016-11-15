@@ -25,9 +25,6 @@ EXTRACT_FLAGS ?= $(RPM_DEFINES) $(EXTRACT_EXTRA_FLAGS)
 RPMBUILD ?= planex-make-srpm
 RPMBUILD_FLAGS ?= ${QUIET+--quiet} $(RPM_DEFINES)
 
-CREATEREPO ?= createrepo
-CREATEREPO_FLAGS ?= ${QUIET+--quiet} --update
-
 MOCK ?= planex-build-mock
 MOCK_FLAGS ?= ${QUIET+--quiet} \
               --configdir=mock \
@@ -69,7 +66,6 @@ $(TOPDIR):
 	@mkdir -p $(TOPDIR)/MANIFESTS
 	@ln -s $(TOPDIR)/RPMS RPMS
 	@ln -s $(TOPDIR)/MANIFESTS MANIFESTS
-	$(AT)$(CREATEREPO) ${QUIET+--quiet} RPMS
 	@echo done
 
 
@@ -156,8 +152,6 @@ $(TOPDIR)/SPECS/%.spec: SPECS/%.lnk $(TOPDIR)/SOURCES/%/patches.tar
 %.rpm:
 	@echo [MOCK] $<
 	$(AT)flock --shared --timeout 300 ./$(TOPDIR)/RPMS $(MOCK) $(MOCK_FLAGS) $<
-	@echo [CREATEREPO] $<
-	$(AT)flock --exclusive --timeout 300 ./$(TOPDIR)/RPMS $(CREATEREPO) $(CREATEREPO_FLAGS) ./$(TOPDIR)/RPMS
 
 
 ############################################################################

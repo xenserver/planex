@@ -66,6 +66,19 @@ def get_command_line(args, tmp_config_dir, defaults):
     return cmd
 
 
+def createrepo(pkg_dir, metadata_dir, quiet=False):
+    """
+    Run createrepo
+    """
+    cmd = ['createrepo']
+    cmd += ['--baseurl=file://%s' % pkg_dir]
+    cmd += ['--outputdir=%s' % metadata_dir]
+    cmd += [pkg_dir]
+    if quiet:
+        cmd.append('--quiet')
+    return cmd
+
+
 def insert_loopback_repo(config_in_path, config_out_path, repo_path):
     """
     Write a new mock config, including a loopback repository configuration
@@ -107,8 +120,13 @@ def main(argv=None):
         config_in = os.path.join(args.configdir, args.root + ".cfg")
         config_out = os.path.join(tmpdir, args.root + ".cfg")
 
-        insert_loopback_repo(config_in, config_out,
-                             os.path.join(os.getcwd(), "RPMS"))
+        cmd = createrepo(os.path.join(os.getcwd(), "RPMS"),
+                         tmpdir, args.quiet)
+        return_value = subprocess.call(cmd)
+        if return_value != 0:
+            sys.exit(return_value)
+
+        insert_loopback_repo(config_in, config_out, tmpdir)
         shutil.copy2(os.path.join(args.configdir, "logging.ini"),
                      os.path.join(tmpdir, "logging.ini"))
         shutil.copy2(os.path.join(args.configdir, "site-defaults.cfg"),
