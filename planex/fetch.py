@@ -154,8 +154,6 @@ def parse_args_or_exit(argv=None):
     parser.add_argument('--retries', '-r',
                         help='Number of times to retry a failed download',
                         type=int, default=5)
-    parser.add_argument("-t", "--topdir", metavar="DIR", default=None,
-                        help='Set rpmbuild toplevel directory [deprecated]')
     parser.add_argument('--no-package-name-check', dest="check_package_names",
                         action="store_false", default=True,
                         help="Don't check that package name matches spec "
@@ -181,12 +179,6 @@ def fetch_sources(args):
         _err = [macro for macro in macros if len(macro) != 2]
         print "error: malformed macro passed to --define: %r" % _err
         sys.exit(1)
-
-    # When using deprecated arguments, we want them at the top of the
-    # macros list
-    if args.topdir is not None:
-        print "# warning: --topdir is deprecated"
-        macros.insert(0, ('_topdir', args.topdir))
 
     spec = planex.spec.Spec(args.spec_or_link,
                             check_package_name=args.check_package_names,
