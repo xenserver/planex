@@ -62,8 +62,6 @@ def parse_args_or_exit(argv=None):
     parser.add_argument("-l", "--link", help="Link file")
     parser.add_argument("-o", "--output", metavar="SPEC",
                         help="Output spec file")
-    parser.add_argument("-t", "--topdir", metavar="DIR", default=None,
-                        help="Set rpmbuild toplevel directory [deprecated]")
     parser.add_argument("-D", "--define", default=[], action="append",
                         help="--define='MACRO EXPR' define MACRO with "
                         "value EXPR")
@@ -101,12 +99,6 @@ def main(argv):
             _err = [macro for macro in macros if len(macro) != 2]
             print "error: malformed macro passed to --define: %r" % _err
             sys.exit(1)
-
-        # When using deprecated arguments, we want them at the top of the
-        # macros list
-        if args.topdir is not None:
-            print "# warning: --topdir is deprecated"
-            macros.insert(0, ('_topdir', args.topdir))
 
         with open(args.output, "w") as spec_fh:
             if 'branch' in link:
