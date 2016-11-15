@@ -116,18 +116,12 @@ def parse_cmdline():
     parser.add_argument(
         "-P", "--pins-dir", help="Directory containing pin overlays")
     parser.add_argument(
-        "-d", "--dist", metavar="DIST", default=None,
-        help="distribution tag (used in RPM filenames) [deprecated]")
-    parser.add_argument(
         "-r", "--repos_path", metavar="DIR", default="repos",
         help='Local path to the repositories')
     parser.add_argument(
         "--no-package-name-check", dest="check_package_names",
         action="store_false", default=True,
         help="Don't check that package name matches spec file name")
-    parser.add_argument(
-        "-t", "--topdir", metavar="DIR", default=None,
-        help='Set rpmbuild toplevel directory [deprecated]')
     parser.add_argument(
         "-D", "--define", default=[], action="append",
         help="--define='MACRO EXPR' define MACRO with value EXPR")
@@ -161,15 +155,6 @@ def main():
         _err = [macro for macro in macros if len(macro) != 2]
         print "error: malformed macro passed to --define: %r" % _err
         sys.exit(1)
-
-    # When using deprecated arguments, we want them at the top of the
-    # macros list
-    if args.topdir is not None:
-        print "# warning: --topdir is deprecated"
-        macros.insert(0, ('_topdir', args.topdir))
-    if args.dist is not None:
-        print "# warning: --dist is deprecated"
-        macros.insert(1, ('dist', args.dist))
 
     pins = {}
     if args.pins_dir:
