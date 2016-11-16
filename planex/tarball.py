@@ -11,9 +11,9 @@ import tarfile
 
 class Tarball(object):
     """Represents a source archive tarball"""
-    def __init__(self, filename, prefix=""):
+    def __init__(self, filename=None, fileobj=None, prefix=""):
         self.filename = filename
-        self.tarfile = tarfile.open(self.filename)
+        self.tarfile = tarfile.open(name=filename, fileobj=fileobj)
         self.archive_root = archive_root(self.tarfile)
         self.prefix = prefix
 
