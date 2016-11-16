@@ -12,10 +12,33 @@ class Link(object):
         with open(path) as fileh:
             self.link = json.load(fileh)
 
-    def patchqueue(self):
-        """Return the patchqueue's patchqueue field"""
-        return self.link.get('patchqueue', '')
+    @property
+    def url(self):
+        """Return the URL from which to fetch the patchqueue tarball"""
+        return self.link.get('URL', None)
 
+    @property
+    def commitish(self):
+        """Return the Git commitish to use when constructing patchqueue.
+           Used mainly for pinning."""
+        return self.link.get('commitish', None)
+
+    @property
+    def specfile(self):
+        """Return the path to the spec file inside the patchqueue tarball"""
+        return self.link.get('specfile', None)
+
+    @property
+    def patchqueue(self):
+        """Return the path to the patchqueue inside the patchqueue tarball"""
+        return self.link.get('patchqueue', None)
+
+    @property
+    def sources(self):
+        """Return the path to extra sources inside the patchqueue tarball"""
+        return self.link.get('sources', None)
+
+    @property
     def patches(self):
-        """Return the patchqueue's patches field"""
-        return self.link.get('patches', '')
+        """Return the path to extra patches inside the patchqueue tarball"""
+        return self.link.get('patches', None)
