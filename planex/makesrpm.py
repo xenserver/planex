@@ -100,16 +100,16 @@ def main(argv):
         # Expand patchqueue to working area, rewriting spec as needed
         if args.link and args.patchqueue:
             # Extract patches
-            if link.patchqueue():
+            if link.patchqueue is not None:
                 with Patchqueue(args.patchqueue,
-                                branch=link.patchqueue()) as patches:
+                                branch=link.patchqueue) as patches:
                     patches.extract_all(tmpdir)
                     patches.add_to_spec(spec, tmp_specfile)
 
             # Extract non-patchqueue sources
-            if link.patches():
+            if link.patches is not None:
                 with Tarball(args.patchqueue,
-                             prefix=link.patches()) as tarball:
+                             prefix=link.patches) as tarball:
                     for path in spec.local_sources():
                         tarball.extract(path, tmpdir)
 
