@@ -107,7 +107,7 @@ def main(argv):
                     patches.add_to_spec(spec, tmp_specfile)
 
             # Extract non-patchqueue sources
-            if link.patchqueue() or link.patches():
+            if link.patches():
                 with Tarball(args.patchqueue,
                              prefix=link.patches()) as tarball:
                     for path in spec.local_sources():
