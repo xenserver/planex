@@ -8,6 +8,8 @@ import os
 import sys
 import tarfile
 
+import planex.util as util
+
 
 class Tarball(object):
     """Represents a source archive tarball"""
@@ -94,3 +96,30 @@ def extract_file(tar, name_in, name_out):
     mem.name = os.path.basename(name_out)
     tar.extract(mem, os.path.dirname(name_out))
     os.utime(name_out, None)
+
+
+def make(inputdir, outputfile):
+    """
+    Create a new tarball named outputfile and recursively add all files
+    in inputdir to it.
+    """
+    tarmode = "w"
+    if outputfile.endswith("gz"):
+        tarmode += ":gz"
+    if outputfile.endswith("bz2"):
+        tarmode += ":bz2"
+
+    def reset(tarinfo):
+        """
+        Clean file ownership and naming when adding to archive
+        """
+        tarinfo.uid = 0
+        tarinfo.gid = 0
+        tarinfo.uname = "root"
+        tarinfo.gname = "root"
+        tarinfo.name = os.path.relpath(tarinfo.name, inputdir[1:])
+        return tarinfo
+
+    util.makedirs(os.path.dirname(outputfile))
+    with tarfile.open(outputfile, mode=tarmode) as tar:
+        tar.add(inputdir, filter=reset)
