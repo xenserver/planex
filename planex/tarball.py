@@ -3,9 +3,7 @@ tarball: Utilities for tar archives
 """
 
 import fileinput
-import logging
 import os
-import sys
 import tarfile
 
 import planex.util as util
@@ -83,19 +81,6 @@ def extract_topdir(tmp_specfile, source):
                 print "%s -c" % line.strip()
         else:
             print line,
-
-
-def extract_file(tar, name_in, name_out):
-    """
-    Extract a file from a tarball
-    """
-    logging.debug("Extracting %s to %s", name_in, name_out)
-    if name_in not in tar.getnames():
-        sys.exit("%s: %s not found in archive" % (sys.argv[0], name_in))
-    mem = tar.getmember(name_in)
-    mem.name = os.path.basename(name_out)
-    tar.extract(mem, os.path.dirname(name_out))
-    os.utime(name_out, None)
 
 
 def make(inputdir, outputfile):
