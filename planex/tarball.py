@@ -29,6 +29,18 @@ class Tarball(object):
         """
         self.tarfile.close()
 
+    def getmembers(self):
+        """
+        Return a list of members of the tarball
+        """
+        source_path = os.path.join(self.archive_root, self.prefix)
+        res = []
+        for mem in self.tarfile.getmembers():
+            if mem.isfile() and os.path.normpath(mem.path).startswith(source_path):
+               mem.path = os.path.relpath(mem.path, source_path)
+               res.append(mem)
+        return res
+
     def extractfile(self, source):
         """
         Extract a file from the tarball, returning a file-like object
