@@ -100,18 +100,18 @@ def main(argv):
         # Expand patchqueue to working area, rewriting spec as needed
         if args.link and args.patchqueue:
             # Extract patches
-            if link.patchqueue is not None:
+            if link.patchqueue():
                 with Patchqueue(args.patchqueue,
-                                branch=link.patchqueue) as patches:
+                                branch=link.patchqueue()) as patches:
                     patches.extract_all(tmpdir)
                     patches.add_to_spec(spec, tmp_specfile)
 
             # Extract non-patchqueue sources
-            with Tarball(args.patchqueue) as tarball:
-                if link.sources is not None:
-                    tarball.extract_dir(link.sources, tmpdir)
-                if link.patches is not None:
-                    tarball.extract_dir(link.patches, tmpdir)
+            if link.patchqueue() or link.patches():
+                with Tarball(args.patchqueue,
+                             prefix=link.patches()) as tarball:
+                    for path in spec.local_sources():
+                        tarball.extract(path, tmpdir)
 
         sys.exit(rpmbuild(args, tmpdir, tmp_specfile))
 
