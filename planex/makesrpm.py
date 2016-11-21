@@ -71,6 +71,46 @@ def rpmbuild(args, tmpdir, specfile):
     return subprocess.call(cmd)
 
 
+def populate_working_directory(tmpdir, spec, link, sources, patchqueue):
+    """
+    Build a working directory containing everything needed to build the SRPM.
+    """
+    # Copy spec to working area
+    tmp_specfile = os.path.join(tmpdir, os.path.basename(spec))
+    shutil.copyfile(spec, tmp_specfile)
+
+    # Copy sources to working area, rewriting spec as needed
+    tarball_filters = ['.tar.gz', '.tar.bz2']
+    for source in sources:
+        if any([ext in source for ext in tarball_filters]):
+            extract_topdir(tmp_specfile, source)
+        shutil.copy(source, tmpdir)
+
+    spec = Spec(tmp_specfile, check_package_name=False)
+
+    # Expand patchqueue to working area, rewriting spec as needed
+    if link and patchqueue:
+        # Extract patches
+        if link.patchqueue is not None:
+            with Patchqueue(patchqueue,
+                            branch=link.patchqueue) as patches:
+                patches.extract_all(tmpdir)
+                patches.add_to_spec(spec, tmp_specfile)
+
+        # Extract non-patchqueue sources
+        with Tarball(patchqueue) as tarball:
+            if link.sources is not None:
+                for source in spec.local_sources():
+                    path = os.path.join(link.sources, source)
+                    tarball.extract(path, tmpdir)
+            if link.patches is not None:
+                for patch in spec.local_patches():
+                    path = os.path.join(link.patches, patch)
+                    tarball.extract(path, tmpdir)
+
+    return tmp_specfile
+
+
 def main(argv):
     """
     Entry point
@@ -78,42 +118,11 @@ def main(argv):
 
     args = parse_args_or_exit(argv)
     tmpdir = tempfile.mkdtemp()
-    tmp_specfile = os.path.join(tmpdir, os.path.basename(args.spec))
 
     try:
-        # Copy spec to working area
-        shutil.copyfile(args.spec, tmp_specfile)
-
-        # Copy sources to working area, rewriting spec as needed
-        tarball_filters = ['.tar.gz', '.tar.bz2']
-        for source in args.sources:
-            if any([ext in source for ext in tarball_filters]):
-                extract_topdir(tmp_specfile, source)
-            shutil.copy(source, tmpdir)
-
-        spec = Spec(tmp_specfile, check_package_name=False)
-
-        # Expand patchqueue to working area, rewriting spec as needed
-        if args.link and args.patchqueue:
-            # Extract patches
-            if args.link.patchqueue is not None:
-                with Patchqueue(args.patchqueue,
-                                branch=args.link.patchqueue) as patches:
-                    patches.extract_all(tmpdir)
-                    patches.add_to_spec(spec, tmp_specfile)
-
-            # Extract non-patchqueue sources
-            with Tarball(args.patchqueue) as tarball:
-                if args.link.sources is not None:
-                    for source in spec.local_sources():
-                        path = os.path.join(args.link.sources, source)
-                        tarball.extract(path, tmpdir)
-                if args.link.patches is not None:
-                    for patch in spec.local_patches():
-                        path = os.path.join(args.link.patches, patch)
-                        tarball.extract(path, tmpdir)
-
-        sys.exit(rpmbuild(args, tmpdir, tmp_specfile))
+        specfile = populate_working_directory(tmpdir, args.spec, args.link,
+                                              args.sources, args.patchqueue)
+        sys.exit(rpmbuild(args, tmpdir, specfile))
 
     except (tarfile.TarError, tarfile.ReadError) as exc:
         print "Error when extracting patchqueue from tarfile"
