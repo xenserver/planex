@@ -11,6 +11,7 @@ import argparse
 import argcomplete
 
 from planex.util import add_common_parser_options
+from planex.util import setup_logging
 from planex.spec import Spec
 from planex.repository import Repository
 
@@ -107,6 +108,7 @@ def main():
     """Entry point."""
 
     args = parse_cmdline()
+    setup_logging(args)
 
     spec = Spec(args.specfile_path)
 
