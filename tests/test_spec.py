@@ -44,16 +44,22 @@ class RpmTests(unittest.TestCase):
 
     def test_source_urls(self):
         self.assertEqual(
-            self.spec.source_urls(),
-            ["https://github.com/mirage/ocaml-cohttp/archive/"
-             "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
-             "ocaml-cohttp-init"])
+            set(self.spec.source_urls()),
+            set(["https://github.com/mirage/ocaml-cohttp/archive/"
+                 "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
+                 "ocaml-cohttp-init",
+                 "ocaml-cohttp-service",
+                 "cohttp0.patch",
+                 "cohttp1.patch"]))
 
     def test_source_paths(self):
         self.assertEqual(
-            self.spec.source_paths(),
-            ["./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz",
-             "./SOURCES/ocaml-cohttp/ocaml-cohttp-init"])
+            set(self.spec.source_paths()),
+            set(["./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz",
+                 "./SOURCES/ocaml-cohttp/ocaml-cohttp-init",
+                 "./SOURCES/ocaml-cohttp/ocaml-cohttp-service",
+                 "./SOURCES/ocaml-cohttp/cohttp0.patch",
+                 "./SOURCES/ocaml-cohttp/cohttp1.patch"]))
 
     def test_buildrequires(self):
         self.assertEqual(
