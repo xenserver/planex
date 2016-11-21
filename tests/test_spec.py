@@ -88,3 +88,17 @@ class RpmTests(unittest.TestCase):
                     "ocaml-cohttp-devel-0.9.8-1.el6.{machine}.rpm"])
             ]
         )
+
+    def test_local_sources(self):
+        self.assertEqual(
+            set(self.spec.local_sources()),
+            set(["ocaml-cohttp-init",
+                 "ocaml-cohttp-service"])
+        )
+
+    def test_local_patches(self):
+        self.assertEqual(
+            set(self.spec.local_patches()),
+            set(["cohttp0.patch",
+                 "cohttp1.patch"])
+        )
