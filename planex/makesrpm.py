@@ -109,9 +109,13 @@ def main(argv):
             # Extract non-patchqueue sources
             with Tarball(args.patchqueue) as tarball:
                 if link.sources is not None:
-                    tarball.extract_dir(link.sources, tmpdir)
+                    for path in tarball.getnames():
+                        if path in spec.local_sources():
+                            tarball.extract(path, tmpdir)
                 if link.patches is not None:
-                    tarball.extract_dir(link.patches, tmpdir)
+                    for path in tarball.getnames():
+                        if path in spec.local_sources():
+                            tarball.extract(path, tmpdir)
 
         sys.exit(rpmbuild(args, tmpdir, tmp_specfile))
 
