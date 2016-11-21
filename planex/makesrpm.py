@@ -43,7 +43,7 @@ def parse_args_or_exit(argv):
     links = [arg for arg in argv if arg.endswith(".lnk")]
     parsed_args.link = None
     if links:
-        parsed_args.link = links[0]
+        parsed_args.link = Link(links[0])
 
     patchqueues = [arg for arg in argv if arg.endswith("patches.tar")]
     parsed_args.patchqueue = None
@@ -80,10 +80,6 @@ def main(argv):
     tmpdir = tempfile.mkdtemp()
     tmp_specfile = os.path.join(tmpdir, os.path.basename(args.spec))
 
-    link = None
-    if args.link:
-        link = Link(args.link)
-
     try:
         # Copy spec to working area
         shutil.copyfile(args.spec, tmp_specfile)
@@ -100,18 +96,22 @@ def main(argv):
         # Expand patchqueue to working area, rewriting spec as needed
         if args.link and args.patchqueue:
             # Extract patches
-            if link.patchqueue is not None:
+            if args.link.patchqueue is not None:
                 with Patchqueue(args.patchqueue,
-                                branch=link.patchqueue) as patches:
+                                branch=args.link.patchqueue) as patches:
                     patches.extract_all(tmpdir)
                     patches.add_to_spec(spec, tmp_specfile)
 
             # Extract non-patchqueue sources
             with Tarball(args.patchqueue) as tarball:
-                if link.sources is not None:
-                    tarball.extract_dir(link.sources, tmpdir)
-                if link.patches is not None:
-                    tarball.extract_dir(link.patches, tmpdir)
+                if args.link.sources is not None:
+                    for source in spec.local_sources():
+                        path = os.path.join(args.link.sources, source)
+                        tarball.extract(path, tmpdir)
+                if args.link.patches is not None:
+                    for patch in spec.local_patches():
+                        path = os.path.join(args.link.patches, patch)
+                        tarball.extract(path, tmpdir)
 
         sys.exit(rpmbuild(args, tmpdir, tmp_specfile))
 
