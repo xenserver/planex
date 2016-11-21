@@ -30,18 +30,18 @@ class BasicTests(unittest.TestCase):
     def test_archive_root(self):
         assert self.tarball.archive_root == "patchqueue"
 
-    def test_getmembers(self):
+    def test_getnames(self):
         expected = ["test.spec",
                     "SOURCES/test1.source",
                     "SOURCES/test2.source"]
-        actual = [mem.name for mem in self.tarball.getmembers()]
+        actual = self.tarball.getnames()
         self.assertEqual(sorted(expected), sorted(actual))
 
-    def test_getmembers_prefix(self):
+    def test_getnames_prefix(self):
         self.tarball.prefix = "SOURCES"
         expected = ["test1.source",
                     "test2.source"]
-        actual = [mem.name for mem in self.tarball.getmembers()]
+        actual = self.tarball.getnames()
         self.assertEqual(sorted(expected), sorted(actual))
 
     def test_extractfile(self):
@@ -71,28 +71,3 @@ class BasicTests(unittest.TestCase):
             expected = ["test1.source contents\n"]
             actual = output.readlines()
         self.assertEqual(sorted(expected), sorted(actual))
-
-    def test_extract_dir(self):
-        self.tarball.extract_dir("SOURCES", self.tmpdir)
-        expected = {"test1.source": ["test1.source contents\n"],
-                    "test2.source": ["test2.source contents\n"]}
-        actual_dir = os.listdir(self.tmpdir)
-        self.assertEqual(sorted(expected.keys()), sorted(actual_dir))
-
-        for filename in expected.keys():
-            with open(os.path.join(self.tmpdir, filename)) as output:
-                actual = output.readlines()
-                self.assertEqual(actual, expected[filename])
-
-    def test_extract_dir_prefix(self):
-        self.tarball.prefix = "SOURCES"
-        self.tarball.extract_dir("", self.tmpdir)
-        expected = {"test1.source": ["test1.source contents\n"],
-                    "test2.source": ["test2.source contents\n"]}
-        actual_dir = os.listdir(self.tmpdir)
-        self.assertEqual(sorted(expected.keys()), sorted(actual_dir))
-
-        for filename in expected.keys():
-            with open(os.path.join(self.tmpdir, filename)) as output:
-                actual = output.readlines()
-                self.assertEqual(actual, expected[filename])

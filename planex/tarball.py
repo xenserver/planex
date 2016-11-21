@@ -29,17 +29,14 @@ class Tarball(object):
         """
         self.tarfile.close()
 
-    def getmembers(self):
+    def getnames(self):
         """
-        Return a list of members of the tarball
+        Return a list of the names of the files in the tarball
         """
         source_path = os.path.join(self.archive_root, self.prefix)
-        res = []
-        for mem in self.tarfile.getmembers():
-            if mem.isfile() and mem.path.startswith(source_path):
-                mem.path = os.path.relpath(mem.path, source_path)
-                res.append(mem)
-        return res
+        names = [mem.name for mem in self.tarfile.getmembers()
+                 if mem.isfile() and mem.path.startswith(source_path)]
+        return [os.path.relpath(name, source_path) for name in names]
 
     def extractfile(self, source):
         """
@@ -56,25 +53,11 @@ class Tarball(object):
         """
         # Get the TarInfo object representing the file and re-set its
         # name.   Otherwise the file will be written to its full path.
-        if isinstance(source, basestring):
-            source_path = os.path.join(self.archive_root, self.prefix, source)
-            mem = self.tarfile.getmember(source_path)
-        else:
-            mem = source
+        source_path = os.path.join(self.archive_root, self.prefix, source)
+        mem = self.tarfile.getmember(source_path)
         mem.name = os.path.basename(mem.name)
         self.tarfile.extract(mem, destdir)
         os.utime(os.path.join(destdir, mem.name), None)
-
-    def extract_dir(self, sourcedir, destdir):
-        """
-        Extract a whole directory from the tarball, saving it to destdir.
-        """
-        # Get the TarInfo object representing the file and re-set its
-        # name.   Otherwise the file will be written to its full path.
-        members = self.getmembers()
-        for mem in members:
-            if mem.name.startswith(sourcedir):
-                self.extract(mem, destdir)
 
 
 def archive_root(tar):
