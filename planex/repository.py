@@ -172,6 +172,7 @@ class Repository(object):
         path = self.url.path.split('/')
         url = "https://%s/rest/api/1.0/projects/%s/repos/%s/commits/%s" % \
             (self.url.netloc, path[5], path[7], commitish)
+        logging.debug("Fetching SHA1 using " + url)
         api_response = requests.get(url)
         api_response.raise_for_status()
         data = api_response.json()
