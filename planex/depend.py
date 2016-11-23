@@ -140,7 +140,7 @@ def main():
     """
     Entry point
     """
-    # pylint: disable=R0912, R0914, R0915
+    # pylint: disable=R0914, R0915
 
     setup_sigint_handler()
     args = parse_cmdline()
