@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 """
 planex-cache: A caching wrapper around mock for building RPMs
 """
@@ -266,7 +264,3 @@ def _main():
     Entry point for setuptools CLI wrapper
     """
     main(sys.argv[1:])
-
-# Entry point when run directly
-if __name__ == "__main__":
-    _main()

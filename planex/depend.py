@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 """
 planex-depend: Generate Makefile-format dependencies from spec files
 """
@@ -218,7 +216,3 @@ def main():
     print ""
     print "srpms: " + " \\\n\t".join(all_srpms)
     print ""
-
-
-if __name__ == "__main__":
-    main()

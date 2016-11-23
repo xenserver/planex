@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 """
 planex-build-mock: Wrapper around mock
 """
@@ -82,7 +80,3 @@ def _main():
     Entry point for setuptools CLI wrapper
     """
     main(sys.argv[1:])
-
-# Entry point when run directly
-if __name__ == "__main__":
-    _main()
