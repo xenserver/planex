@@ -11,15 +11,15 @@ setup(name='planex',
       package_data={'planex': ['Makefile.rules']},
       entry_points={
           'console_scripts': [
-              'planex-build-mock = planex.mock:_main',
-              'planex-cache = planex.cache:_main',
-              'planex-clone-sources = planex.clonesources:_main',
+              'planex-build-mock = planex.mock:main',
+              'planex-cache = planex.cache:main',
+              'planex-clone-sources = planex.clonesources:main',
               'planex-depend = planex.depend:main',
-              'planex-extract = planex.extract:_main',
-              'planex-fetch = planex.fetch:_main',
-              'planex-init = planex.init:_main',
-              'planex-make-srpm = planex.makesrpm:_main',
+              'planex-extract = planex.extract:main',
+              'planex-fetch = planex.fetch:main',
+              'planex-init = planex.init:main',
+              'planex-make-srpm = planex.makesrpm:main',
               'planex-manifest = planex.manifest:main',
-              'planex-pin = planex.pin:_main'
+              'planex-pin = planex.pin:main'
           ]
       })

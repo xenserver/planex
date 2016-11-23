@@ -73,7 +73,7 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
-def main(argv):
+def main(argv=None):
     """
     Main function.  Check out sources defined in a spec file.
     """
@@ -92,10 +92,3 @@ def main(argv):
             fileh = open(status, 'w')
             fileh.close()
             subprocess.check_call(['guilt', 'push', '--all'], cwd=base_dir)
-
-
-def _main():
-    """
-    Entry point for setuptools CLI wrapper
-    """
-    main(sys.argv[1:])

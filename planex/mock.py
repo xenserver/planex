@@ -55,7 +55,7 @@ def get_command_line(args, defaults):
     return cmd
 
 
-def main(argv):
+def main(argv=None):
     """
     Entry point arguments: srpm0 srpm1 srpm2 ...
     At least one SRPM file (with ".src.rpm" or ".srpm" extension)
@@ -73,10 +73,3 @@ def main(argv):
     cmd = get_command_line(args, defaults)
     return_value = subprocess.call(cmd)
     sys.exit(return_value)
-
-
-def _main():
-    """
-    Entry point for setuptools CLI wrapper
-    """
-    main(sys.argv[1:])

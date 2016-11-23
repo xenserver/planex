@@ -8,7 +8,6 @@ import itertools
 import logging
 import os
 import shutil
-import sys
 import tempfile
 import yum
 
@@ -206,7 +205,7 @@ def build_package(configdir, root, passthrough_args):
     return working_directory
 
 
-def main(argv):
+def main(argv=None):
     """
     Main function.  Parse spec file and iterate over its sources, downloading
     them as appropriate.
@@ -257,10 +256,3 @@ def main(argv):
             shutil.move(os.path.join(build_output, cached_file), resultdir)
     else:
         get_from_cache(cachedirs, pkg_hash, resultdir)
-
-
-def _main():
-    """
-    Entry point for setuptools CLI wrapper
-    """
-    main(sys.argv[1:])

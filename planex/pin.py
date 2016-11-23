@@ -268,7 +268,7 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
-def main(argv):
+def main(argv=None):
     """
     Main function
     """
@@ -276,10 +276,3 @@ def main(argv):
     args = parse_args_or_exit(argv)
     setup_logging(args)
     args.func(args)
-
-
-def _main():
-    """
-    Entry point for setuptools CLI wrapper
-    """
-    main(sys.argv[1:])

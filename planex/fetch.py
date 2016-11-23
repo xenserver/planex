@@ -254,7 +254,7 @@ def fetch_via_link(args):
                  (sys.argv[0], exn.strerror, exn.filename))
 
 
-def main(argv):
+def main(argv=None):
     """
     Main function.  Fetch sources directly or via a link file.
     """
@@ -269,10 +269,3 @@ def main(argv):
     else:
         sys.exit("%s: Unsupported file type: %s" % (sys.argv[0],
                                                     args.spec_or_link))
-
-
-def _main():
-    """
-    Entry point for setuptools CLI wrapper
-    """
-    main(sys.argv[1:])

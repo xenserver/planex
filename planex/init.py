@@ -76,7 +76,7 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
-def main(argv):
+def main(argv=None):
     """
     Main entry point.
      * If run without arguments, create or update the Makefile in the
@@ -92,10 +92,3 @@ def main(argv):
         sys.exit(0)
 
     create_makefile()
-
-
-def _main():
-    """
-    Entry point for setuptools CLI wrapper
-    """
-    main(sys.argv[1:])
