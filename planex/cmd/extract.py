@@ -69,7 +69,7 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
-def main(argv):
+def main(argv=None):
     """
     Main function.  Fetch sources directly or via a link file.
     """
@@ -104,15 +104,3 @@ def main(argv):
             if 'branch' in link:
                 spec_fh.write("%%define branch %s\n" % link['branch'])
             copy_spec(args.output + '.tmp', spec_fh)
-
-
-def _main():
-    """
-    Entry point for setuptools CLI wrapper
-    """
-    main(sys.argv[1:])
-
-
-# Entry point when run directly
-if __name__ == "__main__":
-    _main()

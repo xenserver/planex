@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Creates or regenerates a Makefile with special planex-init comments
 """
@@ -21,7 +19,7 @@ def print_rules_path():
     Print the path to Makefile.rules, which is installed in the Python
     package directory.
     """
-    print resource_filename(__name__, "Makefile.rules")
+    print resource_filename("planex", "Makefile.rules")
 
 
 def create_makefile():
@@ -78,7 +76,7 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
-def main(argv):
+def main(argv=None):
     """
     Main entry point.
      * If run without arguments, create or update the Makefile in the
@@ -94,15 +92,3 @@ def main(argv):
         sys.exit(0)
 
     create_makefile()
-
-
-def _main():
-    """
-    Entry point for setuptools CLI wrapper
-    """
-    main(sys.argv[1:])
-
-
-# Entry point when run directly
-if __name__ == "__main__":
-    _main()

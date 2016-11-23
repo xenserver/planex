@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 """
 planex-depend: Generate Makefile-format dependencies from spec files
 """
@@ -13,7 +11,7 @@ import urlparse
 import argcomplete
 from planex.util import add_common_parser_options
 from planex.util import setup_sigint_handler
-from planex import manifest
+from planex.cmd import manifest
 import planex.spec as pkg
 
 
@@ -105,7 +103,7 @@ def buildrequires_for_rpm(spec, provides_to_rpm):
             print "%s: %s" % (rpmpath, buildreqrpm)
 
 
-def parse_cmdline():
+def parse_args_or_exit(argv=None):
     """
     Parse command line options
     """
@@ -126,7 +124,7 @@ def parse_cmdline():
         "-D", "--define", default=[], action="append",
         help="--define='MACRO EXPR' define MACRO with value EXPR")
     argcomplete.autocomplete(parser)
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def pkgname(path):
@@ -136,14 +134,14 @@ def pkgname(path):
     return os.path.splitext(os.path.basename(path))[0]
 
 
-def main():
+def main(argv=None):
     """
     Entry point
     """
-    # pylint: disable=R0912, R0914, R0915
+    # pylint: disable=R0914, R0915
 
     setup_sigint_handler()
-    args = parse_cmdline()
+    args = parse_args_or_exit(argv)
     specs = {}
 
     print "# -*- makefile -*-"
@@ -218,7 +216,3 @@ def main():
     print ""
     print "srpms: " + " \\\n\t".join(all_srpms)
     print ""
-
-
-if __name__ == "__main__":
-    main()

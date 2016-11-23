@@ -1,3 +1,3 @@
 """
-planex: Tools for building RPM and Deb packages
+planex: Classes for building RPM packages
 """

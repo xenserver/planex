@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Library of generic functions used by other planex components
 """

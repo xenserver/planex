@@ -3,7 +3,7 @@ import unittest
 import mock
 
 import planex.spec
-import planex.manifest
+import planex.cmd.manifest
 
 
 class BasicTests(unittest.TestCase):
@@ -50,7 +50,7 @@ class BasicTests(unittest.TestCase):
 
         mock_git_ls_remote.return_value = self.git_ls_remote_out[self.name_1]
 
-        manifest = planex.manifest.generate_manifest(
+        manifest = planex.cmd.manifest.generate_manifest(
             self.spec[self.name_1],
             self.link[self.name_1]
         )
@@ -63,7 +63,7 @@ class BasicTests(unittest.TestCase):
 
         mock_git_ls_remote.return_value = self.git_ls_remote_out[self.name_2]
 
-        manifest = planex.manifest.generate_manifest(
+        manifest = planex.cmd.manifest.generate_manifest(
             self.spec[self.name_2],
             self.link[self.name_2]
         )
@@ -76,7 +76,7 @@ class BasicTests(unittest.TestCase):
 
         mock_git_ls_remote.side_effect = self.git_ls_remote_out[self.name_3]
 
-        manifest = planex.manifest.generate_manifest(
+        manifest = planex.cmd.manifest.generate_manifest(
             self.spec[self.name_3],
             self.link[self.name_3]
         )

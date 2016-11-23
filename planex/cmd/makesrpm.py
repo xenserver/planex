@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 """
 planex-make-srpm: Wrapper around rpmbuild
 """
@@ -21,7 +19,7 @@ from planex.tarball import extract_topdir
 from planex.tarball import Tarball
 
 
-def parse_args_or_exit(argv):
+def parse_args_or_exit(argv=None):
     """
     Parse command line options
     """
@@ -111,10 +109,12 @@ def populate_working_directory(tmpdir, spec, link, sources, patchqueue):
     return tmp_specfile
 
 
-def main(argv):
+def main(argv=None):
     """
     Entry point
     """
+    if argv is None:
+        argv = sys.argv[1:]
 
     args = parse_args_or_exit(argv)
     tmpdir = tempfile.mkdtemp()
@@ -134,14 +134,3 @@ def main(argv):
             print "Working directory retained at %s" % tmpdir
         else:
             shutil.rmtree(tmpdir)
-
-
-def _main():
-    """
-    Entry point for setuptools CLI wrapper
-    """
-    main(sys.argv[1:])
-
-# Entry point when run directly
-if __name__ == "__main__":
-    _main()
