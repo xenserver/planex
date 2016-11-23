@@ -3,17 +3,16 @@ planex-clone-sources: Checkout sources referred to by a spec (and link) file
 """
 
 import argparse
-import json
 import os
 import os.path
 import subprocess
-import sys
 import urlparse
 
 import argcomplete
 
 import planex.repository
 import planex.spec
+from planex.link import Link
 from planex.util import add_common_parser_options
 from planex.util import setup_sigint_handler
 
@@ -22,16 +21,9 @@ def checkout_patchqueue(topdir, linkname, dryrun):
     """
     Clone a patchqueue repository referred to in the link URL
     """
-    try:
-        with open(linkname) as fileh:
-            link = json.load(fileh)
+    link = Link(linkname)
 
-    except IOError as exn:
-        # IO error loading JSON file
-        sys.exit("%s: %s: %s" %
-                 (sys.argv[0], exn.strerror, exn.filename))
-
-    repo = planex.repository.Repository(link['URL'])
+    repo = planex.repository.Repository(link.url)
     if dryrun:
         print repo
     else:
