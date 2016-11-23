@@ -11,7 +11,7 @@ import urlparse
 import argcomplete
 from planex.util import add_common_parser_options
 from planex.util import setup_sigint_handler
-from planex import manifest
+from planex.cmd import manifest
 import planex.spec as pkg
 
 

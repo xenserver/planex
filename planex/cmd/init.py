@@ -19,7 +19,7 @@ def print_rules_path():
     Print the path to Makefile.rules, which is installed in the Python
     package directory.
     """
-    print resource_filename(__name__, "Makefile.rules")
+    print resource_filename("planex", "Makefile.rules")
 
 
 def create_makefile():

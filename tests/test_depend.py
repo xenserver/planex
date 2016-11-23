@@ -8,7 +8,7 @@ import sys
 import unittest
 
 import planex.spec
-import planex.depend
+import planex.cmd.depend
 
 
 class BasicTests(unittest.TestCase):
@@ -22,7 +22,7 @@ class BasicTests(unittest.TestCase):
                                      defines=rpm_defines)
 
     def test_build_srpm_from_spec(self):
-        planex.depend.build_srpm_from_spec(self.spec)
+        planex.cmd.depend.build_srpm_from_spec(self.spec)
 
         self.assertEqual(
             sys.stdout.getvalue(),
@@ -42,7 +42,7 @@ class BasicTests(unittest.TestCase):
             "SOURCES/ocaml-cohttp/cohttp1.patch\n")
 
     def test_download_rpm_sources(self):
-        planex.depend.download_rpm_sources(self.spec)
+        planex.cmd.depend.download_rpm_sources(self.spec)
 
         self.assertEqual(
             sys.stdout.getvalue(),
@@ -50,7 +50,7 @@ class BasicTests(unittest.TestCase):
             "tests/data/ocaml-cohttp.spec\n")
 
     def test_build_rpm_from_srpm(self):
-        planex.depend.build_rpm_from_srpm(self.spec)
+        planex.cmd.depend.build_rpm_from_srpm(self.spec)
 
         self.assertEqual(
             sys.stdout.getvalue(),
@@ -66,8 +66,8 @@ class BasicTests(unittest.TestCase):
         specs = [planex.spec.Spec(spec_path, defines=[('dist', '.el6')])
                  for spec_path in spec_paths]
 
-        planex.depend.buildrequires_for_rpm(
-            self.spec, planex.depend.package_to_rpm_map(specs))
+        planex.cmd.depend.buildrequires_for_rpm(
+            self.spec, planex.cmd.depend.package_to_rpm_map(specs))
 
         self.assertEqual(
             sys.stdout.getvalue(),

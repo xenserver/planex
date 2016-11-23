@@ -6,20 +6,20 @@ from setuptools import setup
 
 setup(name='planex',
       version='0.11.0',
-      packages=['planex'],
+      packages=['planex', 'planex.cmd'],
       include_package_data=True,
       package_data={'planex': ['Makefile.rules']},
       entry_points={
           'console_scripts': [
-              'planex-build-mock = planex.mock:main',
-              'planex-cache = planex.cache:main',
-              'planex-clone-sources = planex.clonesources:main',
-              'planex-depend = planex.depend:main',
-              'planex-extract = planex.extract:main',
-              'planex-fetch = planex.fetch:main',
-              'planex-init = planex.init:main',
-              'planex-make-srpm = planex.makesrpm:main',
-              'planex-manifest = planex.manifest:main',
-              'planex-pin = planex.pin:main'
+              'planex-build-mock = planex.cmd.mock:main',
+              'planex-cache = planex.cmd.cache:main',
+              'planex-clone-sources = planex.cmd.clonesources:main',
+              'planex-depend = planex.cmd.depend:main',
+              'planex-extract = planex.cmd.extract:main',
+              'planex-fetch = planex.cmd.fetch:main',
+              'planex-init = planex.cmd.init:main',
+              'planex-make-srpm = planex.cmd.makesrpm:main',
+              'planex-manifest = planex.cmd.manifest:main',
+              'planex-pin = planex.cmd.pin:main'
           ]
       })
