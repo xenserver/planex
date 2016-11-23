@@ -103,7 +103,7 @@ def buildrequires_for_rpm(spec, provides_to_rpm):
             print "%s: %s" % (rpmpath, buildreqrpm)
 
 
-def parse_cmdline():
+def parse_args_or_exit(argv=None):
     """
     Parse command line options
     """
@@ -124,7 +124,7 @@ def parse_cmdline():
         "-D", "--define", default=[], action="append",
         help="--define='MACRO EXPR' define MACRO with value EXPR")
     argcomplete.autocomplete(parser)
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def pkgname(path):
@@ -134,14 +134,14 @@ def pkgname(path):
     return os.path.splitext(os.path.basename(path))[0]
 
 
-def main():
+def main(argv=None):
     """
     Entry point
     """
     # pylint: disable=R0914, R0915
 
     setup_sigint_handler()
-    args = parse_cmdline()
+    args = parse_args_or_exit(argv)
     specs = {}
 
     print "# -*- makefile -*-"

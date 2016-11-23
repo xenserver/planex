@@ -19,7 +19,7 @@ from planex.tarball import extract_topdir
 from planex.tarball import Tarball
 
 
-def parse_args_or_exit(argv):
+def parse_args_or_exit(argv=None):
     """
     Parse command line options
     """

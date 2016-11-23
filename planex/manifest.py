@@ -14,7 +14,7 @@ from planex.spec import Spec
 from planex.repository import Repository
 
 
-def parse_cmdline():
+def parse_args_or_exit(argv=None):
     """Parse command line options"""
 
     parser = argparse.ArgumentParser(
@@ -38,7 +38,7 @@ def parse_cmdline():
     )
 
     argcomplete.autocomplete(parser)
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def get_path(package_name):
@@ -102,10 +102,10 @@ def generate_manifest(spec, link=None):
     return manifest
 
 
-def main():
+def main(argv=None):
     """Entry point."""
 
-    args = parse_cmdline()
+    args = parse_args_or_exit(argv)
     setup_logging(args)
 
     spec = Spec(args.specfile_path)

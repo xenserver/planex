@@ -11,7 +11,7 @@ import argcomplete
 from planex.util import add_common_parser_options
 
 
-def parse_args_or_exit(argv):
+def parse_args_or_exit(argv=None):
     """
     Parse command line options
     """
