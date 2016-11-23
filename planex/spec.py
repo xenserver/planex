@@ -258,5 +258,12 @@ class Spec(object):
 
     def local_sources(self):
         """List all local sources defined in the spec file"""
-        return [url.path for (_, url) in self.all_sources()
-                if url.netloc == '']
+        patch_urls = [urlparse.urlparse(url) for (url, _, sourcetype)
+                      in self.spec.sources if sourcetype == 1]
+        return [url.path for url in patch_urls if url.netloc == '']
+
+    def local_patches(self):
+        """List all local patches defined in the spec file"""
+        patch_urls = [urlparse.urlparse(url) for (url, _, sourcetype)
+                      in self.spec.sources if sourcetype == 2]
+        return [url.path for url in patch_urls if url.netloc == '']

@@ -9,6 +9,9 @@ Group:          Development/Libraries
 URL:            https://github.com/mirage/ocaml-cohttp
 Source0:        https://github.com/mirage/%{name}/archive/%{name}-%{version}/%{name}-%{version}.tar.gz
 Source1:        ocaml-cohttp-init
+Source2:        ocaml-cohttp-service
+Patch0:         cohttp0.patch
+Patch1:         cohttp1.patch
 BuildRequires:  ocaml ocaml-findlib ocaml-re-devel ocaml-uri-devel ocaml-cstruct-devel ocaml-lwt-devel ocaml-ounit-devel ocaml-ocamldoc ocaml-camlp4-devel
 # should these be inherited from ssl.spec somehow?
 BuildRequires:  openssl openssl-devel
