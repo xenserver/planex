@@ -79,8 +79,8 @@ $(TOPDIR):
 
 # Placeholder
 $(TOPDIR)/SPECS/%.spec: SPECS/%.spec
-	@mkdir -p $(dir $@)
-	@cp -lf $^ $@
+	$(AT) mkdir -p $(dir $@)
+	$(AT) cp -lf $< $@
 
 
 ############################################################################
