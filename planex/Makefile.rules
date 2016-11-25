@@ -6,6 +6,7 @@
 DIST ?= .el6
 TOPDIR ?= _build
 DEPS = $(TOPDIR)/deps
+PINSDIR = PINS
 RPM_DEFINES ?= --define="_topdir $(TOPDIR)" \
                --define="dist $(DIST)" \
                $(RPM_EXTRA_DEFINES)
@@ -33,10 +34,13 @@ MOCK_FLAGS ?= ${QUIET+--quiet} \
               --resultdir=$(dir $@)
 
 DEPEND ?= planex-depend
-DEPEND_FLAGS ?= $(RPM_DEFINES) $(DEPEND_EXTRA_FLAGS)
+DEPEND_FLAGS ?= $(RPM_DEFINES) --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
 
 MANIFEST ?= planex-manifest
 MANIFEST_FLAGS ?=
+
+PATCHQUEUE ?= planex-patchqueue
+PATCHQUEUE_FLAGS ?=
 
 ifdef QUIET
 AT = @
@@ -101,8 +105,12 @@ MANIFESTS/%.json:
 # Fetch a patch tarball listed in a link file.
 .PRECIOUS: $(TOPDIR)/SOURCES/%/patches.tar
 $(TOPDIR)/SOURCES/%/patches.tar: SPECS/%.lnk
+	@echo [FETCH] $@
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
+$(TOPDIR)/SOURCES/%/patches.tar: PINS/%.pin SPECS/%.spec
+	@echo [PATCHQUEUE] $@
+	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
 
 ############################################################################
 # Patch extraction rules
