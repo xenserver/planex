@@ -38,7 +38,8 @@ def parse_args_or_exit(argv=None):
     argcomplete.autocomplete(parser)
 
     parsed_args = parser.parse_args(argv)
-    links = [arg for arg in argv if arg.endswith(".lnk")]
+    links = [arg for arg in argv
+             if arg.endswith(".lnk") or arg.endswith(".pin")]
     parsed_args.link = None
     if links:
         parsed_args.link = Link(links[0])
