@@ -29,11 +29,6 @@ def srpmdir():
     return rpm.expandMacro('%_srcrpmdir')
 
 
-def specdir():
-    """Return the expanded value of the RPM %_specrpmdir macro"""
-    return rpm.expandMacro('%_specdir')
-
-
 def flatten(lst):
     """Flatten a list of lists"""
     return sum(lst, [])
@@ -93,12 +88,8 @@ class Spec(object):
         if 'dist' not in self.macros:
             self.macros['dist'] = ""
 
-        hardcoded_macros = OrderedDict([
-            ('_specdir', os.path.dirname(path))
-        ])
-
-        with rpm_macros(append_macros(self.macros, hardcoded_macros)):
-            self.path = os.path.join(specdir(), os.path.basename(path))
+        with rpm_macros(self.macros):
+            self.path = path
             with open(path) as spec:
                 self.spectext = spec.readlines()
 
