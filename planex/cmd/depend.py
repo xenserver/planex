@@ -3,7 +3,6 @@ planex-depend: Generate Makefile-format dependencies from spec files
 """
 
 import argparse
-import glob
 import os
 import sys
 import urlparse
@@ -112,8 +111,6 @@ def parse_args_or_exit(argv=None):
     add_common_parser_options(parser)
     parser.add_argument("specs", metavar="SPEC", nargs="+", help="spec file")
     parser.add_argument(
-        "-P", "--pins-dir", help="Directory containing pin overlays")
-    parser.add_argument(
         "-r", "--repos_path", metavar="DIR", default="repos",
         help='Local path to the repositories')
     parser.add_argument(
@@ -154,16 +151,6 @@ def main(argv=None):
         print "error: malformed macro passed to --define: %r" % _err
         sys.exit(1)
 
-    pins = {}
-    if args.pins_dir:
-        pins_glob = os.path.join(args.pins_dir, "*.spec")
-        pin_paths = glob.glob(pins_glob)
-        for pin_path in pin_paths:
-            spec = pkg.Spec(pin_path,
-                            check_package_name=args.check_package_names,
-                            defines=macros)
-            pins[os.path.basename(pin_path)] = spec
-
     links = {pkgname(lnk): lnk for lnk in args.specs if lnk.endswith(".lnk")}
 
     for spec_path in [spec for spec in args.specs if spec.endswith(".spec")]:
@@ -171,15 +158,8 @@ def main(argv=None):
             spec = pkg.Spec(spec_path,
                             check_package_name=args.check_package_names,
                             defines=macros)
-            pkg_name = spec.name()
-
             spec_name = os.path.basename(spec_path)
-            if spec_name in pins:
-                print "# Pinning '%s' to '%s'" % (pkg_name,
-                                                  pins[spec_name].specpath())
-                specs[spec_name] = pins[spec_name]
-            else:
-                specs[spec_name] = spec
+            specs[spec_name] = spec
 
         except pkg.SpecNameMismatch as exn:
             sys.stderr.write("error: %s\n" % exn.message)

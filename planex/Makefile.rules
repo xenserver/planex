@@ -6,9 +6,6 @@
 DIST ?= .el6
 TOPDIR ?= _build
 DEPS = $(TOPDIR)/deps
-PINSFILE = pins
-PINDEPS = $(TOPDIR)/pindeps
-PINSDIR = $(TOPDIR)/PINS
 RPM_DEFINES ?= --define="_topdir $(TOPDIR)" \
                --define="dist $(DIST)" \
                $(RPM_EXTRA_DEFINES)
@@ -36,7 +33,7 @@ MOCK_FLAGS ?= ${QUIET+--quiet} \
               --resultdir=$(dir $@)
 
 DEPEND ?= planex-depend
-DEPEND_FLAGS ?= $(RPM_DEFINES) --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
+DEPEND_FLAGS ?= $(RPM_DEFINES) $(DEPEND_EXTRA_FLAGS)
 
 MANIFEST ?= planex-manifest
 MANIFEST_FLAGS ?=
@@ -151,21 +148,13 @@ $(TOPDIR)/SPECS/%.spec: SPECS/%.lnk $(TOPDIR)/SOURCES/%/patches.tar
 # Dependency build rules
 ############################################################################
 
-# Generate all the pinning rules
-.DELETE_ON_ERROR: $(PINDEPS)
-$(PINDEPS): $(PINSFILE)
-	@echo Updating pinning rules...
-	$(AT)planex-pin --pins-file $< --pins-dir $(PINSDIR) rules $(DEPS) > $@
-
--include $(PINDEPS)
-
 # Generate dependency rules linking spec files to tarballs, source
 # packages and binary packages.   planex-depend generates rules suitable
 # for RPM or Debian builds depending on the host distribution.
 # If dependency generation fails, the deps file is deleted to avoid
 # problems with empty, incomplete or corrupt deps.   
 .DELETE_ON_ERROR: $(DEPS)
-$(DEPS): $(TOPDIR) $(wildcard $(PINSFILE) $(PINSDIR)/*.spec) \
+$(DEPS): $(TOPDIR) \
 		$(patsubst SPECS/%.spec,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.spec)) \
 		$(patsubst SPECS/%.lnk,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.lnk))
 	@echo Updating dependencies...
