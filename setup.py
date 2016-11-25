@@ -19,6 +19,7 @@ setup(name='planex',
               'planex-fetch = planex.cmd.fetch:main',
               'planex-init = planex.cmd.init:main',
               'planex-make-srpm = planex.cmd.makesrpm:main',
-              'planex-manifest = planex.cmd.manifest:main'
+              'planex-manifest = planex.cmd.manifest:main',
+              'planex-patchqueue = planex.cmd.patchqueue:main'
           ]
       })
