@@ -25,6 +25,9 @@ EXTRACT_FLAGS ?= $(RPM_DEFINES) $(EXTRACT_EXTRA_FLAGS)
 RPMBUILD ?= planex-make-srpm
 RPMBUILD_FLAGS ?= ${QUIET+--quiet} $(RPM_DEFINES)
 
+CREATEREPO ?= createrepo
+CREATEREPO_FLAGS ?= ${QUIET+--quiet}
+
 MOCK ?= planex-build-mock
 MOCK_FLAGS ?= ${QUIET+--quiet} \
               --configdir=mock \
@@ -50,6 +53,7 @@ endif
 .PHONY: all rpms
 
 all: $(TOPDIR) rpms
+	$(AT)$(CREATEREPO) $(CREATEREPO_FLAGS) $(TOPDIR)/RPMS
 
 .PHONY: clean
 clean:
