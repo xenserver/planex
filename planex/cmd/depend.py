@@ -112,8 +112,6 @@ def parse_args_or_exit(argv=None):
     add_common_parser_options(parser)
     parser.add_argument("specs", metavar="SPEC", nargs="+", help="spec file")
     parser.add_argument(
-        "-P", "--pins-dir", help="Directory containing pin overlays")
-    parser.add_argument(
         "-r", "--repos_path", metavar="DIR", default="repos",
         help='Local path to the repositories')
     parser.add_argument(
@@ -123,6 +121,8 @@ def parse_args_or_exit(argv=None):
     parser.add_argument(
         "-D", "--define", default=[], action="append",
         help="--define='MACRO EXPR' define MACRO with value EXPR")
+    parser.add_argument("-P", "--pins-dir", default="PINS",
+                        help="Directory containing pin overlays")
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
@@ -154,15 +154,10 @@ def main(argv=None):
         print "error: malformed macro passed to --define: %r" % _err
         sys.exit(1)
 
-    pins = {}
+    pins = []
     if args.pins_dir:
-        pins_glob = os.path.join(args.pins_dir, "*.spec")
-        pin_paths = glob.glob(pins_glob)
-        for pin_path in pin_paths:
-            spec = pkg.Spec(pin_path,
-                            check_package_name=args.check_package_names,
-                            defines=macros)
-            pins[os.path.basename(pin_path)] = spec
+        pins_glob = os.path.join(args.pins_dir, "*.pin")
+        pins = [pkgname(pin) for pin in glob.glob(pins_glob)]
 
     links = {pkgname(lnk): lnk for lnk in args.specs if lnk.endswith(".lnk")}
 
@@ -171,15 +166,8 @@ def main(argv=None):
             spec = pkg.Spec(spec_path,
                             check_package_name=args.check_package_names,
                             defines=macros)
-            pkg_name = spec.name()
-
             spec_name = os.path.basename(spec_path)
-            if spec_name in pins:
-                print "# Pinning '%s' to '%s'" % (pkg_name,
-                                                  pins[spec_name].specpath())
-                specs[spec_name] = pins[spec_name]
-            else:
-                specs[spec_name] = spec
+            specs[spec_name] = spec
 
         except pkg.SpecNameMismatch as exn:
             sys.stderr.write("error: %s\n" % exn.message)
@@ -190,11 +178,15 @@ def main(argv=None):
     for spec in specs.itervalues():
         create_manifest_deps(spec)
         build_srpm_from_spec(spec, (spec.name() in links))
-        if spec.name() in links:
+        if spec.name() in links or spec.name() in pins:
             srpmpath = spec.source_package_path()
             patchpath = spec.expand_macro("%_sourcedir/patches.tar")
-            linkpath = "SPECS/%s.lnk" % spec.name()
             print '%s: %s' % (srpmpath, patchpath)
+        if spec.name() in pins:
+            pinpath = "PINS/%s.pin" % spec.name()
+            print '%s: %s' % (srpmpath, pinpath)
+        if spec.name() in links:
+            linkpath = "SPECS/%s.lnk" % spec.name()
             print '%s: %s' % (srpmpath, linkpath)
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
