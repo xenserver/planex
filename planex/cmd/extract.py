@@ -3,7 +3,6 @@ planex-extract: Extract files from a tarball as described by a link file
 """
 
 import argparse
-import json
 import logging
 import os
 import os.path
@@ -12,6 +11,7 @@ import tarfile
 
 import argcomplete
 
+from planex.link import Link
 from planex.util import add_common_parser_options
 from planex.util import setup_logging
 from planex.util import setup_sigint_handler
@@ -78,19 +78,12 @@ def main(argv=None):
     args = parse_args_or_exit(argv)
     setup_logging(args)
 
-    try:
-        with open(args.link) as fileh:
-            link = json.load(fileh)
-
-    except IOError as exn:
-        # IO error loading JSON file
-        sys.exit("%s: %s: %s" %
-                 (sys.argv[0], exn.strerror, exn.filename))
+    link = Link(args.link)
 
     # Extract the spec file
     with tarfile.open(args.tarball) as tar:
         tar_root = archive_root(tar)
-        extract_file(tar, os.path.join(tar_root, str(link['specfile'])),
+        extract_file(tar, os.path.join(tar_root, link.specfile),
                      args.output + '.tmp')
 
         macros = [tuple(macro.split(' ', 1)) for macro in args.define]
@@ -101,6 +94,6 @@ def main(argv=None):
             sys.exit(1)
 
         with open(args.output, "w") as spec_fh:
-            if 'branch' in link:
-                spec_fh.write("%%define branch %s\n" % link['branch'])
+            if link.branch is not None:
+                spec_fh.write("%%define branch %s\n" % link.branch)
             copy_spec(args.output + '.tmp', spec_fh)
