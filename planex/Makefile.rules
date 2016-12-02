@@ -104,13 +104,22 @@ MANIFESTS/%.json:
 
 # Fetch a patch tarball listed in a link file.
 .PRECIOUS: $(TOPDIR)/SOURCES/%/patches.tar
+$(TOPDIR)/SOURCES/%/patches.tar: PINS/%.pin SPECS/%.spec
+	@echo [PATCHQUEUE] $@
+	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
+
+$(TOPDIR)/SOURCES/%/patches.tar: PINS/%.pin SPECS/%.lnk
+	@echo [PATCHQUEUE] $@
+	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
+
+$(TOPDIR)/SOURCES/%/patches.tar: PINS/%.pin
+	@echo [PATCHQUEUE] $@
+	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
+
 $(TOPDIR)/SOURCES/%/patches.tar: SPECS/%.lnk
 	@echo [FETCH] $@
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
-$(TOPDIR)/SOURCES/%/patches.tar: PINS/%.pin SPECS/%.spec
-	@echo [PATCHQUEUE] $@
-	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
 
 ############################################################################
 # Patch extraction rules
