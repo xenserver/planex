@@ -49,8 +49,9 @@ def main(argv=None):
     # but the tag name may be slightly different (v1.2.3 rather than 1.2.3)
     # If the link file does not list a spec file, assume that there is one in
     # the usual place
-    spec_path = link.specfile
-    if not spec_path:
+    if link.specfile is not None:
+        spec_path = os.path.join(link.url, ".git/patches", link.specfile)
+    else:
         basename = os.path.splitext(os.path.basename(args.link))[0]
         spec_path = os.path.join("SPECS", "%s.spec" % basename)
     spec = Spec(spec_path)
