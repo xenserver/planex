@@ -32,6 +32,50 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
+def copy_to_tmpdir(tmpdir, source, dest):
+    """
+    Copy source to dest in tmpdir
+    """
+    dest_path = os.path.join(tmpdir, dest)
+    util.makedirs(os.path.dirname(dest_path))
+    shutil.copyfile(source, dest_path)
+
+
+def assemble_patchqueue(tmpdir, link, repo, start_tag, end_tag):
+    """
+    Assemble the contents of the patch queue in a temporary directory
+    """
+    patchqueue = os.path.join(tmpdir, link.patchqueue)
+    os.makedirs(patchqueue)
+    patches = git.format_patch(repo, start_tag, end_tag, patchqueue)
+    with open(os.path.join(patchqueue, "series"), "w") as series:
+        for patch in patches:
+            series.write(os.path.basename(patch) + "\n")
+
+
+def assemble_extra_sources(tmpdir, link, sources, patches):
+    """
+    Assemble the non-patchqueue sources in the working directory.
+    """
+    if link.specfile is not None:
+        source_path = os.path.join(link.url, ".git/patches", link.specfile)
+        copy_to_tmpdir(tmpdir, source_path, link.specfile)
+
+    if link.sources is not None:
+        for source in sources:
+            source_path = os.path.join(link.url, ".git/patches",
+                                       link.sources, source)
+            dest_path = os.path.join(link.sources, source)
+            copy_to_tmpdir(tmpdir, source_path, dest_path)
+
+    if link.patches is not None:
+        for patch in patches:
+            source_path = os.path.join(link.url, ".git/patches",
+                                       link.patches, patch)
+            dest_path = os.path.join(tmpdir, link.patches, patch)
+            copy_to_tmpdir(tmpdir, source_path, dest_path)
+
+
 def main(argv=None):
     """
     Entry point
@@ -63,16 +107,10 @@ def main(argv=None):
             start_tag = "v%s" % start_tag
 
     try:
-        # Assemble the contents of the patch queue in a temporary directory
         tmpdir = tempfile.mkdtemp()
-        patchqueue = os.path.join(tmpdir, link.patchqueue)
-        os.makedirs(patchqueue)
-        patches = git.format_patch(repo, start_tag, end_tag, patchqueue)
-        with open(os.path.join(patchqueue, "series"), "w") as series:
-            for patch in patches:
-                series.write(os.path.basename(patch) + "\n")
-
-        # Archive the assembled patch queue
+        assemble_patchqueue(tmpdir, link, repo, start_tag, end_tag)
+        assemble_extra_sources(tmpdir, link,
+                               spec.local_sources(), spec.local_patches())
         tarball.make(tmpdir, args.tarball)
 
     finally:
