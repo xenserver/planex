@@ -55,9 +55,12 @@ def main(argv=None):
         basename = os.path.splitext(os.path.basename(args.link))[0]
         spec_path = os.path.join("SPECS", "%s.spec" % basename)
     spec = Spec(spec_path)
-    start_tag = spec.version()
-    if start_tag not in git.tags(repo):
-        start_tag = "v%s" % start_tag
+
+    start_tag = link.base_commitish
+    if start_tag is None:
+        start_tag = spec.version()
+        if start_tag not in git.tags(repo):
+            start_tag = "v%s" % start_tag
 
     try:
         # Assemble the contents of the patch queue in a temporary directory
