@@ -42,6 +42,8 @@ def main(argv=None):
     # Repo and ending tag are specified in the link file
     repo = link.url
     end_tag = link.commitish
+    if end_tag is None:
+        end_tag = "HEAD"
 
     # Start tag is based on the version specified in the spec file,
     # but the tag name may be slightly different (v1.2.3 rather than 1.2.3)
