@@ -2,8 +2,9 @@ import json
 import unittest
 import mock
 
-import planex.spec
 import planex.cmd.manifest
+import planex.link
+import planex.spec
 
 
 class BasicTests(unittest.TestCase):
@@ -28,10 +29,12 @@ class BasicTests(unittest.TestCase):
 
         self.link = {}
         self.link[self.name_1] = None
-        with open(path.format(self.name_2, 'lnk')) as fileh:
-            self.link[self.name_2] = json.load(fileh)
-        with open(path.format(self.name_3, 'lnk')) as fileh:
-            self.link[self.name_3] = json.load(fileh)
+        self.link[self.name_2] = planex.link.Link(
+            path.format(self.name_2, 'lnk')
+        )
+        self.link[self.name_3] = planex.link.Link(
+            path.format(self.name_3, 'lnk')
+        )
 
         self.expected_manifest = {}
         with open(path.format(self.name_1, 'json')) as fileh:

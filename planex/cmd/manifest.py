@@ -10,6 +10,7 @@ import argcomplete
 
 from planex.util import add_common_parser_options
 from planex.util import setup_logging
+from planex.link import Link
 from planex.spec import Spec
 from planex.repository import Repository
 
@@ -76,7 +77,7 @@ def generate_manifest(spec, link=None):
     branch = None
 
     if link is not None:
-        branch = link.get('branch')
+        branch = link.branch
 
     manifest = {'spec': {}}
     source_urls = [url for url in spec.source_urls() if '://' in url]
@@ -95,9 +96,9 @@ def generate_manifest(spec, link=None):
         manifest['spec']['source' + str(i)] = {'url': url, 'sha1': sha1}
 
     if link is not None:
-        repo_ref = Repository(link['URL'])
+        repo_ref = Repository(link.url)
         sha1 = repo_ref.sha1
-        manifest['lnk'] = {'url': link['URL'], 'sha1': sha1}
+        manifest['lnk'] = {'url': link.url, 'sha1': sha1}
 
     return manifest
 
@@ -110,11 +111,9 @@ def main(argv=None):
 
     spec = Spec(args.specfile_path)
 
+    link = None
     if args.lnkfile_path is not None:
-        with open(args.lnkfile_path) as link_fh:
-            link = json.load(link_fh)
-    else:
-        link = None
+        link = Link(args.lnkfile_path)
 
     manifest = generate_manifest(spec, link)
     print json.dumps(manifest, indent=4)

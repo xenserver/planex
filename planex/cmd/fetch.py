@@ -3,7 +3,6 @@ planex-fetch: Download sources referred to by a spec file
 """
 
 import argparse
-import json
 import logging
 import os
 import shutil
@@ -14,6 +13,7 @@ import argcomplete
 import pkg_resources
 import pycurl
 
+from planex.link import Link
 from planex.util import add_common_parser_options
 from planex.util import run
 from planex.util import setup_logging
@@ -230,16 +230,9 @@ def fetch_via_link(args):
     """
     Parse link file and download patch tarball.
     """
-    try:
-        with open(args.spec_or_link) as fileh:
-            link = json.load(fileh)
+    link = Link(args.spec_or_link)
 
-    except IOError as exn:
-        # IO error loading JSON file
-        sys.exit("%s: %s: %s" %
-                 (sys.argv[0], exn.strerror, exn.filename))
-
-    url = urlparse.urlparse(str(link['URL']))
+    url = urlparse.urlparse(str(link.url))
     try:
         fetch_http(url, args.sources[0], args.retries + 1)
 
