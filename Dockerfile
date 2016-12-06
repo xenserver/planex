@@ -1,6 +1,11 @@
 FROM centos:7.2.1511
 MAINTAINER Euan Harris <euan.harris@citrix.com>
 
+# Install sudo and preconfigure the sudoers file for the build user
+RUN yum -y install sudo \
+  && echo 'build ALL=(ALL:ALL) NOPASSWD:ALL' >> /etc/sudoers \
+  && sed -i.bak 's/^Defaults.*requiretty//g' /etc/sudoers
+
 # Install basic prerequisites for building planex
 # yum-plugin-ovl works around problems on OverlayFS-backed containers:
 #   https://github.com/docker/docker/issues/10180
