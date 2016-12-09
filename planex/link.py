@@ -49,3 +49,8 @@ class Link(object):
         """Deprecated. Return the branch from which to fetch the patchqueue"""
         warnings.warn("link.branch will be removed")
         return self.link.get('branch', None)
+
+    @property
+    def base_commitish(self):
+        """Return the commitish from which to fetch the patchqueue"""
+        return self.link.get('base_commitish', None)
