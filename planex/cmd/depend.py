@@ -183,7 +183,7 @@ def main(argv=None):
             patchpath = spec.expand_macro("%_sourcedir/patches.tar")
             print '%s: %s' % (srpmpath, patchpath)
         if spec.name() in pins:
-            pinpath = "PINS/%s.pin" % spec.name()
+            pinpath = "%s/%s.pin" % (args.pins_dir, spec.name())
             print '%s: %s' % (srpmpath, pinpath)
         if spec.name() in links:
             linkpath = "SPECS/%s.lnk" % spec.name()
