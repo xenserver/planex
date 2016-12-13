@@ -6,7 +6,7 @@
 DIST ?= .el6
 TOPDIR ?= _build
 DEPS = $(TOPDIR)/deps
-PINSDIR = PINS
+PINSDIR ?= PINS
 RPM_DEFINES ?= --define="_topdir $(TOPDIR)" \
                --define="dist $(DIST)" \
                $(RPM_EXTRA_DEFINES)
@@ -104,15 +104,15 @@ MANIFESTS/%.json:
 
 # Fetch a patch tarball listed in a link file.
 .PRECIOUS: $(TOPDIR)/SOURCES/%/patches.tar
-$(TOPDIR)/SOURCES/%/patches.tar: PINS/%.pin SPECS/%.spec
+$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin SPECS/%.spec
 	@echo [PATCHQUEUE] $@
 	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
 
-$(TOPDIR)/SOURCES/%/patches.tar: PINS/%.pin SPECS/%.lnk
+$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin SPECS/%.lnk
 	@echo [PATCHQUEUE] $@
 	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
 
-$(TOPDIR)/SOURCES/%/patches.tar: PINS/%.pin
+$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin
 	@echo [PATCHQUEUE] $@
 	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
 
