@@ -16,7 +16,8 @@ from planex.util import add_common_parser_options
 
 def infer_current_xenserver_path(repo_name):
     """
-    Very hacky for now, cut the path to xenserver-specs and check the branch name.
+    Very hacky for now, cut the path to xenserver-specs
+    and check the branch name.
     """
 
     cwd = os.getcwd()
@@ -33,7 +34,8 @@ def parse_args_or_exit(argv=None):
     """
 
     parser = argparse.ArgumentParser(
-        description='Create an override file pointing to a repository in xenserver-specs/repos')
+        description="Create an override file pointing to a repository \
+                     in xenserver-specs/repos")
     add_common_parser_options(parser)
     parser.add_argument("reponame", metavar="REPO", help="repository nanme")
     parser.add_argument("branch", metavar="BRANCH", nargs="?",
@@ -49,7 +51,7 @@ def main(argv=None):
 
     args = parse_args_or_exit(argv)
 
-    #TODO: make it customisable
+    # TODO: make it customisable
     xs_path = infer_current_xenserver_path("xenserver-specs")
     xs_branch = current_branch(xs_path)
 

@@ -87,7 +87,8 @@ def current_branch(repo):
     """
     Return the name of the current branch on repo. Requires git 1.7+.
     """
-    return run(["git", "-C", "%s" % repo, "rev-parse", "--abbrev-ref", "HEAD"])['stdout'].strip()
+    return run(["git", "-C", "%s" % repo, "rev-parse",
+                "--abbrev-ref", "HEAD"])['stdout'].strip()
 
 
 def format_patch(repo, startref, endref, target_dir):
