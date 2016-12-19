@@ -87,7 +87,7 @@ def current_branch(repo):
     """
     Return the name of the current branch on repo. Requires git 1.7+.
     """
-    return run(["git", "-C", "%s" % repo, "rev-parse",
+    return run(["git", "--work-tree=%s" % repo, "rev-parse",
                 "--abbrev-ref", "HEAD"])['stdout'].strip()
 
 
