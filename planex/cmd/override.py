@@ -27,19 +27,18 @@ def mkdir_p(path):
             raise exc
 
 
-def infer_current_xenserver_path(repo_name):
+def heuristical_is_spec_repo_root(xs_path):
     """
-    Very hacky for now, cut the path to xenserver-specs
-    and check the branch name.
+    Heuristical check for a spec repository root folder.
+    Looks for the presence of xs_path/.git, xs_path/SPECS and xs_path/mock.
+    Raise and error if any of those is not present.
     """
 
-    cwd = os.getcwd()
-    if repo_name in cwd:
-        path = cwd.split(repo_name)[0]
-        return os.path.normpath("/".join([path, repo_name]))
-
-    raise ValueError("Base repository %s not found in the current path %s"
-                     % (repo_name, cwd))
+    if not (os.path.exists("%s/.git" % xs_path) and
+            os.path.exists("%s/SPECS" % xs_path) and
+            os.path.exists("%s/mock" % xs_path)):
+        raise ValueError("Spec repository not found in the current path: %s"
+                         % xs_path)
 
 
 def is_spec(repo_path, package_name):
@@ -84,17 +83,14 @@ def parse_args_or_exit(argv=None):
 
     parser = argparse.ArgumentParser(
         description="Create an override file pointing to a repository \
-                     in xenserver-specs/repos. The override automatically \
-                     points to the HEAD of the repository.")
+                     in $CWD/repos. The override automatically \
+                     points to the HEAD of the repository. You must run \
+                     this tool from the root of a spec repository.")
     add_common_parser_options(parser)
     parser.add_argument("packages", metavar="PKG", nargs="+",
                         help="package name")
     parser.add_argument("--pinsdir", default="PINS",
                         help="use custom override folder (default to PINS)")
-    parser.add_argument("--baserepo", default="xenserver-specs",
-                        help="use custom base repository, \
-                              its name must be present in the path \
-                              (dafault to xenserver-specs)")
     parser.add_argument("--branch", default=None,
                         help="branch or tag name used for the override \
                               (defaults to HEAD)")
@@ -109,7 +105,9 @@ def main(argv=None):
 
     args = parse_args_or_exit(argv)
 
-    xs_path = infer_current_xenserver_path(args.baserepo)
+    xs_path = os.getcwd()
+    heuristical_is_spec_repo_root(xs_path)
+
     xs_branch = current_branch(xs_path)
     # make it customisable?
     xs_repos = "repos"
