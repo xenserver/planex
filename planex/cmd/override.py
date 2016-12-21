@@ -84,18 +84,21 @@ def parse_args_or_exit(argv=None):
     """
 
     parser = argparse.ArgumentParser(
-        description="Create an override file pointing to a repository \
-                     in $CWD/repos. The override automatically \
-                     points to the HEAD of the repository. You must run \
-                     this tool from the root of a spec repository.")
+        description="Create an override file pointing to a repository "
+                    "in $CWD/repos. The override automatically "
+                    "points to the HEAD of the repository. You must run "
+                    "this tool from the root of a spec repository.")
     add_common_parser_options(parser)
     parser.add_argument("packages", metavar="PKG", nargs="+",
                         help="package name")
     parser.add_argument("--pinsdir", default="PINS",
                         help="use custom override folder (default to PINS)")
     parser.add_argument("--branch", default=None,
-                        help="branch or tag name used for the override \
-                              (defaults to HEAD)")
+                        help="branch or tag name used for the override "
+                             "(defaults to HEAD)")
+    parser.add_argument("--dry-run", dest="dry", action="store_true",
+                        help="perform a dry-run only showing the "
+                             "performed steps")
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
