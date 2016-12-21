@@ -110,6 +110,9 @@ def main(argv=None):
 
     args = parse_args_or_exit(argv)
 
+    if args.dry:
+        print "======= running in dry-run mode ======="
+
     xs_path = os.getcwd()
     heuristic_is_spec_repo_root(xs_path)
 
