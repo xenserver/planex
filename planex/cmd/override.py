@@ -114,19 +114,19 @@ def main(argv=None):
     heuristic_is_spec_repo_root(xs_path)
 
     xs_branch = current_branch(xs_path)
+    package_branch = args.branch if args.branch is not None else "HEAD"
 
     pinfile_dir = "%s/%s/%s" % (xs_path, args.pinsdir, xs_branch)
-    if not os.path.isdir(pinfile_dir):
+    if not args.dry:
         print "Creating overrides directory %s" % pinfile_dir
         mkdir_p(pinfile_dir)
-
-    package_branch = args.branch if args.branch is not None else "HEAD"
 
     for package_name in args.packages:
         pinfile_path, pinfile = make_pin(xs_path, xs_branch, pinfile_dir,
                                          package_name, package_branch)
-        with open(pinfile_path, "w") as pin:
-            json.dump(pinfile, pin)
+        if not args.dry:
+            with open(pinfile_path, "w") as pin:
+                json.dump(pinfile, pin)
 
         print "Override file for %s saved in %s with the following content" % (
             package_name, pinfile_path)
