@@ -3,7 +3,6 @@ planex-override: generate override files pointing at local repos
 in xenserver-specs/repos/
 """
 
-import errno
 import json
 import os
 
@@ -11,20 +10,7 @@ import argparse
 import argcomplete
 
 from planex.git import current_branch
-from planex.util import add_common_parser_options
-
-
-def mkdir_p(path):
-    """
-    Like `mkdir -p path` but does not fail when the path is already present.
-    """
-    try:
-        os.makedirs(path)
-    except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise exc
+from planex.util import add_common_parser_options, makedirs
 
 
 def heuristic_is_spec_repo_root(xs_path):
@@ -122,7 +108,7 @@ def main(argv=None):
     pinfile_dir = "%s/%s/%s" % (xs_path, args.pinsdir, xs_branch)
     if not args.dry:
         print "Creating overrides directory %s" % pinfile_dir
-        mkdir_p(pinfile_dir)
+        makedirs(pinfile_dir)
 
     for package_name in args.packages:
         pinfile_path, pinfile = make_pin(xs_path, xs_branch, pinfile_dir,
