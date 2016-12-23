@@ -64,6 +64,24 @@ def make_pin(xs_path, xs_branch, pinfile_dir, package_name, package_branch):
     return pinfile_path, pinfile
 
 
+def get_branch(branch, xs_path, package_name):
+    """
+    Return branch to use for the override
+    """
+    if branch is not None:
+        return branch
+
+    if is_spec(xs_path, package_name):
+        print "No custom branch specified, defaulting to HEAD for %s" \
+              % package_name
+        return "HEAD"
+
+    # else:
+    print "No custom branch specified, defaulting to guilt/master " \
+        "for %s because a patchqueue has been detected" % package_name
+    return "guilt/master"
+
+
 def parse_args_or_exit(argv=None):
     """
     Parse command line options
@@ -103,7 +121,6 @@ def main(argv=None):
     heuristic_is_spec_repo_root(xs_path)
 
     xs_branch = current_branch(xs_path)
-    package_branch = args.branch if args.branch is not None else "HEAD"
 
     pinfile_dir = "%s/%s/%s" % (xs_path, args.pinsdir, xs_branch)
     if not args.dry:
@@ -111,6 +128,7 @@ def main(argv=None):
         makedirs(pinfile_dir)
 
     for package_name in args.packages:
+        package_branch = get_branch(args.branch, xs_path, package_name)
         pinfile_path, pinfile = make_pin(xs_path, xs_branch, pinfile_dir,
                                          package_name, package_branch)
         if not args.dry:
