@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.11.0
+Version: 0.12.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -19,7 +19,7 @@ Requires: rpm-build
 Requires: yum-plugin-priorities
 
 %description
-Planex is a tool for building RPMs. It manages interdependencies and caching.
+Planex is a tool for building collections of RPMs.
 
 %prep
 %setup -q
@@ -53,6 +53,25 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Tue Dec 13 2016 Euan Harris <euan.harris@citrix.com> - 0.12.0-1
+- Docker: allow passwordless sudo for the build user
+- planex-patchqueue: Add a new utility to create a patchqueue based on
+  a spec file and a locally checked-out Git repository
+- planex-pin has been removed and replaced by planex-patchqueue
+- planex-makesrpm: Do not extract all files in source directories
+- spec: Report local sources and patches separately
+- makesrpm: Extract patches and sources separately
+- Add utility classes for dealing with links, tarballs and patchqueues
+- planex-makesrpm: Require 'patches' to be declared explicitly in
+  link files
+- Tools which accepted the --topdir and --dist arguments now accept
+  rpmbuild-style --define arguments
+- planex-extract: Do not unpack patches or rewrite spec files 
+- planex-makesrpm: Consume the patch queue tarball directly, rather
+  than requiring it to be unpacked
+- Makefile.rules: Don't symlink SOURCES into _build, and keep local
+  and downloaded sources separate
+
 * Thu Nov 10 2016 Euan Harris <euan.harris@citrix.com> - 0.11.0-1
 - planex-clone-sources: Add a tool to check out source repositories
 - planex-manifest: Add a tool to record repository hashes
