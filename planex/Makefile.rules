@@ -64,9 +64,9 @@ $(TOPDIR):
 	@echo -n Populating build directory: $(TOPDIR)...
 	@mkdir -p $(TOPDIR)
 	@mkdir -p SPECS SOURCES
-	@mkdir $(TOPDIR)/RPMS
-	@mkdir $(TOPDIR)/SPECS
-	@mkdir $(TOPDIR)/MANIFESTS
+	@mkdir -p $(TOPDIR)/RPMS
+	@mkdir -p $(TOPDIR)/SPECS
+	@mkdir -p $(TOPDIR)/MANIFESTS
 	@ln -s $(TOPDIR)/RPMS RPMS
 	@ln -s $(TOPDIR)/MANIFESTS MANIFESTS
 	$(AT)$(CREATEREPO) ${QUIET+--quiet} RPMS
