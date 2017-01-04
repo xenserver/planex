@@ -30,7 +30,7 @@ CREATEREPO_FLAGS ?= ${QUIET+--quiet} --update
 
 MOCK ?= planex-build-mock
 MOCK_FLAGS ?= ${QUIET+--quiet} \
-              --configdir=$(TOPDIR)/mock \
+              --configdir=mock \
               --resultdir=$(dir $@)
 
 DEPEND ?= planex-depend
@@ -64,7 +64,6 @@ $(TOPDIR):
 	@echo -n Populating build directory: $(TOPDIR)...
 	@mkdir -p $(TOPDIR)
 	@mkdir -p SPECS SOURCES
-	@ln -s ../mock $(TOPDIR)/mock
 	@mkdir $(TOPDIR)/RPMS
 	@mkdir $(TOPDIR)/SPECS
 	@mkdir $(TOPDIR)/MANIFESTS
