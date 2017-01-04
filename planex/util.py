@@ -11,47 +11,10 @@ import shutil
 import signal
 import subprocess
 import sys
-import tempfile
-import yum
 
 import pkg_resources
 
 import __main__
-
-
-def load_mock_config(cfg):
-    """
-    Load the yum configuration from the mock configuration file
-    Nasty, but this is how mock loads its configuration file...
-    From /usr/sbin/mock
-    """
-
-    import mockbuild.util  # pylint: disable=F0401
-    unpriv_uid = os.getuid()
-    version = 1
-    pkgpythondir = mockbuild.__path__[0]
-    config_opts = mockbuild.util.setup_default_config_opts(
-        unpriv_uid, version, pkgpythondir)
-    config_opts['config_paths'] = []
-    config_opts['config_paths'].append(cfg)
-    execfile(cfg)
-    return config_opts
-
-
-def get_yumbase(config):
-    """
-    Initialise the Yum library and return an object which can be
-    used to query the package database
-    """
-    with tempfile.NamedTemporaryFile() as temp:
-        temp.write(config['yum.conf'])
-        temp.flush()
-
-        yumbase = yum.YumBase()
-        yumbase.repos.disableRepo('*')
-        yumbase.getReposFromConfigFile(temp.name)
-
-    return yumbase
 
 
 def run(cmd, check=True, env=None, inputtext=None, logfiles=None):
