@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.12.0
+Version: 0.13.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -52,7 +52,11 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
-* Tue Dec 13 2016 Euan Harris <euan.harris@citrix.com> - 0.12.0-1
+* Wed Jan 4 2017 Euan Harris <euan.harris@citrix.com> - 0.13.0-1
+- planex-mock: automatically generate loopback repository configuration
+- planex-cache has been removed
+
+* Tue Jan 3 2017 Euan Harris <euan.harris@citrix.com> - 0.12.0-1
 - Docker: allow passwordless sudo for the build user
 - planex-patchqueue: Add a new utility to create a patchqueue based on
   a spec file and a locally checked-out Git repository
