@@ -12,7 +12,6 @@ setup(name='planex',
       entry_points={
           'console_scripts': [
               'planex-build-mock = planex.cmd.mock:main',
-              'planex-cache = planex.cmd.cache:main',
               'planex-clone-sources = planex.cmd.clonesources:main',
               'planex-depend = planex.cmd.depend:main',
               'planex-extract = planex.cmd.extract:main',
