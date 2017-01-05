@@ -204,7 +204,6 @@ def main(argv=None):
         print "%s.srpm: %s" % (spec.name(), spec.source_package_path())
     print ""
 
-    print "rpms: " + " \\\n\t".join(all_rpms)
+    print "RPMS := " + " \\\n\t".join(all_rpms)
     print ""
-    print "srpms: " + " \\\n\t".join(all_srpms)
-    print ""
+    print "SRPMS := " + " \\\n\t".join(all_srpms)
