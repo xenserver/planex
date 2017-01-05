@@ -56,7 +56,7 @@ all: $(TOPDIR) rpms
 
 .PHONY: clean
 clean:
-	rm -rf $(TOPDIR) RPMS
+	rm -rf $(TOPDIR) RPMS MANIFESTS
 
 
 .DELETE_ON_ERROR: $(TOPDIR)
