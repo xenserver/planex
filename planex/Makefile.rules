@@ -58,9 +58,15 @@ endif
 ############################################################################
 
 .PHONY: all rpms
+all: $(TOPDIR) $(RPMS)
 
-all: $(TOPDIR) rpms
+$(TOPDIR)/RPMS/repodata/repomd.xml: $(RPMS)
 	$(AT)$(CREATEREPO) $(CREATEREPO_FLAGS) $(TOPDIR)/RPMS
+
+rpms: $(TOPDIR)/RPMS/repodata/repomd.xml
+
+srpms: $(SRPMS)
+
 
 .PHONY: clean
 clean:
