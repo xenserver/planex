@@ -11,6 +11,13 @@ RPM_DEFINES ?= --define="_topdir $(TOPDIR)" \
                --define="dist $(DIST)" \
                $(RPM_EXTRA_DEFINES)
 
+# Dependencies are not included when we are only cleaning as they may
+# have to be rebuilt and it makes no sense to do that when we know we are
+# going to delete the whole working directory.
+ifneq ($(MAKECMDGOALS),clean)
+include $(DEPS)
+endif
+
 
 ############################################################################
 # Executable names and flags
@@ -168,12 +175,5 @@ $(DEPS): $(TOPDIR) \
 		$(patsubst SPECS/%.lnk,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.lnk))
 	@echo Updating dependencies...
 	$(AT)$(DEPEND) $(DEPEND_FLAGS) SPECS/*.lnk $(TOPDIR)/SPECS/*.spec > $@
-
-# Dependencies are not included when we are only cleaning as they may
-# have to be rebuilt and it makes no sense to do that when we know we are
-# going to delete the whole working directory.
-ifneq ($(MAKECMDGOALS),clean)
-include $(DEPS)
-endif
 
 # vim:ft=make:
