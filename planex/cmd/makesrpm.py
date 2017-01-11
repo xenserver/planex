@@ -118,7 +118,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     args = parse_args_or_exit(argv)
-    tmpdir = tempfile.mkdtemp()
+    tmpdir = tempfile.mkdtemp(prefix="px-srpm-")
 
     try:
         specfile = populate_working_directory(tmpdir, args.spec, args.link,
