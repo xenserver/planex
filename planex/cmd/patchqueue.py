@@ -107,7 +107,7 @@ def main(argv=None):
             start_tag = "v%s" % start_tag
 
     try:
-        tmpdir = tempfile.mkdtemp()
+        tmpdir = tempfile.mkdtemp(prefix="px-pq-")
         assemble_patchqueue(tmpdir, link, repo, start_tag, end_tag)
         assemble_extra_sources(tmpdir, link,
                                spec.local_sources(), spec.local_patches())
