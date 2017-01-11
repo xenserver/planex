@@ -115,7 +115,7 @@ def main(argv=None):
 
     args = parse_args_or_exit(argv)
 
-    tmpdir = tempfile.mkdtemp()
+    tmpdir = tempfile.mkdtemp(prefix="px-mock-")
     try:
         config_in = os.path.join(args.configdir, args.root + ".cfg")
         config_out = os.path.join(tmpdir, args.root + ".cfg")
