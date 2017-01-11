@@ -1,3 +1,6 @@
+0.14.0
+* planex-mock: enable concurrent package builds
+
 0.13.0
 * planex-mock: automatically generate loopback repository
   configuration
