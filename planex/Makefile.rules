@@ -7,6 +7,7 @@ DIST ?= .el6
 TOPDIR ?= _build
 DEPS = $(TOPDIR)/deps
 PINSDIR ?= PINS
+REPOSDIR ?= repos
 RPM_DEFINES ?= --define="_topdir $(TOPDIR)" \
                --define="dist $(DIST)" \
                $(RPM_EXTRA_DEFINES)
@@ -47,7 +48,7 @@ MANIFEST ?= planex-manifest
 MANIFEST_FLAGS ?=
 
 PATCHQUEUE ?= planex-patchqueue
-PATCHQUEUE_FLAGS ?=
+PATCHQUEUE_FLAGS ?= --repos $(REPOSDIR)
 
 ifdef QUIET
 AT = @
