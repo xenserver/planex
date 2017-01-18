@@ -7,6 +7,7 @@ import argparse
 import os
 import shutil
 import tempfile
+from urlparse import urlparse
 
 import argcomplete
 
@@ -26,6 +27,8 @@ def parse_args_or_exit(argv=None):
     util.add_common_parser_options(parser)
     parser.add_argument("link", metavar="LINK", help="link file")
     parser.add_argument("tarball", metavar="TARBALL", help="tarball")
+    parser.add_argument("--repos", default="repos",
+                        help="Local repository directory")
     parser.add_argument("--keeptmp", action="store_true",
                         help="Do not clean up working directory")
     argcomplete.autocomplete(parser)
@@ -88,6 +91,13 @@ def main(argv=None):
     end_tag = link.commitish
     if end_tag is None:
         end_tag = "HEAD"
+
+    # If the repository URL in the link is remote, look for a
+    # local clone in repos (without a .git suffix)
+    url = urlparse(repo)
+    if url.scheme:
+        reponame = os.path.basename(url.path).rsplit(".git")[0]
+        repo = os.path.join(args.repos, reponame)
 
     # Start tag is based on the version specified in the spec file,
     # but the tag name may be slightly different (v1.2.3 rather than 1.2.3)
