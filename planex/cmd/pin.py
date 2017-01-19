@@ -1,6 +1,6 @@
 """
-planex-override: generate override files pointing at local repos
-in xenserver-specs/repos/
+planex-pin: generate pin files pointing at local repos
+in xenserver-specs/repos/ to override the spec/lnk
 """
 
 import json
@@ -66,7 +66,7 @@ def make_pin(xs_path, xs_branch, pinfile_dir, package_name, package_branch):
 
 def get_branch(branch, xs_path, package_name):
     """
-    Return branch to use for the override
+    Return branch to use for the pin
     """
     if branch is not None:
         return branch
@@ -88,18 +88,17 @@ def parse_args_or_exit(argv=None):
     """
 
     parser = argparse.ArgumentParser(
-        description="Create an override file pointing to a repository "
-                    "in $CWD/repos. The override automatically "
-                    "points to the HEAD of the repository. You must run "
+        description="Create a .pin file pointing to a repository "
+                    "in $CWD/repos. You must run "
                     "this tool from the root of a spec repository.")
     add_common_parser_options(parser)
     parser.add_argument("packages", metavar="PKG", nargs="+",
                         help="package name")
     parser.add_argument("--pinsdir", default="PINS",
-                        help="use custom override folder (default to PINS)")
+                        help="use custom pin folder (default to PINS)")
     parser.add_argument("--branch", default=None,
-                        help="branch or tag name used for the override "
-                             "(defaults to HEAD)")
+                        help="branch, hash or tag name to specify "
+                             "the source tree to compile (defaults to HEAD)")
     parser.add_argument("--dry-run", dest="dry", action="store_true",
                         help="perform a dry-run only showing the "
                              "performed steps")
@@ -124,7 +123,7 @@ def main(argv=None):
 
     pinfile_dir = "%s/%s/%s" % (xs_path, args.pinsdir, xs_branch)
     if not args.dry:
-        print "Creating overrides directory %s" % pinfile_dir
+        print "Creating pins directory %s" % pinfile_dir
         makedirs(pinfile_dir)
 
     for package_name in args.packages:
@@ -135,7 +134,7 @@ def main(argv=None):
             with open(pinfile_path, "w") as pin:
                 json.dump(pinfile, pin)
 
-        print "Override file for %s saved in %s with the following content" % (
+        print "Pin file for %s saved in %s with the following content" % (
             package_name, pinfile_path)
         print pinfile
 
