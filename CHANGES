@@ -1,3 +1,8 @@
+0.15.0
+* planex-patchqueue: If a pin specifies a remote URL, look for a local
+  clone of the repository
+* planex-clone: Add utility to clone repositories listed in pin files
+
 0.14.0
 * planex-mock: enable concurrent package builds
 
