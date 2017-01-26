@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.14.0
+Version: 0.15.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -38,6 +38,7 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %doc LICENSE
 %doc CHANGES
 %{_bindir}/planex-build-mock
+%{_bindir}/planex-clone
 %{_bindir}/planex-clone-sources
 %{_bindir}/planex-depend
 %{_bindir}/planex-extract
@@ -52,6 +53,11 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Thu Jan 12 2017 Euan Harris <euan.harris@citrix.com> - 0.15.0-1
+- planex-patchqueue: If a pin specifies a remote URL, look for a local
+  clone of the repository
+- planex-clone: Add utility to clone repositories listed in pin files
+
 * Thu Jan 12 2017 Euan Harris <euan.harris@citrix.com> - 0.14.0-1
 - planex-mock: enable concurrent package builds
 
