@@ -45,6 +45,8 @@ def clone(url, destination, branch="master"):
     """Clone repository"""
     cmd = ['git', 'clone', '--branch', branch, url, destination]
     subprocess.check_call(cmd)
+    cmd = ['git', 'checkout', '-B', branch]
+    subprocess.check_call(cmd, cwd=destination)
 
 
 def main(argv=None):
@@ -66,9 +68,40 @@ def main(argv=None):
                                                credentials=args.credentials)
 
         else:
-            print "Cloning %s" % pin.url
-            util.makedirs(os.path.dirname(checkoutdir))
-            clone(pin.url, checkoutdir, pin.commitish)
+            if pin.base:
+                base_reponame = os.path.basename(pin.base).rsplit(".git")[0]
+                base_checkoutdir = os.path.join(args.repos, base_reponame)
+                print "Cloning %s" % pin.base
+                util.makedirs(os.path.dirname(base_checkoutdir))
+                clone(pin.base, base_checkoutdir, pin.base_commitish)
+
+                print "Cloning %s" % pin.url
+                reponame = os.path.basename(pin.url).rsplit(".git")[0]
+                checkoutdir = os.path.join(args.repos, reponame)
+                clone(pin.url, checkoutdir, pin.commitish)
+
+                # Symlink the patchqueue
+                patch_path = os.path.join(base_checkoutdir, ".git/patches")
+                util.makedirs(patch_path)
+
+                link_path = os.path.relpath(checkoutdir, patch_path)
+
+                os.symlink(os.path.join(link_path, pin.patchqueue),
+                           os.path.join(patch_path, pin.base_commitish))
+
+                # Create empty guilt status for the branch
+                status = os.path.join(patch_path, pin.base_commitish, 'status')
+                fileh = open(status, 'w')
+                fileh.close()
+
+                subprocess.check_call(['guilt', 'push', '--all'],
+                                      cwd=base_checkoutdir)
+
+            else:
+                print "Cloning %s" % pin.url
+                util.makedirs(os.path.dirname(checkoutdir))
+                clone(pin.url, checkoutdir, pin.commitish)
+
 
 if __name__ == "__main__":
     main()

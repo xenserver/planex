@@ -54,3 +54,9 @@ class Link(object):
     def base_commitish(self):
         """Return the commitish from which to fetch the patchqueue"""
         return self.link.get('base_commitish', None)
+
+    @property
+    def base(self):
+        """Return the base repository on top of which to apply the
+           patchqueue"""
+        return self.link.get('base', None)
