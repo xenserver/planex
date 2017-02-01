@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.15.0
+Version: 0.15.1
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -53,6 +53,9 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Wed Feb 1 2017 Euan Harris <euan.harris@citrix.com> - 0.15.1-1
+- git library: Add current_branch function
+
 * Thu Jan 12 2017 Euan Harris <euan.harris@citrix.com> - 0.15.0-1
 - planex-patchqueue: If a pin specifies a remote URL, look for a local
   clone of the repository
