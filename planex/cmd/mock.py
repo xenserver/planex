@@ -37,8 +37,12 @@ def parse_args_or_exit(argv=None):
         "-D", "--define", default=[], action="append",
         help="--define='MACRO EXPR' \
               define MACRO with value EXPR for the build")
-    parser.add_argument('srpms', metavar='SRPM', nargs='+',
-                        help='SRPM to build in the chroot')
+    parser.add_argument(
+        "--init", action="store_true",
+        help="initialize the chroot, do not build anything")
+    parser.add_argument(
+        "--rebuild", metavar="SRPM", nargs="+", dest="srpms",
+        help='rebuild the specified SRPM(s)')
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
@@ -110,18 +114,22 @@ def main(argv=None):
 
     tmpdir = tempfile.mkdtemp(prefix="px-mock-")
     try:
-        config_in = os.path.join(args.configdir, args.root + ".cfg")
-        config_out = os.path.join(tmpdir, args.root + ".cfg")
+        if args.init:
+            mock(args, tmpdir, "--init")
 
-        createrepo(os.path.join(os.getcwd(), "RPMS"), tmpdir, args.quiet)
-
-        insert_loopback_repo(config_in, config_out, tmpdir)
-        shutil.copy2(os.path.join(args.configdir, "logging.ini"),
-                     os.path.join(tmpdir, "logging.ini"))
-        shutil.copy2(os.path.join(args.configdir, "site-defaults.cfg"),
-                     os.path.join(tmpdir, "site-defaults.cfg"))
-
-        mock(args, tmpdir, "--rebuild", *args.srpms)
+        else:
+            config_in = os.path.join(args.configdir, args.root + ".cfg")
+            config_out = os.path.join(tmpdir, args.root + ".cfg")
+    
+            createrepo(os.path.join(os.getcwd(), "RPMS"), tmpdir, args.quiet)
+    
+            insert_loopback_repo(config_in, config_out, tmpdir)
+            shutil.copy2(os.path.join(args.configdir, "logging.ini"),
+                         os.path.join(tmpdir, "logging.ini"))
+            shutil.copy2(os.path.join(args.configdir, "site-defaults.cfg"),
+                         os.path.join(tmpdir, "site-defaults.cfg"))
+    
+            mock(args, tmpdir, "--rebuild", *args.srpms)
 
     except subprocess.CalledProcessError as cpe:
         sys.exit(cpe.returncode)
