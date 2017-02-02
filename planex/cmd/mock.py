@@ -43,7 +43,7 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
-def mock(args, tmp_config_dir, defaults):
+def mock(args, tmp_config_dir, *extra_params):
     """
     Return mock command line and arguments
     """
@@ -61,8 +61,7 @@ def mock(args, tmp_config_dir, defaults):
     for define in args.define:
         cmd += ['--define', define]
 
-    cmd.extend(defaults)
-    cmd.extend(args.srpms)
+    cmd.extend(extra_params)
     subprocess.check_call(cmd)
 
 
@@ -107,10 +106,6 @@ def main(argv=None):
     Entry point
     """
 
-    defaults = [
-        "--rebuild"
-    ]
-
     args = parse_args_or_exit(argv)
 
     tmpdir = tempfile.mkdtemp(prefix="px-mock-")
@@ -126,7 +121,7 @@ def main(argv=None):
         shutil.copy2(os.path.join(args.configdir, "site-defaults.cfg"),
                      os.path.join(tmpdir, "site-defaults.cfg"))
 
-        mock(args, tmpdir, defaults)
+        mock(args, tmpdir, "--rebuild", *args.srpms)
 
     except subprocess.CalledProcessError as cpe:
         sys.exit(cpe.returncode)
