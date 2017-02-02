@@ -49,19 +49,18 @@ def mock(args, tmp_config_dir, defaults):
     """
     cmd = ['mock']
     cmd += ["--uniqueext", uuid4().hex]
+    cmd += ['--configdir', tmp_config_dir]
+
     if args.quiet:
-        cmd.append('--quiet')
-    for define in args.define:
-        cmd.append('--define')
-        cmd.append(define)
-    cmd.append('--configdir')
-    cmd.append(tmp_config_dir)
+        cmd += ['--quiet']
     if args.root is not None:
-        cmd.append('--root')
-        cmd.append(args.root)
+        cmd += ['--root', args.root]
     if args.resultdir is not None:
-        cmd.append("--resultdir")
-        cmd.append(args.resultdir)
+        cmd += ["--resultdir", args.resultdir]
+
+    for define in args.define:
+        cmd += ['--define', define]
+
     cmd.extend(defaults)
     cmd.extend(args.srpms)
     subprocess.check_call(cmd)
@@ -76,7 +75,7 @@ def createrepo(pkg_dir, metadata_dir, quiet=False):
     cmd += ['--outputdir=%s' % metadata_dir]
     cmd += [pkg_dir]
     if quiet:
-        cmd.append('--quiet')
+        cmd += ['--quiet']
     subprocess.check_call(cmd)
 
 
