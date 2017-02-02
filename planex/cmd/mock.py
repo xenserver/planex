@@ -43,7 +43,7 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
-def get_command_line(args, tmp_config_dir, defaults):
+def mock(args, tmp_config_dir, defaults):
     """
     Return mock command line and arguments
     """
@@ -63,7 +63,7 @@ def get_command_line(args, tmp_config_dir, defaults):
         cmd.append(args.resultdir)
     cmd.extend(defaults)
     cmd.extend(args.srpms)
-    return cmd
+    subprocess.check_call(cmd)
 
 
 def createrepo(pkg_dir, metadata_dir, quiet=False):
@@ -76,7 +76,7 @@ def createrepo(pkg_dir, metadata_dir, quiet=False):
     cmd += [pkg_dir]
     if quiet:
         cmd.append('--quiet')
-    return cmd
+    subprocess.check_call(cmd)
 
 
 def insert_loopback_repo(config_in_path, config_out_path, repo_path):
@@ -120,11 +120,7 @@ def main(argv=None):
         config_in = os.path.join(args.configdir, args.root + ".cfg")
         config_out = os.path.join(tmpdir, args.root + ".cfg")
 
-        cmd = createrepo(os.path.join(os.getcwd(), "RPMS"),
-                         tmpdir, args.quiet)
-        return_value = subprocess.call(cmd)
-        if return_value != 0:
-            sys.exit(return_value)
+        createrepo(os.path.join(os.getcwd(), "RPMS"), tmpdir, args.quiet)
 
         insert_loopback_repo(config_in, config_out, tmpdir)
         shutil.copy2(os.path.join(args.configdir, "logging.ini"),
@@ -132,12 +128,13 @@ def main(argv=None):
         shutil.copy2(os.path.join(args.configdir, "site-defaults.cfg"),
                      os.path.join(tmpdir, "site-defaults.cfg"))
 
-        cmd = get_command_line(args, tmpdir, defaults)
-        return_value = subprocess.call(cmd)
+        mock(args, tmpdir, defaults)
+
+    except subprocess.CalledProcessError as cpe:
+        sys.exit(cpe.returncode)
 
     finally:
         if args.keeptmp:
             print "Working directory retained at %s" % tmpdir
         else:
             shutil.rmtree(tmpdir)
-        sys.exit(return_value)
