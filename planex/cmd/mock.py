@@ -48,6 +48,7 @@ def mock(args, tmp_config_dir, defaults):
     Return mock command line and arguments
     """
     cmd = ['mock']
+    cmd += ["--uniqueext", uuid4().hex]
     if args.quiet:
         cmd.append('--quiet')
     for define in args.define:
@@ -108,7 +109,6 @@ def main(argv=None):
     """
 
     defaults = [
-        "--uniqueext", uuid4().hex,
         "--rebuild"
     ]
 
