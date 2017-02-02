@@ -109,7 +109,6 @@ def main(argv=None):
 
     defaults = [
         "--uniqueext", uuid4().hex,
-        "--disable-plugin", "package_state",
         "--rebuild"
     ]
 
