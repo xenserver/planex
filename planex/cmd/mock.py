@@ -71,7 +71,8 @@ def mock(args, tmp_config_dir, *extra_params):
 
 def createrepo(pkg_dir, metadata_dir, quiet=False):
     """
-    Run createrepo
+    Run createrepo.   Repository metadata will be created in
+    metadata_dir/repodata.
     """
     cmd = ['createrepo']
     cmd += ['--baseurl=file://%s' % pkg_dir]
@@ -105,6 +106,18 @@ def insert_loopback_repo(config_in_path, config_out_path, repo_path):
     shutil.copystat(config_in_path, config_out_path)
 
 
+def clone_mock_config(configdir, tmpdir):
+    """
+    Copy mock configuration files into a temporary directory,
+    retaining modification times to prevent the mock chroot
+    cache from being rebuilt.
+    Returns the path to the temporary configuration.
+    """
+    clonedir = os.path.join(tmpdir, "mock")
+    shutil.copytree(configdir, clonedir)
+    return clonedir
+
+
 def main(argv=None):
     """
     Entry point
@@ -113,23 +126,18 @@ def main(argv=None):
     args = parse_args_or_exit(argv)
 
     tmpdir = tempfile.mkdtemp(prefix="px-mock-")
+    config = clone_mock_config(args.configdir, tmpdir)
+
     try:
         if args.init:
-            mock(args, tmpdir, "--init")
+            mock(args, config, "--init")
 
         else:
-            config_in = os.path.join(args.configdir, args.root + ".cfg")
-            config_out = os.path.join(tmpdir, args.root + ".cfg")
-    
+            config_in_path = os.path.join(args.configdir, args.root + ".cfg")
+            config_out_path = os.path.join(config, args.root + ".cfg")
+            insert_loopback_repo(config_in_path, config_out_path, tmpdir)
             createrepo(os.path.join(os.getcwd(), "RPMS"), tmpdir, args.quiet)
-    
-            insert_loopback_repo(config_in, config_out, tmpdir)
-            shutil.copy2(os.path.join(args.configdir, "logging.ini"),
-                         os.path.join(tmpdir, "logging.ini"))
-            shutil.copy2(os.path.join(args.configdir, "site-defaults.cfg"),
-                         os.path.join(tmpdir, "site-defaults.cfg"))
-    
-            mock(args, tmpdir, "--rebuild", *args.srpms)
+            mock(args, config, "--rebuild", *args.srpms)
 
     except subprocess.CalledProcessError as cpe:
         sys.exit(cpe.returncode)
