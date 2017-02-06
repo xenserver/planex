@@ -1,3 +1,6 @@
+0.16.0
+* planex-build-mock: Add --init option to pre-warm root cache
+
 0.15.1
 * git library: Add current_branch function
 
