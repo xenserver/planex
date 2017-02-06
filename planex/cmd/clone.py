@@ -4,7 +4,6 @@ planex-clone: Checkout sources referred to by a pin file
 
 from string import Template
 import argparse
-import glob
 import os
 import subprocess
 
