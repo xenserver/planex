@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.16.0
+Version: 0.16.1
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -53,6 +53,9 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Mon Feb 6 2017 Euan Harris <euan.harris@citrix.com> - 0.16.1-1
+- planex-clone: Allow list of pin files to be empty
+
 * Mon Feb 6 2017 Euan Harris <euan.harris@citrix.com> - 0.16.0-1
 - planex-build-mock: Add --init option to pre-warm root cache
 

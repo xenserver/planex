@@ -1,3 +1,6 @@
+0.16.1
+* planex-clone: Allow list of pin files to be empty
+
 0.16.0
 * planex-build-mock: Add --init option to pre-warm root cache
 
