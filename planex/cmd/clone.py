@@ -4,6 +4,7 @@ planex-clone: Checkout sources referred to by a pin file
 
 from string import Template
 import argparse
+import glob
 import os
 import subprocess
 
@@ -25,11 +26,11 @@ def parse_args_or_exit(argv=None):
     parser.add_argument(
         "-r", "--repos", metavar="DIR", default="repos",
         help='Local path to the repositories')
-    parser.add_argument("pins", metavar="PINS", nargs="+", help="pin file")
+    parser.add_argument("pins", metavar="PINS", nargs="*", help="pin file")
     return parser.parse_args(argv)
 
 
-CHECKOUT_TEMPLATE = Template("""checkout poll: true,
+CHECKOUT_TEMPLATE = Template("""check ut poll: true,
          scm:[$$class: 'GitSCM',
               branches: [[name: '$branch']],
               extensions: [[$$class: 'RelativeTargetDirectory',
