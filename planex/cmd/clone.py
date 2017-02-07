@@ -29,7 +29,7 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
-CHECKOUT_TEMPLATE = Template("""check ut poll: true,
+CHECKOUT_TEMPLATE = Template("""checkout poll: true,
          scm:[$$class: 'GitSCM',
               branches: [[name: '$branch']],
               extensions: [[$$class: 'RelativeTargetDirectory',
