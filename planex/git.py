@@ -58,21 +58,18 @@ def describe(repo, treeish="HEAD"):
     return description[matchlen:].replace('-', '+')
 
 
-def archive(repo, commit_hash, prefix, target_dir):
+def archive(repo, commit_hash, output, prefix=None):
     """
     Archive a git repo at a given commit with a specified version prefix.
-    Returns the path to a tar.gz to be used as a source for building an RPM.
+    Returns the path to an archive to be used as a source for building an RPM.
     """
     dotgitdir = dotgitdir_of_path(repo)
 
-    prefix = "%s-%s" % (os.path.basename(repo), prefix)
-    path = os.path.join(target_dir, "%s.tar" % prefix)
-
-    run(["git", "--git-dir=%s" % dotgitdir, "archive", commit_hash,
-         "--prefix=%s/" % prefix, "-o", path])
-    run(["gzip", "--no-name", "-f", path])
-
-    return path + ".gz"
+    cmd = ["git", "--git-dir=%s" % dotgitdir, "archive", commit_hash,
+           "-o", output]
+    if prefix is not None:
+        cmd += ["--prefix=%s-%s/" % (os.path.basename(repo), prefix)]
+    run(cmd)
 
 
 def tags(repo):

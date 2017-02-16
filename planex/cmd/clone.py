@@ -68,24 +68,21 @@ def main(argv=None):
                                                credentials=args.credentials)
 
         else:
-            if pin.base:
+            print "Cloning %s" % pin.url
+            util.makedirs(os.path.dirname(checkoutdir))
+            clone(pin.url, checkoutdir, pin.commitish)
+
+            if pin.base is not None:
                 base_reponame = os.path.basename(pin.base).rsplit(".git")[0]
                 base_checkoutdir = os.path.join(args.repos, base_reponame)
                 print "Cloning %s" % pin.base
                 util.makedirs(os.path.dirname(base_checkoutdir))
                 clone(pin.base, base_checkoutdir, pin.base_commitish)
 
-                print "Cloning %s" % pin.url
-                reponame = os.path.basename(pin.url).rsplit(".git")[0]
-                checkoutdir = os.path.join(args.repos, reponame)
-                clone(pin.url, checkoutdir, pin.commitish)
-
                 # Symlink the patchqueue
                 patch_path = os.path.join(base_checkoutdir, ".git/patches")
-                util.makedirs(patch_path)
-
                 link_path = os.path.relpath(checkoutdir, patch_path)
-
+                util.makedirs(patch_path)
                 os.symlink(os.path.join(link_path, pin.patchqueue),
                            os.path.join(patch_path, pin.base_commitish))
 
@@ -94,13 +91,9 @@ def main(argv=None):
                 fileh = open(status, 'w')
                 fileh.close()
 
+                # Push patchqueue
                 subprocess.check_call(['guilt', 'push', '--all'],
                                       cwd=base_checkoutdir)
-
-            else:
-                print "Cloning %s" % pin.url
-                util.makedirs(os.path.dirname(checkoutdir))
-                clone(pin.url, checkoutdir, pin.commitish)
 
 
 if __name__ == "__main__":

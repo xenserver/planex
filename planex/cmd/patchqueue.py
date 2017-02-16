@@ -6,6 +6,7 @@ the tag pointed to by a spec file and a Git repository.
 import argparse
 import os
 import shutil
+import sys
 import tempfile
 from urlparse import urlparse
 
@@ -61,20 +62,18 @@ def assemble_extra_sources(tmpdir, link, sources, patches):
     Assemble the non-patchqueue sources in the working directory.
     """
     if link.specfile is not None:
-        source_path = os.path.join(link.url, ".git/patches", link.specfile)
+        source_path = os.path.join(link.url, link.specfile)
         copy_to_tmpdir(tmpdir, source_path, link.specfile)
 
     if link.sources is not None:
         for source in sources:
-            source_path = os.path.join(link.url, ".git/patches",
-                                       link.sources, source)
+            source_path = os.path.join(link.url, link.sources, source)
             dest_path = os.path.join(link.sources, source)
             copy_to_tmpdir(tmpdir, source_path, dest_path)
 
     if link.patches is not None:
         for patch in patches:
-            source_path = os.path.join(link.url, ".git/patches",
-                                       link.patches, patch)
+            source_path = os.path.join(link.url, link.patches, patch)
             dest_path = os.path.join(tmpdir, link.patches, patch)
             copy_to_tmpdir(tmpdir, source_path, dest_path)
 
@@ -99,12 +98,17 @@ def main(argv=None):
         reponame = os.path.basename(url.path).rsplit(".git")[0]
         repo = os.path.join(args.repos, reponame)
 
+    if repo.endswith(".pg"):
+        util.makedirs(os.path.dirname(args.tarball))
+        git.archive(repo, end_tag, args.tarball)
+        sys.exit(0)
+
     # Start tag is based on the version specified in the spec file,
     # but the tag name may be slightly different (v1.2.3 rather than 1.2.3)
     # If the link file does not list a spec file, assume that there is one in
     # the usual place
     if link.specfile is not None:
-        spec_path = os.path.join(link.url, ".git/patches", link.specfile)
+        spec_path = os.path.join(repo, link.specfile)
     else:
         basename = os.path.splitext(os.path.basename(args.link))[0]
         spec_path = os.path.join("SPECS", "%s.spec" % basename)
