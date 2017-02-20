@@ -1,3 +1,6 @@
+0.17.0
+* planex-clone: Add ability to clone repositories with patchqueues
+
 0.16.2
 * planex-clone: Fix typo in Jenkinsfile fragment template
 
