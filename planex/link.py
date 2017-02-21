@@ -3,7 +3,6 @@ Classes for dealing with pin and link files
 """
 
 import json
-import warnings
 
 
 class Link(object):
@@ -43,12 +42,6 @@ class Link(object):
     def patches(self):
         """Return the path to extra patches inside the patchqueue tarball"""
         return self.link.get('patches', None)
-
-    @property
-    def branch(self):
-        """Deprecated. Return the branch from which to fetch the patchqueue"""
-        warnings.warn("link.branch will be removed")
-        return self.link.get('branch', None)
 
     @property
     def base_commitish(self):

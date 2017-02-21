@@ -97,18 +97,11 @@ def generate_manifest(spec, link=None, pin=None):
             }
         }
     """
-    branch = None
-
-    if link is not None:
-        branch = link.branch
 
     manifest = {'spec': {}}
     source_urls = [url for url in spec.source_urls() if '://' in url]
 
     for i, url in enumerate(source_urls):
-        if branch:
-            url = url.replace("%{branch}", branch)
-
         # Sources taken from artifactory do not have SHA1
         if 'repo.citrite.net' not in url:
             repo_ref = Repository(url)

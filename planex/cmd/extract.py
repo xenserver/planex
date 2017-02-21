@@ -43,15 +43,6 @@ def archive_root(tar):
     return ''
 
 
-def copy_spec(spec_in, spec_out):
-    """
-    Copy contents of file named by spec_in to the file handle spec_out
-    """
-    with open(spec_in) as fh_in:
-        for line in fh_in:
-            spec_out.write(line)
-
-
 def parse_args_or_exit(argv=None):
     """
     Parse command line options
@@ -62,9 +53,6 @@ def parse_args_or_exit(argv=None):
     parser.add_argument("-l", "--link", help="Link file")
     parser.add_argument("-o", "--output", metavar="SPEC",
                         help="Output spec file")
-    parser.add_argument("-D", "--define", default=[], action="append",
-                        help="--define='MACRO EXPR' define MACRO with "
-                        "value EXPR")
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
@@ -83,17 +71,4 @@ def main(argv=None):
     # Extract the spec file
     with tarfile.open(args.tarball) as tar:
         tar_root = archive_root(tar)
-        extract_file(tar, os.path.join(tar_root, link.specfile),
-                     args.output + '.tmp')
-
-        macros = [tuple(macro.split(' ', 1)) for macro in args.define]
-
-        if any(len(macro) != 2 for macro in macros):
-            _err = [macro for macro in macros if len(macro) != 2]
-            print "error: malformed macro passed to --define: %r" % _err
-            sys.exit(1)
-
-        with open(args.output, "w") as spec_fh:
-            if link.branch is not None:
-                spec_fh.write("%%define branch %s\n" % link.branch)
-            copy_spec(args.output + '.tmp', spec_fh)
+        extract_file(tar, os.path.join(tar_root, link.specfile), args.output)
