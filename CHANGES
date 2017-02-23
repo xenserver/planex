@@ -1,3 +1,10 @@
+0.18.0
+* planex-clone-sources has been removed and replaced by planex-clone
+* planex-extract: Remove support for heavyweight branches
+* Makefile.rules: It is now possible to override the Mock configuration
+  used to build packages by defining the MOCK_CONFIGDIR and MOCK_ROOT
+  variables
+
 0.17.0
 * planex-clone: Add ability to clone repositories with patchqueues
 
