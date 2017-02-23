@@ -11,6 +11,8 @@ REPOSDIR ?= repos
 RPM_DEFINES ?= --define="_topdir $(TOPDIR)" \
                --define="dist $(DIST)" \
                $(RPM_EXTRA_DEFINES)
+MOCK_CONFIGDIR ?= /etc/mock
+MOCK_ROOT ?= default
 
 # Dependencies are not included when we are only cleaning as they may
 # have to be rebuilt and it makes no sense to do that when we know we are
@@ -38,7 +40,8 @@ CREATEREPO_FLAGS ?= ${QUIET+--quiet}
 
 MOCK ?= planex-build-mock
 MOCK_FLAGS ?= ${QUIET+--quiet} \
-              --configdir=mock \
+              --configdir=$(MOCK_CONFIGDIR) \
+              --root=$(MOCK_ROOT) \
               --resultdir=$(dir $@)
 
 DEPEND ?= planex-depend
