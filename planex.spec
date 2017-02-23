@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.17.0
+Version: 0.18.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -52,6 +52,13 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Thu Feb 23 2017 Euan Harris <euan.harris@citrix.com> - 0.18.0-1
+- planex-clone-sources has been removed and replaced by planex-clone
+- planex-extract: Remove support for heavyweight branches
+- Makefile.rules: It is now possible to override the Mock configuration
+  used to build packages by defining the MOCK_CONFIGDIR and MOCK_ROOT
+  variables
+
 * Mon Feb 20 2017 Euan Harris <euan.harris@citrix.com> - 0.17.0-1
 - planex-clone: Add ability to clone repositories with patchqueues
 
