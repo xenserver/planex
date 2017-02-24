@@ -1,8 +1,12 @@
 before_script:
-  - yum -y install python-pep8 pylint python-nose python-argcomplete
+  - yum -y install python-virtualenv python-rpm
+  - virtualenv --system-site-packages venv
+  - source venv/bin/activate
 
 basic-tests:
   script:
+    - pip install -r requirements.txt
+    - pip install -r test-requirements.txt
     - pep8 --show-source --show-pep8 setup.py planex tests
     - pylint setup.py planex
     - nosetests
