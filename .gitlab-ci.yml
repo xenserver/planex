@@ -1,5 +1,5 @@
 before_script:
-  - yum -y install python-virtualenv python-rpm
+  - yum -y install python-virtualenv python-rpm python-pycurl
   - virtualenv --system-site-packages venv
   - source venv/bin/activate
 
