@@ -9,4 +9,4 @@ basic-tests:
     - pip install -r test-requirements.txt
     - pep8 --show-source --show-pep8 setup.py planex tests
     - pylint setup.py planex
-    - nosetests
+    - nosetests --with-coverage --cover-inclusive
