@@ -7,6 +7,9 @@ addons:
     packages:
     - yum
     - python-rpm
+install:
+  - pip install -r requirements.txt
+  - pip install -r test-requirements.txt
 script: 
   - pep8 --show-source --show-pep8 setup.py planex tests
   - pylint setup.py planex
