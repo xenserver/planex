@@ -13,4 +13,4 @@ install:
 script: 
   - pep8 --show-source --show-pep8 setup.py planex tests
   - pylint setup.py planex
-  - nosetests --verbose
+  - nosetests --verbose --with-coverage --cover-inclusive
