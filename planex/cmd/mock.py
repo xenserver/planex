@@ -51,7 +51,12 @@ def mock(args, tmp_config_dir, *extra_params):
     """
     Return mock command line and arguments
     """
-    cmd = ['mock']
+
+    print "Mock args ar %s" % args
+
+    cmd = []
+    cmd += ['stdbuf', '-o', 'L']
+    cmd += ['mock']
     cmd += ["--uniqueext", uuid4().hex]
     cmd += ['--configdir', tmp_config_dir]
 
