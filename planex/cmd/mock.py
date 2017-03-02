@@ -59,6 +59,7 @@ def mock(args, tmp_config_dir, *extra_params):
     cmd += ['mock']
     cmd += ["--uniqueext", uuid4().hex]
     cmd += ['--configdir', tmp_config_dir]
+    cmd += ['--verbose']
 
     if args.quiet:
         cmd += ['--quiet']
