@@ -52,7 +52,7 @@ def mock(args, tmp_config_dir, *extra_params):
     Return mock command line and arguments
     """
 
-    print "Mock args ar %s" % args
+    print "Mock args are %s" % args
 
     cmd = []
     cmd += ['stdbuf', '-o', 'L']
