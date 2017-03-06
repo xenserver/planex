@@ -100,3 +100,15 @@ def format_patch(repo, startref, endref, target_dir):
     res = run(["git", "--git-dir=%s" % dotgitdir, "format-patch",
                "--no-renames", commit_range, "--output-directory", target_dir])
     return res['stdout'].split()
+
+
+def diff(repo, startref, endref):
+    """
+    Returns the diff between startref and endref as a string.
+    """
+    dotgitdir = dotgitdir_of_path(repo)
+
+    commit_range = "%s..%s" % (startref, endref)
+    res = run(["git", "--git-dir=%s" % dotgitdir, "diff", "--no-renames",
+               startref, endref])
+    return res['stdout']
