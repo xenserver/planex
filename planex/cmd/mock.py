@@ -51,12 +51,15 @@ def mock(args, tmp_config_dir, *extra_params):
     """
     Return mock command line and arguments
     """
+    print "Mock args are %s" % args
     cmd = ['mock']
     cmd += ["--uniqueext", uuid4().hex]
     cmd += ['--configdir', tmp_config_dir]
 
     if args.quiet:
         cmd += ['--quiet']
+    else:
+        cmd += ['--verbose']
     if args.root is not None:
         cmd += ['--root', args.root]
     if args.resultdir is not None:
