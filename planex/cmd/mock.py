@@ -61,8 +61,6 @@ def mock(args, tmp_config_dir, *extra_params):
     cmd += ['--configdir', tmp_config_dir]
     cmd += ['--verbose']
 
-    if args.quiet:
-        cmd += ['--quiet']
     if args.root is not None:
         cmd += ['--root', args.root]
     if args.resultdir is not None:
