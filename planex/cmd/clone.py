@@ -7,6 +7,7 @@ import argparse
 import os
 import subprocess
 
+import git
 from planex.link import Link
 import planex.util as util
 
@@ -41,12 +42,24 @@ CHECKOUT_TEMPLATE = Template("""checkout poll: true,
 """)
 
 
-def clone(url, destination, branch="master"):
+def clone(url, destination, commitish):
     """Clone repository"""
-    cmd = ['git', 'clone', '--branch', branch, url, destination]
-    subprocess.check_call(cmd)
-    cmd = ['git', 'checkout', '-B', branch]
-    subprocess.check_call(cmd, cwd=destination)
+    repo = git.Repo.clone_from(url, destination)
+    if commitish in repo.remotes['origin'].refs:
+        branch_name = commitish
+        commit = repo.remotes['origin'].refs[commitish]
+
+    elif commitish in repo.tags:
+        branch_name = "planex/%s" % commitish
+        commit = repo.refs[commitish]
+
+    else:
+        branch_name = "planex/%s" % commitish[:8]
+        commit = repo.rev_parse(commitish)
+
+    local_branch = repo.create_head(branch_name, commit)
+    local_branch.checkout()
+    return repo
 
 
 def main(argv=None):
@@ -77,19 +90,27 @@ def main(argv=None):
                 base_checkoutdir = os.path.join(args.repos, base_reponame)
                 print "Cloning %s" % pin.base
                 util.makedirs(os.path.dirname(base_checkoutdir))
-                clone(pin.base, base_checkoutdir, pin.base_commitish)
+                base_repo = clone(pin.base, base_checkoutdir,
+                                  pin.base_commitish)
 
-                # Symlink the patchqueue
+                # Symlink the patchqueue repository into .git/patches
                 patch_path = os.path.join(base_checkoutdir, ".git/patches")
-                link_path = os.path.relpath(checkoutdir, patch_path)
-                util.makedirs(patch_path)
-                os.symlink(os.path.join(link_path, pin.patchqueue),
-                           os.path.join(patch_path, pin.base_commitish))
+                link_path = os.path.relpath(checkoutdir,
+                                            os.path.dirname(patch_path))
+                os.symlink(link_path, patch_path)
+
+                # Symlink the patchqueue directory to match the base_repo
+                # branch name as guilt expects
+                patchqueue_path = os.path.join(base_checkoutdir, ".git/patches",
+                                               base_repo.active_branch.name)
+                branch_path = os.path.dirname(base_repo.active_branch.name)
+                util.makedirs(os.path.dirname(patchqueue_path))
+                os.symlink(os.path.relpath(pin.patchqueue, branch_path),
+                           patchqueue_path)
 
                 # Create empty guilt status for the branch
-                status = os.path.join(patch_path, pin.base_commitish, 'status')
-                fileh = open(status, 'w')
-                fileh.close()
+                status = os.path.join(patchqueue_path, 'status')
+                open(status, 'w').close()
 
                 # Push patchqueue
                 subprocess.check_call(['guilt', 'push', '--all'],
