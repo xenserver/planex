@@ -120,7 +120,3 @@ def main(argv=None):
                 # Push patchqueue
                 subprocess.check_call(['guilt', 'push', '--all'],
                                       cwd=base_repo.working_dir)
-
-
-if __name__ == "__main__":
-    main()
