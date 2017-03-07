@@ -31,6 +31,12 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
+def repo_name(url):
+    """Return the base repository name in url.   This is the name of
+       the directory which would be created by `git clone url`"""
+    return basename(url).rsplit(".git")[0]
+
+
 CHECKOUT_TEMPLATE = Template("""checkout poll: true,
          scm:[$$class: 'GitSCM',
               branches: [[name: '$branch']],
@@ -45,6 +51,7 @@ CHECKOUT_TEMPLATE = Template("""checkout poll: true,
 
 def clone_jenkins(url, destination, commitish, credentials):
     """Print Jenkinsfile fragment to clone repository"""
+    destination = join(destination, repo_name(url))
     print CHECKOUT_TEMPLATE.substitute(url=url,
                                        branch=commitish,
                                        checkoutdir=destination,
@@ -53,6 +60,7 @@ def clone_jenkins(url, destination, commitish, credentials):
 
 def clone(url, destination, commitish):
     """Clone repository"""
+    destination = join(destination, repo_name(url))
     repo = git.Repo.clone_from(url, destination)
     if commitish in repo.remotes['origin'].refs:
         branch_name = commitish
@@ -79,34 +87,27 @@ def main(argv=None):
 
     for pinpath in args.pins:
         pin = Link(pinpath)
-        reponame = basename(pin.url).rsplit(".git")[0]
-        checkoutdir = join(args.repos, reponame)
 
         if args.jenkins:
             print 'echo "Cloning %s"' % pin.url
-            clone_jenkins(pin.url, checkoutdir, pin.commitish, args.credentials)
+            clone_jenkins(pin.url, args.repos, pin.commitish, args.credentials)
 
         else:
             print "Cloning %s" % pin.url
-            util.makedirs(dirname(checkoutdir))
-            clone(pin.url, checkoutdir, pin.commitish)
+            util.makedirs(args.repos)
+            pq_repo = clone(pin.url, args.repos, pin.commitish)
 
             if pin.base is not None:
-                base_reponame = basename(pin.base).rsplit(".git")[0]
-                base_checkoutdir = join(args.repos, base_reponame)
                 print "Cloning %s" % pin.base
-                util.makedirs(dirname(base_checkoutdir))
-                base_repo = clone(pin.base, base_checkoutdir,
-                                  pin.base_commitish)
+                base_repo = clone(pin.base, args.repos, pin.base_commitish)
 
                 # Symlink the patchqueue repository into .git/patches
-                patch_path = join(base_checkoutdir, ".git/patches")
-                link_path = relpath(checkoutdir, dirname(patch_path))
-                symlink(link_path, patch_path)
+                link_path = relpath(pq_repo.working_dir, base_repo.git_dir)
+                symlink(link_path, join(base_repo.git_dir, "patches"))
 
                 # Symlink the patchqueue directory to match the base_repo
                 # branch name as guilt expects
-                patchqueue_path = join(base_checkoutdir, ".git/patches",
+                patchqueue_path = join(base_repo.git_dir, "patches",
                                        base_repo.active_branch.name)
                 branch_path = dirname(base_repo.active_branch.name)
                 util.makedirs(dirname(patchqueue_path))
@@ -118,7 +119,7 @@ def main(argv=None):
 
                 # Push patchqueue
                 subprocess.check_call(['guilt', 'push', '--all'],
-                                      cwd=base_checkoutdir)
+                                      cwd=base_repo.working_dir)
 
 
 if __name__ == "__main__":
