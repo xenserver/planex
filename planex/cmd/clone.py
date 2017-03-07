@@ -43,6 +43,14 @@ CHECKOUT_TEMPLATE = Template("""checkout poll: true,
 """)
 
 
+def clone_jenkins(url, destination, commitish, credentials):
+    """Print Jenkinsfile fragment to clone repository"""
+    print CHECKOUT_TEMPLATE.substitute(url=url,
+                                       branch=commitish,
+                                       checkoutdir=destination,
+                                       credentials=credentials)
+
+
 def clone(url, destination, commitish):
     """Clone repository"""
     repo = git.Repo.clone_from(url, destination)
@@ -76,10 +84,7 @@ def main(argv=None):
 
         if args.jenkins:
             print 'echo "Cloning %s"' % pin.url
-            print CHECKOUT_TEMPLATE.substitute(url=pin.url,
-                                               branch=pin.commitish,
-                                               checkoutdir=checkoutdir,
-                                               credentials=args.credentials)
+            clone_jenkins(pin.url, checkoutdir, pin.commitish, args.credentials)
 
         else:
             print "Cloning %s" % pin.url
