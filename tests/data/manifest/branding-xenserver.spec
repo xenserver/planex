@@ -13,7 +13,7 @@ Requires: python
 Files containing platform and product versioning, EULA etc.
 
 %prep
-%autosetup
+%autosetup -p1
 
 %install
 %{__make} -f Citrix/XenServer/Makefile install DESTDIR=%{buildroot}
