@@ -105,4 +105,11 @@ def expand_patchqueue(spec, series):
     """
     patches = list(series)
     patchnum = spec.highest_patch()
+    found_autosetup = False
+    for line in spec.spectext:
+        if line.startswith("%autosetup") and "-p1" in line:
+            found_autosetup = True
+            break
+    if not found_autosetup:
+        raise SpecMissingAutosetup()
     return rewrite_spec(spec, patches, patchnum)
