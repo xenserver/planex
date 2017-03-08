@@ -7,6 +7,11 @@ import re
 import planex.tarball
 
 
+class SpecMissingAutosetup(Exception):
+    """Exception raised if the spec file is missing %autosetup -p1"""
+    pass
+
+
 class Patchqueue(object):
     """Represents a patchqueue archive"""
     def __init__(self, filename, branch="master"):

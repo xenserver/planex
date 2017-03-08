@@ -41,9 +41,16 @@ class BasicTests(unittest.TestCase):
         self.assertIn("patch_with_a_negative_guard", applied)
 
     def test_rewrite_spec(self):
-        spec = Spec("tests/data/ocaml-uri.spec", check_package_name=False)
+        spec = Spec("tests/data/manifest/branding-xenserver.spec",
+                    check_package_name=False)
         patches = ["first.patch", "second.patch", "third.patch"]
         rewritten = planex.patchqueue.expand_patchqueue(spec, patches)
         self.assertIn("Patch0: first.patch\n", rewritten)
         self.assertIn("Patch1: second.patch\n", rewritten)
         self.assertIn("Patch2: third.patch\n", rewritten)
+
+    def test_autosetup_check(self):
+        spec = Spec("tests/data/ocaml-uri.spec", check_package_name=False)
+        patches = ["first.patch"]
+        with self.assertRaises(planex.patchqueue.SpecMissingAutosetup):
+            planex.patchqueue.expand_patchqueue(spec, patches)
