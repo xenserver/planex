@@ -9,12 +9,13 @@ BuildArch: noarch
 BuildRequires: python-setuptools
 Requires: createrepo
 Requires: git
+Requires: GitPython
 Requires: make
 Requires: mock
 Requires: python-argcomplete
 Requires: python-argparse
-Requires: python-setuptools
 Requires: python-requests
+Requires: python-setuptools
 Requires: rpm-build
 Requires: yum-plugin-priorities
 
