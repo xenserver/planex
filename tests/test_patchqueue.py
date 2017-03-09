@@ -49,7 +49,13 @@ class BasicTests(unittest.TestCase):
         self.assertIn("Patch1: second.patch\n", rewritten)
         self.assertIn("Patch2: third.patch\n", rewritten)
 
-    def test_autosetup_check(self):
+    def test_autosetup_present(self):
+        spec = Spec("tests/data/manifest/branding-xenserver.spec",
+                    check_package_name=False)
+        patches = ["first.patch"]
+        planex.patchqueue.expand_patchqueue(spec, patches)
+
+    def test_autosetup_missing(self):
         spec = Spec("tests/data/ocaml-uri.spec", check_package_name=False)
         patches = ["first.patch"]
         with self.assertRaises(planex.patchqueue.SpecMissingAutosetup):
