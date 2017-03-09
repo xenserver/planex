@@ -4,9 +4,11 @@ planex-clone: Checkout sources referred to by a pin file
 
 from string import Template
 import argparse
-import os
+from os import symlink
+from os.path import basename, dirname, join, relpath
 import subprocess
 
+import git
 from planex.link import Link
 import planex.util as util
 
@@ -29,6 +31,12 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
+def repo_name(url):
+    """Return the base repository name in url.   This is the name of
+       the directory which would be created by `git clone url`"""
+    return basename(url).rsplit(".git")[0]
+
+
 CHECKOUT_TEMPLATE = Template("""checkout poll: true,
          scm:[$$class: 'GitSCM',
               branches: [[name: '$branch']],
@@ -41,12 +49,34 @@ CHECKOUT_TEMPLATE = Template("""checkout poll: true,
 """)
 
 
-def clone(url, destination, branch="master"):
+def clone_jenkins(url, destination, commitish, credentials):
+    """Print Jenkinsfile fragment to clone repository"""
+    destination = join(destination, repo_name(url))
+    print CHECKOUT_TEMPLATE.substitute(url=url,
+                                       branch=commitish,
+                                       checkoutdir=destination,
+                                       credentials=credentials)
+
+
+def clone(url, destination, commitish):
     """Clone repository"""
-    cmd = ['git', 'clone', '--branch', branch, url, destination]
-    subprocess.check_call(cmd)
-    cmd = ['git', 'checkout', '-B', branch]
-    subprocess.check_call(cmd, cwd=destination)
+    destination = join(destination, repo_name(url))
+    repo = git.Repo.clone_from(url, destination)
+    if commitish in repo.remotes['origin'].refs:
+        branch_name = commitish
+        commit = repo.remotes['origin'].refs[commitish]
+
+    elif commitish in repo.tags:
+        branch_name = "planex/%s" % commitish
+        commit = repo.refs[commitish]
+
+    else:
+        branch_name = "planex/%s" % commitish[:8]
+        commit = repo.rev_parse(commitish)
+
+    local_branch = repo.create_head(branch_name, commit)
+    local_branch.checkout()
+    return repo
 
 
 def main(argv=None):
@@ -57,44 +87,36 @@ def main(argv=None):
 
     for pinpath in args.pins:
         pin = Link(pinpath)
-        reponame = os.path.basename(pin.url).rsplit(".git")[0]
-        checkoutdir = os.path.join(args.repos, reponame)
 
         if args.jenkins:
             print 'echo "Cloning %s"' % pin.url
-            print CHECKOUT_TEMPLATE.substitute(url=pin.url,
-                                               branch=pin.commitish,
-                                               checkoutdir=checkoutdir,
-                                               credentials=args.credentials)
+            clone_jenkins(pin.url, args.repos, pin.commitish, args.credentials)
 
         else:
             print "Cloning %s" % pin.url
-            util.makedirs(os.path.dirname(checkoutdir))
-            clone(pin.url, checkoutdir, pin.commitish)
+            util.makedirs(args.repos)
+            pq_repo = clone(pin.url, args.repos, pin.commitish)
 
             if pin.base is not None:
-                base_reponame = os.path.basename(pin.base).rsplit(".git")[0]
-                base_checkoutdir = os.path.join(args.repos, base_reponame)
                 print "Cloning %s" % pin.base
-                util.makedirs(os.path.dirname(base_checkoutdir))
-                clone(pin.base, base_checkoutdir, pin.base_commitish)
+                base_repo = clone(pin.base, args.repos, pin.base_commitish)
 
-                # Symlink the patchqueue
-                patch_path = os.path.join(base_checkoutdir, ".git/patches")
-                link_path = os.path.relpath(checkoutdir, patch_path)
-                util.makedirs(patch_path)
-                os.symlink(os.path.join(link_path, pin.patchqueue),
-                           os.path.join(patch_path, pin.base_commitish))
+                # Symlink the patchqueue repository into .git/patches
+                link_path = relpath(pq_repo.working_dir, base_repo.git_dir)
+                symlink(link_path, join(base_repo.git_dir, "patches"))
+
+                # Symlink the patchqueue directory to match the base_repo
+                # branch name as guilt expects
+                patchqueue_path = join(base_repo.git_dir, "patches",
+                                       base_repo.active_branch.name)
+                branch_path = dirname(base_repo.active_branch.name)
+                util.makedirs(dirname(patchqueue_path))
+                symlink(relpath(pin.patchqueue, branch_path), patchqueue_path)
 
                 # Create empty guilt status for the branch
-                status = os.path.join(patch_path, pin.base_commitish, 'status')
-                fileh = open(status, 'w')
-                fileh.close()
+                status = join(patchqueue_path, 'status')
+                open(status, 'w').close()
 
                 # Push patchqueue
                 subprocess.check_call(['guilt', 'push', '--all'],
-                                      cwd=base_checkoutdir)
-
-
-if __name__ == "__main__":
-    main()
+                                      cwd=base_repo.working_dir)
