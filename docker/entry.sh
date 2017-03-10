@@ -18,4 +18,8 @@ useradd build --groups mock,wheel \
               --no-create-home    \
               --non-unique
 
-exec sudo -u build -i SSH_AUTH_SOCK=$SSH_AUTH_SOCK $@
+if [ -z "$1" ]; then
+    exec sudo -u build -i SSH_AUTH_SOCK=$SSH_AUTH_SOCK
+else
+    exec sudo -u build -i SSH_AUTH_SOCK=$SSH_AUTH_SOCK "$@"
+fi
