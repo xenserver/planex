@@ -15,8 +15,6 @@ docker pull $PLANEX_CONTAINER
 docker run \
   --privileged \
   --rm -i -t \
-  -e SSH_AUTH_SOCK \
-  -v $(dirname $SSH_AUTH_SOCK):$(dirname $SSH_AUTH_SOCK) \
   -v ${PWD}/_obj/var/cache/mock:/var/cache/mock \
   -v ${PWD}/_obj/var/cache/yum:/var/cache/yum \
   -v ${PWD}:/build \
