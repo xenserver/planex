@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.18.0
+Version: 0.19.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -53,6 +53,15 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Fri Mar 10 2017 Euan Harris <euan.harris@citrix.com> - 0.19.0-1
+- planex-build-mock: Pass --verbose to mock if --quiet is not supplied
+  so that logs are produced inside docker with concurrent builds which
+  use make's output --output-sync=target option
+- planex-patchqueue: Check that pinned spec file contains the 
+  %autosetup -p1 macro which is needed to apply patch queue
+- planex-clone: Improve handling of pins to branches, tags and commit
+  hashes
+
 * Thu Feb 23 2017 Euan Harris <euan.harris@citrix.com> - 0.18.0-1
 - planex-clone-sources has been removed and replaced by planex-clone
 - planex-extract: Remove support for heavyweight branches
