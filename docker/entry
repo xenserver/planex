@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+
+import os
+import subprocess
+import sys
+
+print "Entering container: %s" % sys.argv
+
+# Create 'build' user in the container to match the owner of the
+# build directory, so that built packages will have the correct
+# owner outside the container.
+
+build_stat = os.stat("/build")
+
+print "Adding group build: %d" % build_stat.st_gid
+subprocess.call(["groupadd", "build",
+                 "--gid", str(build_stat.st_gid),
+                 "--non-unique"])
+
+print "Adding user build: %d" % build_stat.st_uid
+subprocess.call(["useradd", "build",
+                 "--groups", "mock,wheel",
+                 "--home-dir", "/build",
+                 "--uid", str(build_stat.st_uid),
+                 "--gid", str(build_stat.st_gid),
+                 "--no-create-home",
+                 "--non-unique"])
+
+# Become the 'build' user.  If no command argument was provided,
+# start an interactive shell.
+su_cmd = ["su", "-", "build"]
+if len(sys.argv) > 1:
+    su_cmd += ["-c", " ".join(sys.argv[1:])]
+
+print "Becoming build user: %s" % " ".join(su_cmd)
+sys.stdout.flush()
+os.execvp(su_cmd[0], su_cmd)

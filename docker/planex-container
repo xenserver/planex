@@ -18,4 +18,4 @@ docker run \
   -v ${PWD}/_obj/var/cache/mock:/var/cache/mock \
   -v ${PWD}/_obj/var/cache/yum:/var/cache/yum \
   -v ${PWD}:/build \
-  $PLANEX_CONTAINER "$*"
+  $PLANEX_CONTAINER $*

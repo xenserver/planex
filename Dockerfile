@@ -32,5 +32,5 @@ RUN python setup.py build \
   && python setup.py install
 
 WORKDIR /build
-COPY docker/entry.sh /entry.sh
-ENTRYPOINT ["bash", "/entry.sh"]
+COPY docker/entry /entry
+ENTRYPOINT ["/entry"]
