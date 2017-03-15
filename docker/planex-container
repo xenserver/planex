@@ -1,21 +1,32 @@
-#!/bin/sh
+#!/usr/bin/env python
 
-: ${PLANEX_CONTAINER:="xenserver/planex:latest"}
+import os
+import subprocess
+import sys
+
+PLANEX_CONTAINER = os.getenv("PLANEX_CONTAINER", "xenserver/planex:latest")
 
 # _obj is used for the mock cache, so that the chroot does not have to
 # be rebuilt for each run
-mkdir -p _obj/var/cache/mock _obj/var/cache/yum
-chmod +rwx _obj/var/cache/mock _obj/var/cache/yum
+subprocess.call(["mkdir", "-p", "_obj/var/cache/mock"])
+subprocess.call(["mkdir", "-p", "_obj/var/cache/yum"])
+subprocess.call(["chmod", "+rwx", "_obj/var/cache/mock"])
+subprocess.call(["chmod", "+rwx", "_obj/var/cache/yum"])
 
 # Make sure that we have the latest version of the container
-docker pull $PLANEX_CONTAINER
+subprocess.call(["docker", "pull", PLANEX_CONTAINER])
 
-# Run the container, mounting _obj and the current specs 
+# Run the container, mounting _obj and the current specs
 # This should be run from the root of the specfile directory
-docker run \
-  --privileged \
-  --rm -i -t \
-  -v ${PWD}/_obj/var/cache/mock:/var/cache/mock \
-  -v ${PWD}/_obj/var/cache/yum:/var/cache/yum \
-  -v ${PWD}:/build \
-  $PLANEX_CONTAINER $*
+docker_cmd = ["docker", "run",
+              "--privileged",
+              "--rm", "-i", "-t",
+              "-v", "%s/_obj/var/cache/mock:/var/cache/mock" % os.getcwd(),
+              "-v", "%s/_obj/var/cache/yum:/var/cache/yum" % os.getcwd(),
+              "-v", "%s:/build" % os.getcwd(),
+              PLANEX_CONTAINER] # need to add args here
+
+if len(sys.argv) > 1:
+    docker_cmd += sys.argv[1:]
+
+os.execvp(docker_cmd[0], docker_cmd)
