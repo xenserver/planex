@@ -28,10 +28,10 @@ subprocess.call(["useradd", "build",
 
 # Become the 'build' user.  If no command argument was provided,
 # start an interactive shell.
-su_cmd = ["su", "-", "build"]
+sudo_cmd = ["sudo", "-u", "build", "-i"]
 if len(sys.argv) > 1:
-    su_cmd += ["-c", " ".join(sys.argv[1:])]
+    sudo_cmd += [" ".join(sys.argv[1:])]
 
-print "Becoming build user: %s" % " ".join(su_cmd)
+print "Becoming build user: %s" % " ".join(sudo_cmd)
 sys.stdout.flush()
-os.execvp(su_cmd[0], su_cmd)
+os.execvp(sudo_cmd[0], sudo_cmd)
