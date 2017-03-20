@@ -29,6 +29,10 @@ subprocess.call(["useradd", "build",
 # Become the 'build' user.  If no command argument was provided,
 # start an interactive shell.
 sudo_cmd = ["sudo", "-u", "build", "-i"]
+
+if "SSH_AUTH_SOCK" in os.environ:
+    sudo_cmd += ["SSH_AUTH_SOCK=%s" % os.environ["SSH_AUTH_SOCK"]]
+
 if len(sys.argv) > 1:
     sudo_cmd += [" ".join(sys.argv[1:])]
 

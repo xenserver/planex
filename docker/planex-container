@@ -23,8 +23,14 @@ docker_cmd = ["docker", "run",
               "--rm", "-i", "-t",
               "-v", "%s/_obj/var/cache/mock:/var/cache/mock" % os.getcwd(),
               "-v", "%s/_obj/var/cache/yum:/var/cache/yum" % os.getcwd(),
-              "-v", "%s:/build" % os.getcwd(),
-              PLANEX_CONTAINER] # need to add args here
+              "-v", "%s:/build" % os.getcwd()]
+
+if "SSH_AUTH_SOCK" in os.environ:
+    docker_cmd += ["-e", "SSH_AUTH_SOCK"]
+    docker_cmd += ["-v", "%s:%s" % (os.environ["SSH_AUTH_SOCK"],
+                                    os.environ["SSH_AUTH_SOCK"])]
+
+docker_cmd += [PLANEX_CONTAINER]
 
 if len(sys.argv) > 1:
     docker_cmd += sys.argv[1:]
