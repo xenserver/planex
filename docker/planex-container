@@ -27,8 +27,7 @@ docker_cmd = ["docker", "run",
 
 if "SSH_AUTH_SOCK" in os.environ:
     docker_cmd += ["-e", "SSH_AUTH_SOCK"]
-    docker_cmd += ["-v", "%s:%s" % (os.environ["SSH_AUTH_SOCK"],
-                                    os.environ["SSH_AUTH_SOCK"])]
+    docker_cmd += ["-v", "{SSH_AUTH_SOCK}:{SSH_AUTH_SOCK}".format(**os.environ)]
 
 docker_cmd += [PLANEX_CONTAINER]
 
