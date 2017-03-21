@@ -34,7 +34,7 @@ if "SSH_AUTH_SOCK" in os.environ:
     sudo_cmd += ["SSH_AUTH_SOCK=%s" % os.environ["SSH_AUTH_SOCK"]]
 
 if len(sys.argv) > 1:
-    sudo_cmd += [" ".join(sys.argv[1:])]
+    sudo_cmd += sys.argv[1:]
 
 print "Becoming build user: %s" % " ".join(sudo_cmd)
 sys.stdout.flush()
