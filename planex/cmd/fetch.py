@@ -72,8 +72,13 @@ def make_dir(path):
     """
     Ensure that path exists
     """
-    if not os.path.isdir(path):
+    try:
         os.makedirs(path)
+    except OSError:
+        # The path may exist. Check that is exists and is actually a dir and
+        # not some other type.
+        if not os.path.isdir(path):
+            raise
 
 
 def best_effort_file_verify(path):
