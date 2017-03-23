@@ -121,8 +121,13 @@ def parse_args_or_exit(argv=None):
     parser.add_argument(
         "-D", "--define", default=[], action="append",
         help="--define='MACRO EXPR' define MACRO with value EXPR")
-    parser.add_argument("-P", "--pins-dir", default="PINS",
-                        help="Directory containing pin overlays")
+    parser.add_argument(
+        "-P", "--pins-dir", default="PINS",
+        help="Directory containing pin overlays")
+    parser.add_argument(
+        "--no-buildrequires", dest="buildrequires",
+        action="store_false", default=True,
+        help="Don't generate dependency rules for BuildRequires")
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
@@ -190,7 +195,8 @@ def main(argv=None):
             print '%s: %s' % (srpmpath, linkpath)
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
-        buildrequires_for_rpm(spec, provides_to_rpm)
+        if args.buildrequires:
+            buildrequires_for_rpm(spec, provides_to_rpm)
         print ""
 
     # Generate targets to build all srpms and all rpms
