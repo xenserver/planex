@@ -43,6 +43,9 @@ def parse_args_or_exit(argv=None):
     parser.add_argument(
         "--rebuild", metavar="SRPM", nargs="+", dest="srpms",
         help='rebuild the specified SRPM(s)')
+    parser.add_argument(
+        "--loopback-config-extra", action='append', default=[],
+        help='add extra lines to the loopback repo stanza')
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
@@ -86,7 +89,11 @@ def createrepo(pkg_dir, metadata_dir, quiet=False):
     subprocess.check_call(cmd)
 
 
-def insert_loopback_repo(config_in_path, config_out_path, repo_path):
+def insert_loopback_repo(
+        config_in_path,
+        config_out_path,
+        repo_path,
+        extra_conf_list):
     """
     Write a new mock config, including a loopback repository configuration
     pointing to repo_path.    Ensure that the new config file's last-modified
@@ -105,6 +112,8 @@ def insert_loopback_repo(config_in_path, config_out_path, repo_path):
                     config_out.write("priority=1\n")
                     config_out.write("enabled=1\n")
                     config_out.write("metadata_expire=0\n")
+                    for conf_line in extra_conf_list:
+                        config_out.write(conf_line + '\n')
                     config_out.write("\n")
     shutil.copystat(config_in_path, config_out_path)
 
@@ -138,7 +147,11 @@ def main(argv=None):
         else:
             config_in_path = os.path.join(args.configdir, args.root + ".cfg")
             config_out_path = os.path.join(config, args.root + ".cfg")
-            insert_loopback_repo(config_in_path, config_out_path, tmpdir)
+            insert_loopback_repo(
+                config_in_path,
+                config_out_path,
+                tmpdir,
+                args.loopback_config_extra)
             createrepo(os.path.join(os.getcwd(), "RPMS"), tmpdir, args.quiet)
             mock(args, config, "--rebuild", *args.srpms)
 
