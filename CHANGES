@@ -1,3 +1,11 @@
+0.20.0
+* planex-build-mock: Add '--loopback-config-extra' option to pass extra
+  lines to the loopback repository configuration
+* planex-depend: Add option to disable generation of buildrequires
+  dependencies
+* planex-fetch: Fix a TOCTOU race when creating directories
+* planex-container: Pass SSH agent socket through to container
+
 0.19.0
 * planex-build-mock: Pass --verbose to mock if --quiet is not supplied
   so that logs are produced inside docker with concurrent builds which

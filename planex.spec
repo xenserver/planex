@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.19.0
+Version: 0.20.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -53,6 +53,14 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Mon Mar 27 2017 Euan Harris <euan.harris@citrix.com> - 0.20.0-1
+- planex-build-mock: Add '--loopback-config-extra' option to pass extra
+  lines to the loopback repository configuration
+- planex-depend: Add option to disable generation of buildrequires
+  dependencies
+- planex-fetch: Fix a TOCTOU race when creating directories
+- planex-container: Pass SSH agent socket through to container
+
 * Fri Mar 10 2017 Euan Harris <euan.harris@citrix.com> - 0.19.0-1
 - planex-build-mock: Pass --verbose to mock if --quiet is not supplied
   so that logs are produced inside docker with concurrent builds which
