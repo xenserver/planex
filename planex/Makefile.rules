@@ -43,7 +43,7 @@ MOCK_FLAGS ?= ${QUIET+--quiet} \
               --configdir=$(MOCK_CONFIGDIR) \
               --root=$(MOCK_ROOT) \
               --resultdir=$(dir $@) \
-              --loopback-config-extra="exclude = *-release" \
+              $(MOCK_EXTRA_FLAGS)
 
 DEPEND ?= planex-depend
 DEPEND_FLAGS ?= $(RPM_DEFINES) --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
