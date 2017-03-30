@@ -118,11 +118,15 @@ def main(argv=None):
             clone_jenkins(pin.url, args.repos, pin.commitish, args.credentials)
 
         else:
-            print "Cloning %s" % pin.url
-            util.makedirs(args.repos)
-            pq_repo = clone(pin.url, args.repos, pin.commitish)
+            try:
+                print "Cloning %s" % pin.url
+                util.makedirs(args.repos)
+                pq_repo = clone(pin.url, args.repos, pin.commitish)
 
-            if pin.base is not None:
-                print "Cloning %s" % pin.base
-                base_repo = clone(pin.base, args.repos, pin.base_commitish)
-                apply_patchqueue(base_repo, pq_repo, pin.patchqueue)
+                if pin.base is not None:
+                    print "Cloning %s" % pin.base
+                    base_repo = clone(pin.base, args.repos, pin.base_commitish)
+                    apply_patchqueue(base_repo, pq_repo, pin.patchqueue)
+
+            except git.GitCommandError as gce:
+                print gce.stderr
