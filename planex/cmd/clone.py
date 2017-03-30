@@ -79,6 +79,31 @@ def clone(url, destination, commitish):
     return repo
 
 
+def apply_patchqueue(base_repo, pq_repo, pq_dir):
+    """
+    Apply a patchqueue to a base repository
+    """
+    # Symlink the patchqueue repository into .git/patches
+    link_path = relpath(pq_repo.working_dir, base_repo.git_dir)
+    symlink(link_path, join(base_repo.git_dir, "patches"))
+
+    # Symlink the patchqueue directory to match the base_repo
+    # branch name as guilt expects
+    patchqueue_path = join(base_repo.git_dir, "patches",
+                           base_repo.active_branch.name)
+    branch_path = dirname(base_repo.active_branch.name)
+    util.makedirs(dirname(patchqueue_path))
+    symlink(relpath(pq_dir, branch_path), patchqueue_path)
+
+    # Create empty guilt status for the branch
+    status = join(patchqueue_path, 'status')
+    open(status, 'w').close()
+
+    # Push patchqueue
+    subprocess.check_call(['guilt', 'push', '--all'],
+                          cwd=base_repo.working_dir)
+
+
 def main(argv=None):
     """
     Entry point
@@ -100,23 +125,4 @@ def main(argv=None):
             if pin.base is not None:
                 print "Cloning %s" % pin.base
                 base_repo = clone(pin.base, args.repos, pin.base_commitish)
-
-                # Symlink the patchqueue repository into .git/patches
-                link_path = relpath(pq_repo.working_dir, base_repo.git_dir)
-                symlink(link_path, join(base_repo.git_dir, "patches"))
-
-                # Symlink the patchqueue directory to match the base_repo
-                # branch name as guilt expects
-                patchqueue_path = join(base_repo.git_dir, "patches",
-                                       base_repo.active_branch.name)
-                branch_path = dirname(base_repo.active_branch.name)
-                util.makedirs(dirname(patchqueue_path))
-                symlink(relpath(pin.patchqueue, branch_path), patchqueue_path)
-
-                # Create empty guilt status for the branch
-                status = join(patchqueue_path, 'status')
-                open(status, 'w').close()
-
-                # Push patchqueue
-                subprocess.check_call(['guilt', 'push', '--all'],
-                                      cwd=base_repo.working_dir)
+                apply_patchqueue(base_repo, pq_repo, pin.patchqueue)
