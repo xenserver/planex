@@ -65,6 +65,8 @@ endif
 .PHONY: all rpms
 all: $(TOPDIR) $(RPMS)
 
+$(RPMS): $(MOCK_CONFIGDIR)/$(MOCK_ROOT).cfg
+
 $(TOPDIR)/RPMS/repodata/repomd.xml: $(RPMS)
 	$(AT)$(CREATEREPO) $(CREATEREPO_FLAGS) $(TOPDIR)/RPMS
 
