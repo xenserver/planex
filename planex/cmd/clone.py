@@ -100,8 +100,14 @@ def apply_patchqueue(base_repo, pq_repo, pq_dir):
     open(status, 'w').close()
 
     # Push patchqueue
-    subprocess.check_call(['guilt', 'push', '--all'],
-                          cwd=base_repo.working_dir)
+    # `guilt push --all` fails with a non-zero error code if the patchqueue
+    # is empty; this cannot be distinguished from a patch failing to apply,
+    # so skip trying to push if the patchqueue is empty.
+    patches = subprocess.check_output(['guilt', 'unapplied'],
+                                      cwd=base_repo.working_dir)
+    if patches:
+        subprocess.check_call(['guilt', 'push', '--all'],
+                              cwd=base_repo.working_dir)
 
 
 def main(argv=None):
