@@ -100,3 +100,16 @@ def format_patch(repo, startref, endref, target_dir):
     res = run(["git", "--git-dir=%s" % dotgitdir, "format-patch",
                "--no-renames", commit_range, "--output-directory", target_dir])
     return res['stdout'].split()
+
+
+def origin_url(repo):
+    """
+    Return the remote url for origin
+    """
+    dotgitdir = dotgitdir_of_path(repo)
+
+    res = run(['git', '--git-dir=%s' % dotgitdir, 'remote', '-v'])
+    remotes = res['stdout'].strip()
+    match = re.search(r'origin\s*(\S*)\s*\(fetch\)', remotes)
+
+    return match.group(1).strip()

@@ -4,7 +4,10 @@ planex-make-srpm: Wrapper around rpmbuild
 
 import sys
 import subprocess
+import fileinput
+import json
 import os
+import re
 import shutil
 import tarfile
 import tempfile
@@ -70,6 +73,60 @@ def rpmbuild(args, tmpdir, specfile):
     return subprocess.call(cmd)
 
 
+def get_commit_id(info_file):
+    """
+    Read the commit id from the .gitarchive-info file
+    """
+    changeset = re.compile(r'^Changeset: (.*)$')
+    for line in info_file:
+        match = changeset.match(line)
+        if match:
+            changeset = match.group(1)
+            return changeset
+    return None
+
+
+def add_manifest_source_entry(manifest_name, specfile):
+    """
+    Add a source line to the specfile that adds the manifest data
+    """
+    # Have to do this in two passes, find the highest source and then
+    # add one higher
+    source = re.compile(r'^Source(\d*): .*$')
+    highestsource = 0
+    for scan_pass in ['first', 'second']:
+        for line in fileinput.input(specfile, inplace=True):
+            print line
+            match = source.match(line)
+            if match:
+                index = int(match.group(1))
+                if scan_pass == 'first' and index > highestsource:
+                    highestsource = index
+                elif scan_pass == 'second':
+                    if index == highestsource:
+                        print 'Source{0}: {1}'.format(
+                            highestsource + 1, manifest_name)
+
+
+def extract_commit(source, manifests):
+    """
+    Try to extrct git archive information from a source entry
+    """
+    if tarfile.is_tarfile(source):
+        with Tarball(source) as tarball:
+            try:
+                archive_info = tarball.extractfile('.gitarchive-info')
+                if archive_info:
+                    name = os.path.basename(source)
+                    origin_name = '{0}.origin'.format(source)
+                    if os.path.exists(origin_name):
+                        with open(origin_name, 'r') as origin_file:
+                            name = origin_file.readline()
+                    manifests[name.strip()] = get_commit_id(archive_info)
+            except KeyError:
+                pass
+
+
 def populate_working_directory(tmpdir, spec, link, sources, patchqueue):
     """
     Build a working directory containing everything needed to build the SRPM.
@@ -78,12 +135,22 @@ def populate_working_directory(tmpdir, spec, link, sources, patchqueue):
     tmp_specfile = os.path.join(tmpdir, os.path.basename(spec))
     shutil.copyfile(spec, tmp_specfile)
 
+    manifests = {}
+
     # Copy sources to working area, rewriting spec as needed
     tarball_filters = ['.tar.gz', '.tar.bz2']
     for source in sources:
+        extract_commit(source, manifests)
         if any([ext in source for ext in tarball_filters]):
             extract_topdir(tmp_specfile, source)
         shutil.copy(source, tmpdir)
+
+    if len(manifests) > 0:
+        with open('{0}/manifest.json'.format(tmpdir), 'w') as json_file:
+            json.dump(manifests, json_file)
+        add_manifest_source_entry('manifest.json', tmp_specfile)
+    else:
+        print "No .gitarchive-info found for {0}".format(spec)
 
     spec = Spec(tmp_specfile, check_package_name=False)
 
