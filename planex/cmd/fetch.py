@@ -117,6 +117,9 @@ def fetch_http(url, filename, retries):
                 curl_get(url_string, tmp_file)
                 best_effort_file_verify(tmp_filename)
                 shutil.move(tmp_filename, filename)
+                # Write an origin file for tracking.
+                with open('{0}.origin'.format(filename), 'w') as origin_file:
+                    origin_file.write('{0}\n'.format(url_string))
                 return
 
         except pycurl.error as exn:

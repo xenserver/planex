@@ -100,8 +100,11 @@ def main(argv=None):
         reponame = os.path.basename(url.path).rsplit(".git")[0]
         repo = os.path.join(args.repos, reponame)
 
+    util.makedirs(os.path.dirname(args.tarball))
+    with open('{0}.origin'.format(args.tarball), 'w') as origin_file:
+        origin_file.write('{0}\n'.format(git.origin_url(repo)))
+
     if repo.endswith(".pg"):
-        util.makedirs(os.path.dirname(args.tarball))
         with FileUpdate(args.tarball) as outfile:
             git.archive(repo, end_tag, outfile)
         sys.exit(0)
