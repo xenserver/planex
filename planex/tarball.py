@@ -111,6 +111,7 @@ def make(inputdir, outputfile):
         tarinfo.gid = 0
         tarinfo.uname = "root"
         tarinfo.gname = "root"
+        tarinfo.mtime = 0
         tarinfo.name = os.path.relpath(tarinfo.name, inputdir[1:])
         return tarinfo
 
