@@ -17,7 +17,6 @@ from planex.util import add_common_parser_options
 from planex.spec import Spec
 from planex.link import Link
 from planex.patchqueue import Patchqueue
-from planex.tarball import extract_topdir
 from planex.tarball import Tarball
 
 
@@ -136,12 +135,9 @@ def populate_working_directory(tmpdir, spec, link, sources, patchqueue):
 
     manifests = {}
 
-    # Copy sources to working area, rewriting spec as needed
-    tarball_filters = ['.tar.gz', '.tar.bz2']
+    # Copy sources to working area
     for source in sources:
         extract_commit(source, manifests)
-        if any([ext in source for ext in tarball_filters]):
-            extract_topdir(tmp_specfile, source)
         shutil.copy(source, tmpdir)
 
     if manifests:

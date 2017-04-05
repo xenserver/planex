@@ -2,7 +2,6 @@
 tarball: Utilities for tar archives
 """
 
-import fileinput
 import os
 import tarfile
 
@@ -69,25 +68,6 @@ def archive_root(tar):
         if top_element.isdir():
             return topname
     return ''
-
-
-def extract_topdir(tmp_specfile, source):
-    """
-    Set the topdir name taken from the source tarball
-    """
-    for line in fileinput.input(tmp_specfile, inplace=True):
-        if 'autosetup' in line:
-            tar = tarfile.open(source)
-            names = tar.getnames()
-            topname = os.path.commonprefix(names)
-            if topname in names:
-                top_element = tar.getmember(topname)
-                if top_element.isdir():
-                    print "%s -n %s" % (line.strip(), topname)
-            else:
-                print "%s -c" % line.strip()
-        else:
-            print line,
 
 
 def make(inputdir, outputfile, mode=None):
