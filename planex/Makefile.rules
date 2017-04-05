@@ -121,17 +121,21 @@ MANIFESTS/%.json:
 	@echo [FETCH] $@
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
+# Always regenerate pinned patch queues
+.PHONY: FORCE
+FORCE:
+
 # Fetch a patch tarball listed in a link file.
 .PRECIOUS: $(TOPDIR)/SOURCES/%/patches.tar
-$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin SPECS/%.spec
+$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin SPECS/%.spec FORCE
 	@echo [PATCHQUEUE] $@
 	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
 
-$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin SPECS/%.lnk
+$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin SPECS/%.lnk FORCE
 	@echo [PATCHQUEUE] $@
 	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
 
-$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin
+$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin FORCE
 	@echo [PATCHQUEUE] $@
 	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
 
