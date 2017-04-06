@@ -13,6 +13,7 @@ setup(name='planex',
           'console_scripts': [
               'planex-build-mock = planex.cmd.mock:main',
               'planex-clone= planex.cmd.clone:main',
+              'planex-create-mock-config = planex.cmd.createmockconfig:main',
               'planex-depend = planex.cmd.depend:main',
               'planex-extract = planex.cmd.extract:main',
               'planex-fetch = planex.cmd.fetch:main',
