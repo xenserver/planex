@@ -12,6 +12,7 @@ from urlparse import urlparse
 
 import argcomplete
 
+from planex.fileupdate import FileUpdate
 from planex.link import Link
 from planex.spec import Spec
 import planex.git as git
@@ -100,7 +101,8 @@ def main(argv=None):
 
     if repo.endswith(".pg"):
         util.makedirs(os.path.dirname(args.tarball))
-        git.archive(repo, end_tag, args.tarball)
+        with FileUpdate(args.tarball) as outfile:
+            git.archive(repo, end_tag, outfile)
         sys.exit(0)
 
     # Start tag is based on the version specified in the spec file,
@@ -125,7 +127,8 @@ def main(argv=None):
         assemble_patchqueue(tmpdir, link, repo, start_tag, end_tag)
         assemble_extra_sources(tmpdir, link,
                                spec.local_sources(), spec.local_patches())
-        tarball.make(tmpdir, args.tarball)
+        with FileUpdate(args.tarball) as outfile:
+            tarball.make(tmpdir, outfile)
 
     finally:
         if args.keeptmp:
