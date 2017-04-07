@@ -6,8 +6,6 @@ import fileinput
 import os
 import tarfile
 
-import planex.util as util
-
 
 class Tarball(object):
     """Represents a source archive tarball"""
@@ -92,16 +90,14 @@ def extract_topdir(tmp_specfile, source):
             print line,
 
 
-def make(inputdir, outputfile):
+def make(inputdir, outputfile, mode=None):
     """
     Create a new tarball named outputfile and recursively add all files
     in inputdir to it.
     """
     tarmode = "w"
-    if outputfile.endswith("gz"):
-        tarmode += ":gz"
-    if outputfile.endswith("bz2"):
-        tarmode += ":bz2"
+    if mode is not None:
+        tarmode += ":" + mode
 
     def reset(tarinfo):
         """
@@ -115,6 +111,5 @@ def make(inputdir, outputfile):
         tarinfo.name = os.path.relpath(tarinfo.name, inputdir[1:])
         return tarinfo
 
-    util.makedirs(os.path.dirname(outputfile))
-    with tarfile.open(outputfile, mode=tarmode) as tar:
+    with tarfile.open(fileobj=outputfile, mode=tarmode) as tar:
         tar.add(inputdir, filter=reset)
