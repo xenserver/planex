@@ -84,6 +84,7 @@ def main(argv=None):
     Entry point
     """
     args = parse_args_or_exit(argv)
+    util.setup_logging(args)
     link = Link(args.link)
 
     # Repo and ending tag are specified in the link file
