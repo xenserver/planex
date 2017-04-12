@@ -97,6 +97,28 @@ def format_patch(repo, startref, endref, target_dir):
     dotgitdir = dotgitdir_of_path(repo)
 
     commit_range = "%s..%s" % (startref, endref)
-    res = run(["git", "--git-dir=%s" % dotgitdir, "format-patch",
-               "--no-renames", commit_range, "--output-directory", target_dir])
-    return res['stdout'].split()
+    res = run(["git", "--git-dir=%s" % dotgitdir, "rev-list",
+               "--first-parent", "--reverse", commit_range])
+
+    patchlist = []
+    for i, commit in enumerate(res['stdout'].split()):
+        patch = run(["git", "--git-dir=%s" % dotgitdir, "show",
+                     "--pretty=email", "-m", "--first-parent", "--no-renames",
+                     commit])['stdout']
+
+        # Skip empty patches
+        diffs = [j for j in patch.split('\n') if j.startswith('diff --git a/')]
+        if len(diffs) == 0:
+            continue
+
+        subject = [j for j in patch.split('\n') if j.startswith('Subject:')]
+        # Strip the prefix of the first subject: 'Subject: [PATCH] '
+        subject = subject[0][17:]
+        patchname = "%04d-%s.patch" % (i + 1, re.sub(r'\W', '_', subject)[:40])
+
+        with open(os.path.join(target_dir, patchname), "w") as patchfp:
+            patchfp.write(patch)
+
+        patchlist.append(patchname)
+
+    return patchlist
