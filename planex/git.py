@@ -4,6 +4,7 @@ Wrappers and utility functions for dealing with git repositories
 
 import os
 import re
+import subprocess
 
 from planex.util import run
 
@@ -65,11 +66,11 @@ def archive(repo, commit_hash, output, prefix=None):
     """
     dotgitdir = dotgitdir_of_path(repo)
 
-    cmd = ["git", "--git-dir=%s" % dotgitdir, "archive", commit_hash,
-           "-o", output]
+    cmd = ["git", "--git-dir=%s" % dotgitdir, "archive", commit_hash]
+
     if prefix is not None:
         cmd += ["--prefix=%s-%s/" % (os.path.basename(repo), prefix)]
-    run(cmd)
+    subprocess.check_call(cmd, stdout=output)
 
 
 def tags(repo):
