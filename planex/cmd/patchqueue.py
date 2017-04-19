@@ -52,10 +52,12 @@ def assemble_patchqueue(tmpdir, link, repo, start_tag, end_tag):
     """
     patchqueue = os.path.join(tmpdir, link.patchqueue)
     os.makedirs(patchqueue)
-    patches = git.format_patch(repo, start_tag, end_tag, patchqueue)
+    patch = git.diff(repo, start_tag, end_tag)
+    patchname = "development.patch"
+    with open(os.path.join(patchqueue, patchname), "w") as patchfp:
+        patchfp.write(patch)
     with open(os.path.join(patchqueue, "series"), "w") as series:
-        for patch in patches:
-            series.write(os.path.basename(patch) + "\n")
+        series.write(patchname + "\n")
 
 
 def assemble_extra_sources(tmpdir, link, sources, patches):
