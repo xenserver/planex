@@ -4,15 +4,14 @@ planex-create-mock-config: Populate mock config with yum repositories
 
 from __future__ import print_function
 import argparse
+import ConfigParser
 import os
 import os.path
 import pprint
-import yum
-
-import ConfigParser
 import StringIO
 
 import argcomplete
+import yum
 
 from planex.util import add_common_parser_options
 from planex.util import setup_logging
