@@ -52,7 +52,7 @@ def update_mock_repos(config, yum_repos):
     for repo in yum_repos:
         config.add_section(repo.id)
         config.set(repo.id, 'name', repo.name)
-        if len(repo.baseurl):
+        if repo.baseurl:
             config.set(repo.id, 'baseurl', ' '.join(repo.baseurl))
         else:
             config.set(repo.id, 'mirrorlist', repo.mirrorlist)
