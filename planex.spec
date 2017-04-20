@@ -40,6 +40,7 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %doc CHANGES
 %{_bindir}/planex-build-mock
 %{_bindir}/planex-clone
+%{_bindir}/planex-create-mock-config
 %{_bindir}/planex-depend
 %{_bindir}/planex-extract
 %{_bindir}/planex-fetch
