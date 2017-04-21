@@ -3,6 +3,7 @@ planex-build-mock: Wrapper around mock
 """
 
 import os
+import pty
 import shutil
 import subprocess
 import sys
@@ -50,6 +51,31 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
+def pty_check_call(cmd):
+    """
+    Runs the given command in a subprocess with I/O redirected through a pty.
+    This ensures isatty(3) will return 1.
+    An exception is raised if the command exits with non-zero status.
+    """
+    # python2.7 doesn't return the exitcode here:
+    pty.spawn(cmd)
+    # get exit status of first child
+    (pid, status) = os.waitpid(-1, 0)
+    returncode = 1
+    if status == 0:
+        returncode = 0
+    elif os.WIFEXITED(status):
+        returncode = os.WEXITSTATUS(status)
+        print "PID %d exited with status %d" % (pid, returncode)
+    elif os.WIFSIGNALED(status):
+        signal = os.WTERMSIG(status)
+        print "PID %d exited with signal %d" % (pid, signal)
+    else:
+        print "PID %d exited with non-zero status 0x%02x" % (pid, status)
+    if returncode > 0:
+        raise subprocess.CalledProcessError(returncode, cmd)
+
+
 def mock(args, tmp_config_dir, *extra_params):
     """
     Return mock command line and arguments
@@ -61,8 +87,6 @@ def mock(args, tmp_config_dir, *extra_params):
 
     if args.quiet:
         cmd += ['--quiet']
-    else:
-        cmd += ['--verbose']
     if args.root is not None:
         cmd += ['--root', args.root]
     if args.resultdir is not None:
@@ -72,7 +96,9 @@ def mock(args, tmp_config_dir, *extra_params):
         cmd += ['--define', define]
 
     cmd.extend(extra_params)
-    subprocess.check_call(cmd)
+    # mock produces more output when stderr isatty, so use a pty to fake that
+    # subprocess.check_call(cmd)
+    pty_check_call(cmd)
 
 
 def createrepo(pkg_dir, metadata_dir, quiet=False):
