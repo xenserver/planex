@@ -232,6 +232,16 @@ class Spec(object):
 
         return [rpm_name_from_header(pkg.header) for pkg in self.spec.packages]
 
+    def binary_packages(self):
+        """Return a list of binary package versions built by this spec"""
+        def evr(hdr):
+            """Return the epoch-version-release from an RPM header"""
+            epoch = hdr['epoch']
+            return (str(epoch) if epoch else None,
+                    hdr['version'], hdr['release'])
+        return {pkg.header['name']: evr(pkg.header)
+                for pkg in self.spec.packages}
+
     def highest_patch(self):
         """Return the number the highest numbered patch or -1"""
         patches = [num for (_, num, sourcetype) in self.spec.sources

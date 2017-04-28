@@ -6,6 +6,8 @@
 DIST ?= .el6
 TOPDIR ?= _build
 DEPS = $(TOPDIR)/deps
+DELTA = $(TOPDIR)/delta
+DELTADEPS = $(TOPDIR)/deltadeps
 PINSDIR ?= PINS
 REPOSDIR ?= repos
 RPM_DEFINES ?= --define="_topdir $(TOPDIR)" \
@@ -47,6 +49,10 @@ MOCK_FLAGS ?= ${QUIET+--quiet} \
 
 DEPEND ?= planex-depend
 DEPEND_FLAGS ?= $(RPM_DEFINES) --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
+
+WHATCHANGED ?= planex-whatchanged
+WHATCHANGED_EXTRA_FLAGS ?= --debug
+WHATCHANGED_FLAGS ?= $(RPM_DEFINES) $(WHATCHANGED_EXTRA_FLAGS)
 
 MANIFEST ?= planex-manifest
 MANIFEST_FLAGS ?=
@@ -192,5 +198,35 @@ $(DEPS): $(TOPDIR) \
 		$(patsubst SPECS/%.lnk,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.lnk))
 	@echo Updating dependencies...
 	$(AT)$(DEPEND) $(DEPEND_FLAGS) SPECS/*.lnk $(TOPDIR)/SPECS/*.spec > $@
+
+# Incremental build rules
+
+# A package needs to be rebuilt if its epoch-version-release number has changed
+# Except for the packages in the list below where file digests are compared
+# This is needed currently for patch queues
+PKGSFULLDIFF := $(patsubst SPECS/%.lnk,%,$(wildcard SPECS/*.lnk))
+
+.PHONY: oldsrpms
+oldsrpms: | $(TOPDIR)
+	@echo "Downloading old SRPMS"
+	@mkdir -p $(TOPDIR)/oldSRPMS
+	$(AT)cd $(TOPDIR)/oldSRPMS && sudo yumdownloader --source $(PKGSFULLDIFF)
+
+OLDSRPMS = $(wildcard $(TOPDIR)/oldSRPMS/*.src.rpm)
+NEWSRPMS = $(wildcard $(TOPDIR)/SRPMS/*.src.rpm)
+
+.DELETE_ON_ERROR: $(DELTA)
+$(DELTA): $(DEPS) oldsrpms $(addsuffix .srpm, $(PKGSFULLDIFF))
+	@echo "Detecting changed packages"
+	$(AT)$(WHATCHANGED) $(WHATCHANGED_FLAGS) $(OLDSRPMS) $(NEWSRPMS) $(TOPDIR)/SPECS/*.spec >$@
+
+DELTA_TARGETS = $(sort $(file <$(DELTA)))
+DELTA_SPECS = $(addsuffix .spec, $(addprefix $(TOPDIR)/SPECS/,$(DELTA_TARGETS)))
+
+.PHONY: delta
+delta: $(TOPDIR) $(DELTA)
+	@echo "Updating dependencies for $(DELTA_TARGETS)"
+	$(AT)$(DEPEND) $(DEPEND_FLAGS) SPECS/*.lnk $(DELTA_SPECS) > $(DELTADEPS)
+	$(MAKE) DEPS=$(DELTADEPS) --trace
 
 # vim:ft=make:
