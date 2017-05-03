@@ -106,6 +106,8 @@ class Spec(object):
                         os.close(errcpy)
                 except ValueError as exn:
                     nullfh.seek(0, os.SEEK_SET)
+                    # https://github.com/PyCQA/pylint/issues/1435
+                    # pylint: disable=E1133
                     for line in nullfh:
                         line = line.strip()
                         if not line.endswith(': No such file or directory'):
