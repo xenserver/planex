@@ -1,3 +1,7 @@
+0.22.0
+* mock: Restore loglevel to normal and allocate a pty so that it
+  continues to print standard error logging when running in a container.
+
 0.21.0
 * Add planex-create-mock-config, which constructs a mock configuration
   file from the system yum configuration.
