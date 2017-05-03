@@ -10,8 +10,8 @@ import os.path
 import pprint
 import StringIO
 
-import argcomplete
 import yum
+import argcomplete
 
 from planex.util import add_common_parser_options
 from planex.util import setup_logging
