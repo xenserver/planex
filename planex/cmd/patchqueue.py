@@ -58,23 +58,23 @@ def assemble_patchqueue(tmpdir, link, repo, start_tag, end_tag):
             series.write(os.path.basename(patch) + "\n")
 
 
-def assemble_extra_sources(tmpdir, link, sources, patches):
+# pylint: disable=R0913
+def assemble_extra_sources(tmpdir, repo, spec, link, sources, patches):
     """
     Assemble the non-patchqueue sources in the working directory.
     """
-    if link.specfile is not None:
-        source_path = os.path.join(link.url, link.specfile)
-        copy_to_tmpdir(tmpdir, source_path, link.specfile)
+    if spec.path is not None and link.specfile is not None:
+        copy_to_tmpdir(tmpdir, spec.path, link.specfile)
 
     if link.sources is not None:
         for source in sources:
-            source_path = os.path.join(link.url, link.sources, source)
+            source_path = os.path.join(repo, link.sources, source)
             dest_path = os.path.join(link.sources, source)
             copy_to_tmpdir(tmpdir, source_path, dest_path)
 
     if link.patches is not None:
         for patch in patches:
-            source_path = os.path.join(link.url, link.patches, patch)
+            source_path = os.path.join(repo, link.patches, patch)
             dest_path = os.path.join(tmpdir, link.patches, patch)
             copy_to_tmpdir(tmpdir, source_path, dest_path)
 
@@ -129,7 +129,7 @@ def main(argv=None):
     try:
         tmpdir = tempfile.mkdtemp(prefix="px-pq-")
         assemble_patchqueue(tmpdir, link, repo, start_tag, end_tag)
-        assemble_extra_sources(tmpdir, link,
+        assemble_extra_sources(tmpdir, repo, spec, link,
                                spec.local_sources(), spec.local_patches())
         with FileUpdate(args.tarball) as outfile:
             tarball.make(tmpdir, outfile)
