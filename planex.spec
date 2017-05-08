@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.22.0
+Version: 0.22.1
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -54,6 +54,10 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Mon May 8 2017 Euan Harris <euan.harris@citrix.com> - 0.22.1-1
+- planex-patchqueue: Handle static tarballs in patchqueue repositories
+  correctly
+
 * Wed May 3 2017 Euan Harris <euan.harris@citrix.com> - 0.22.0-1
 - mock: Restore loglevel to normal and allocate a pty so that it
   continues to print standard error logging when running in a container.

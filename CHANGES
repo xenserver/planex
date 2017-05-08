@@ -1,3 +1,7 @@
+0.22.1
+* planex-patchqueue: Handle static tarballs in patchqueue repositories
+  correctly
+
 0.22.0
 * mock: Restore loglevel to normal and allocate a pty so that it
   continues to print standard error logging when running in a container.
