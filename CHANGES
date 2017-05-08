@@ -1,3 +1,6 @@
+0.23.0
+* planex-makesrpm: Do not rewrite %autosetup rules in spec files
+
 0.22.1
 * planex-patchqueue: Handle static tarballs in patchqueue repositories
   correctly
