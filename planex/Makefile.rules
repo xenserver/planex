@@ -186,9 +186,12 @@ $(TOPDIR)/SPECS/%.spec: SPECS/%.lnk $(TOPDIR)/SOURCES/%/patches.tar
 # for RPM or Debian builds depending on the host distribution.
 # If dependency generation fails, the deps file is deleted to avoid
 # problems with empty, incomplete or corrupt deps.   
+ifndef BUILD_TARGETS
+$(error BUILD_TARGETS must be set in the top-level Makefile)
+endif
 .DELETE_ON_ERROR: $(DEPS)
 $(DEPS): $(TOPDIR) \
-		$(patsubst SPECS/%.spec,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.spec)) \
+                $(BUILD_TARGETS) \
 		$(patsubst SPECS/%.lnk,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.lnk))
 	@echo Updating dependencies...
 	$(AT)$(DEPEND) $(DEPEND_FLAGS) SPECS/*.lnk $(TOPDIR)/SPECS/*.spec > $@
