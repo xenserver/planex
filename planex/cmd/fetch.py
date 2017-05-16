@@ -144,7 +144,7 @@ def url_for_source(spec, source):
     """
     source_basename = os.path.basename(source)
     for path, url in spec.all_sources():
-        if path.endswith(source_basename):
+        if os.path.basename(path) == source_basename:
             return path, url
 
     raise KeyError(source_basename)

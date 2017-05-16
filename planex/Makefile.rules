@@ -116,8 +116,8 @@ MANIFESTS/%.json:
 ############################################################################
 
 # Fetch a source tarball listed in a spec file.
-.DELETE_ON_ERROR: %.tar %.tar.gz %.tar.xz %.tar.bz2 %.tgz %.tbz %.zip %.pdf %.cpio
-%.tar %.tar.gz %.tar.xz %.tar.bz2 %.tgz %.tbz %.zip %.pdf %.cpio:
+.DELETE_ON_ERROR: $(TOPDIR)/SOURCES/%
+$(TOPDIR)/SOURCES/%:
 	@echo [FETCH] $@
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
