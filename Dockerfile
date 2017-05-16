@@ -34,3 +34,5 @@ RUN python setup.py build \
 WORKDIR /build
 COPY docker/entry /entry
 ENTRYPOINT ["/entry"]
+
+RUN rm /etc/yum.repos.d/*
