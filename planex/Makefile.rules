@@ -5,6 +5,8 @@
 
 DIST ?= .el6
 TOPDIR ?= _build
+SPECS ?= $(wildcard SPECS/*.spec)
+LINKS ?= $(wildcard SPECS/*.lnk)
 DEPS = $(TOPDIR)/deps
 PINSDIR ?= PINS
 REPOSDIR ?= repos
@@ -98,16 +100,6 @@ $(TOPDIR):
 
 
 ############################################################################
-# Spec file transformation rules
-############################################################################
-
-# Placeholder
-$(TOPDIR)/SPECS/%.spec: SPECS/%.spec
-	$(AT) mkdir -p $(dir $@)
-	$(AT) cp -lf $< $@
-
-
-############################################################################
 # Manifest creation rules
 ############################################################################
 
@@ -189,10 +181,8 @@ $(TOPDIR)/SPECS/%.spec: SPECS/%.lnk $(TOPDIR)/SOURCES/%/patches.tar
 # for RPM or Debian builds depending on the host distribution.
 # If dependency generation fails, the deps file is deleted to avoid
 # problems with empty, incomplete or corrupt deps.   
-$(DEPS): $(TOPDIR) \
-		$(patsubst SPECS/%.spec,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.spec)) \
-		$(patsubst SPECS/%.lnk,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.lnk))
+$(DEPS): $(SPECS) $(LINKS) | $(TOPDIR)
 	@echo Updating dependencies...
-	$(AT)$(DEPEND) $(DEPEND_FLAGS) SPECS/*.lnk $(TOPDIR)/SPECS/*.spec > $@
+	$(AT)$(DEPEND) $(DEPEND_FLAGS) $^ > $@
 
 # vim:ft=make:
