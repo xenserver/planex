@@ -31,9 +31,6 @@ endif
 FETCH ?= planex-fetch
 FETCH_FLAGS ?= $(RPM_DEFINES) $(FETCH_EXTRA_FLAGS)
 
-EXTRACT ?= planex-extract
-EXTRACT_FLAGS ?= $(EXTRACT_EXTRA_FLAGS)
-
 RPMBUILD ?= planex-make-srpm
 RPMBUILD_FLAGS ?= ${QUIET+--quiet} $(RPM_DEFINES) $(RPMBUILD_EXTRA_FLAGS)
 
@@ -137,15 +134,6 @@ $(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin FORCE
 $(TOPDIR)/SOURCES/%/patches.tar: SPECS/%.lnk
 	@echo [FETCH] $@
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
-
-
-############################################################################
-# Patch extraction rules
-############################################################################
-
-# Extract a spec file from a patch tarball.
-$(TOPDIR)/SPECS/%.spec: SPECS/%.lnk $(TOPDIR)/SOURCES/%/patches.tar
-	$(AT)$(EXTRACT) $(EXTRACT_FLAGS) --output $@ --link $^
 
 
 ############################################################################
