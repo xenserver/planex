@@ -24,11 +24,6 @@ class Link(object):
         return self.link.get('commitish', None)
 
     @property
-    def specfile(self):
-        """Return the path to the spec file inside the patchqueue tarball"""
-        return self.link.get('specfile', None)
-
-    @property
     def patchqueue(self):
         """Return the path to the patchqueue inside the patchqueue tarball"""
         return self.link.get('patchqueue', None)
