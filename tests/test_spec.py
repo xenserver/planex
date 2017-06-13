@@ -38,28 +38,28 @@ class RpmTests(unittest.TestCase):
         self.assertEqual(self.spec.version(), "0.9.8")
 
     def test_provides(self):
-        self.assertEqual(
+        self.assertItemsEqual(
             self.spec.provides(),
-            set(["ocaml-cohttp", "ocaml-cohttp-devel"]))
+            ["ocaml-cohttp", "ocaml-cohttp-devel"])
 
     def test_source_urls(self):
-        self.assertEqual(
-            set(self.spec.source_urls()),
-            set(["https://github.com/mirage/ocaml-cohttp/archive/"
-                 "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
-                 "ocaml-cohttp-init",
-                 "ocaml-cohttp-service",
-                 "cohttp0.patch",
-                 "cohttp1.patch"]))
+        self.assertItemsEqual(
+            self.spec.source_urls(),
+            ["https://github.com/mirage/ocaml-cohttp/archive/"
+             "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
+             "ocaml-cohttp-init",
+             "ocaml-cohttp-service",
+             "cohttp0.patch",
+             "cohttp1.patch"])
 
     def test_source_paths(self):
-        self.assertEqual(
-            set(self.spec.source_paths()),
-            set(["./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz",
-                 "./SOURCES/ocaml-cohttp/ocaml-cohttp-init",
-                 "./SOURCES/ocaml-cohttp/ocaml-cohttp-service",
-                 "./SOURCES/ocaml-cohttp/cohttp0.patch",
-                 "./SOURCES/ocaml-cohttp/cohttp1.patch"]))
+        self.assertItemsEqual(
+            self.spec.source_paths(),
+            ["./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz",
+             "./SOURCES/ocaml-cohttp/ocaml-cohttp-init",
+             "./SOURCES/ocaml-cohttp/ocaml-cohttp-service",
+             "./SOURCES/ocaml-cohttp/cohttp0.patch",
+             "./SOURCES/ocaml-cohttp/cohttp1.patch"])
 
     def test_buildrequires(self):
         self.assertEqual(
@@ -78,27 +78,24 @@ class RpmTests(unittest.TestCase):
     def test_binary_package_paths(self):
         machine = get_rpm_machine()
 
-        self.assertEqual(
-            sorted(self.spec.binary_package_paths()),
-            [
-                path.format(machine=machine) for path in
-                sorted([
-                    "./RPMS/{machine}/ocaml-cohttp-0.9.8-1.el6.{machine}.rpm",
-                    "./RPMS/{machine}/" +
-                    "ocaml-cohttp-devel-0.9.8-1.el6.{machine}.rpm"])
-            ]
+        self.assertItemsEqual(
+            self.spec.binary_package_paths(),
+            [path.format(machine=machine) for path in
+             ["./RPMS/{machine}/ocaml-cohttp-0.9.8-1.el6.{machine}.rpm",
+              "./RPMS/{machine}/" +
+              "ocaml-cohttp-devel-0.9.8-1.el6.{machine}.rpm"]]
         )
 
     def test_local_sources(self):
-        self.assertEqual(
-            set(self.spec.local_sources()),
-            set(["ocaml-cohttp-init",
-                 "ocaml-cohttp-service"])
+        self.assertItemsEqual(
+            self.spec.local_sources(),
+            ["ocaml-cohttp-init",
+             "ocaml-cohttp-service"]
         )
 
     def test_local_patches(self):
-        self.assertEqual(
-            set(self.spec.local_patches()),
-            set(["cohttp0.patch",
-                 "cohttp1.patch"])
+        self.assertItemsEqual(
+            self.spec.local_patches(),
+            ["cohttp0.patch",
+             "cohttp1.patch"]
         )

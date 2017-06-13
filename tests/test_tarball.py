@@ -28,41 +28,41 @@ class BasicTests(unittest.TestCase):
         self.tarball.close()
 
     def test_archive_root(self):
-        assert self.tarball.archive_root == "patchqueue"
+        self.assertEqual(self.tarball.archive_root, "patchqueue")
 
     def test_getnames(self):
         expected = ["test.spec",
                     "SOURCES/test1.source",
                     "SOURCES/test2.source"]
         actual = self.tarball.getnames()
-        self.assertEqual(sorted(expected), sorted(actual))
+        self.assertItemsEqual(expected, actual)
 
     def test_getnames_prefix(self):
         self.tarball.prefix = "SOURCES"
         expected = ["test1.source",
                     "test2.source"]
         actual = self.tarball.getnames()
-        self.assertEqual(sorted(expected), sorted(actual))
+        self.assertItemsEqual(expected, actual)
 
     def test_extractfile(self):
         file = self.tarball.extractfile("SOURCES/test1.source")
         expected = ["test1.source contents\n"]
         actual = file.readlines()
-        self.assertEqual(sorted(expected), sorted(actual))
+        self.assertItemsEqual(expected, actual)
 
     def test_extractfile_prefix(self):
         self.tarball.prefix = "SOURCES"
         file = self.tarball.extractfile("test1.source")
         expected = ["test1.source contents\n"]
         actual = file.readlines()
-        self.assertEqual(sorted(expected), sorted(actual))
+        self.assertItemsEqual(expected, actual)
 
     def test_extract(self):
         self.tarball.extract("SOURCES/test1.source", self.tmpdir)
         with open(os.path.join(self.tmpdir, "test1.source")) as output:
             expected = ["test1.source contents\n"]
             actual = output.readlines()
-        self.assertEqual(sorted(expected), sorted(actual))
+        self.assertItemsEqual(expected, actual)
 
     def test_extract_prefix(self):
         self.tarball.prefix = "SOURCES"
@@ -70,4 +70,4 @@ class BasicTests(unittest.TestCase):
         with open(os.path.join(self.tmpdir, "test1.source")) as output:
             expected = ["test1.source contents\n"]
             actual = output.readlines()
-        self.assertEqual(sorted(expected), sorted(actual))
+        self.assertItemsEqual(expected, actual)
