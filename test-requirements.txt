@@ -1,4 +1,5 @@
 coverage
+hypothesis
 mock
 nose
 pep8
