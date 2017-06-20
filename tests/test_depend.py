@@ -1,6 +1,4 @@
-# Run these tests with 'nosetests':
-#   install the 'python-nose' package (Fedora/CentOS or Ubuntu)
-#   run 'nosetests' in the root of the repository
+"""Tests for dependency generation"""
 
 import glob
 import os
@@ -12,6 +10,7 @@ import planex.cmd.depend
 
 
 class BasicTests(unittest.TestCase):
+    """Basic dependency generation tests"""
     # unittest.TestCase has more methods than Pylint permits
     # pylint: disable=R0904
     def setUp(self):
@@ -22,8 +21,12 @@ class BasicTests(unittest.TestCase):
                                      defines=rpm_defines)
 
     def test_build_srpm_from_spec(self):
+        """Dependency rules to pack sources into source RPMs"""
+        # This should be a library method which doesn't write to stdout
         planex.cmd.depend.build_srpm_from_spec(self.spec)
 
+        # Nose adds sys.stdout.getvalue() dynamically.
+        # pylint: disable=E1101
         self.assertEqual(
             sys.stdout.getvalue(),
             "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
@@ -42,22 +45,29 @@ class BasicTests(unittest.TestCase):
             "SOURCES/ocaml-cohttp/cohttp1.patch\n")
 
     def test_download_rpm_sources(self):
+        """Dependency rules to download non-local sources"""
+        # This should be a library method which doesn't write to stdout
         planex.cmd.depend.download_rpm_sources(self.spec)
 
+        # pylint: disable=E1101
         self.assertEqual(
             sys.stdout.getvalue(),
             "_build/SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz: "
             "tests/data/ocaml-cohttp.spec\n")
 
     def test_build_rpm_from_srpm(self):
+        """Dependency rules to build binary RPMs from source RPMs"""
+        # This should be a library method which doesn't write to stdout
         planex.cmd.depend.build_rpm_from_srpm(self.spec)
 
+        # pylint: disable=E1101
         self.assertEqual(
             sys.stdout.getvalue(),
             "_build/RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
             "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm\n")
 
     def test_buildrequires_for_rpm(self):
+        """Dependency rules for build-time dependencies between binary RPMs"""
         # N.B. buildrequires_for_rpm only generates rules for other packages
         # defined by local spec files.   Even though ocaml-cohttp depends on
         # other packages, the test data directory contains only ocaml-uri and
@@ -66,9 +76,11 @@ class BasicTests(unittest.TestCase):
         specs = [planex.spec.Spec(spec_path, defines=[('dist', '.el6')])
                  for spec_path in spec_paths]
 
+        # This should be a library method which doesn't write to stdout
         planex.cmd.depend.buildrequires_for_rpm(
             self.spec, planex.cmd.depend.package_to_rpm_map(specs))
 
+        # pylint: disable=E1101
         self.assertEqual(
             sys.stdout.getvalue(),
             "_build/RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
