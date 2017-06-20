@@ -1,6 +1,4 @@
-# Run these tests with 'nosetests':
-#   install the 'python-nose' package (Fedora/CentOS or Ubuntu)
-#   run 'nosetests' in the root of the repository
+"""Tests for BitBucket URL parser"""
 
 import json
 import unittest
@@ -10,6 +8,7 @@ import planex.repository
 
 
 class BasicTests(unittest.TestCase):
+    """Basic GitHub URL parser tests"""
     # unittest.TestCase has more methods than Pylint permits
     # pylint: disable=R0904
 
@@ -19,6 +18,7 @@ class BasicTests(unittest.TestCase):
 
     @mock.patch('planex.repository.git_ls_remote')
     def test_urls(self, mock_git_ls_remote):
+        """Well-formed GitHub URLs are parsed correctly"""
         for tcase in self.data:
             mock_git_ls_remote.return_value = tcase['git_ls_remote_out']
             repo = planex.repository.Repository(tcase['URL'])
