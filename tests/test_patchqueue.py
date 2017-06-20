@@ -15,8 +15,6 @@ from planex.spec import Spec
 
 class BasicTests(unittest.TestCase):
     """Basic tests of patchqueue handling"""
-    # unittest.TestCase has more methods than Pylint permits
-    # pylint: disable=R0904
 
     def setUp(self):
         # Create a temporary directory

@@ -14,8 +14,6 @@ def get_rpm_machine():
 
 class RpmTests(unittest.TestCase):
     """Basic Spec class tests"""
-    # unittest.TestCase has more methods than Pylint permits
-    # pylint: disable=R0904
 
     def setUp(self):
         rpm_defines = [("dist", ".el6"),

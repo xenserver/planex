@@ -11,8 +11,6 @@ import planex.cmd.depend
 
 class BasicTests(unittest.TestCase):
     """Basic dependency generation tests"""
-    # unittest.TestCase has more methods than Pylint permits
-    # pylint: disable=R0904
     def setUp(self):
         rpm_defines = [("dist", ".el6"),
                        ("_topdir", "_build"),

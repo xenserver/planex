@@ -12,8 +12,6 @@ import planex.spec
 class BasicTests(unittest.TestCase):
     """Basic manifest generation tests"""
 
-    # unittest.TestCase has more methods than Pylint permits
-    # pylint: disable=R0904
     def setUp(self):
         path = 'tests/data/manifest/{}.{}'
         self.name_1 = 'branding-xenserver'

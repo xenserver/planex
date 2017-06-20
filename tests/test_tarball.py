@@ -12,9 +12,6 @@ import planex.tarball
 class BasicTests(unittest.TestCase):
     """Basic tarball tests"""
 
-    # unittest.TestCase has more methods than Pylint permits
-    # pylint: disable=R0904
-
     def setUp(self):
         # Create a temporary directory
         self.tmpdir = tempfile.mkdtemp()

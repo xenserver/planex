@@ -9,8 +9,6 @@ import planex.repository
 
 class BasicTests(unittest.TestCase):
     """Basic BitBucket URL parser tests"""
-    # unittest.TestCase has more methods than Pylint permits
-    # pylint: disable=R0904
 
     def setUp(self):
         with open("tests/data/bitbucket-repo.json") as fileh:
@@ -35,8 +33,6 @@ class BasicTests(unittest.TestCase):
 
 class GitHubTests(unittest.TestCase):
     """Basic GitHub URL parser tests"""
-    # unittest.TestCase has more methods than Pylint permits
-    # pylint: disable=R0904
 
     def setUp(self):
         with open("tests/data/github-repo.json") as fileh:
@@ -56,8 +52,6 @@ class GitHubTests(unittest.TestCase):
 
 class GitWebTests(unittest.TestCase):
     """Basic GitWeb URL parser tests"""
-    # unittest.TestCase has more methods than Pylint permits
-    # pylint: disable=R0904
 
     def setUp(self):
         with open("tests/data/gitweb-repo.json") as fileh:
