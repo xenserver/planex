@@ -1,22 +1,20 @@
 """Test patchqueue handling"""
 
-# Run these tests with 'nosetests':
-#   install the 'python-nose' package (Fedora/CentOS or Ubuntu)
-#   run 'nosetests' in the root of the repository
-
-import glob
-import os
-import os.path
 import shutil
-import sys
 import tempfile
 import unittest
+
+from hypothesis import given
+from nose.plugins.attrib import attr
+
+import tests.strategies as tst
 
 import planex.patchqueue
 from planex.spec import Spec
 
 
 class BasicTests(unittest.TestCase):
+    """Basic tests of patchqueue handling"""
     # unittest.TestCase has more methods than Pylint permits
     # pylint: disable=R0904
 
@@ -29,11 +27,11 @@ class BasicTests(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def test_patch_guards(self):
+        """Patch guards are applied correctly"""
         series = ("patch_no_guard_or_comment\n",
                   "patch_with_a_comment # this is a comment\n",
                   "patch_with_a_positive_guard #+aguard\n",
-                  "patch_with_a_negative_guard #-aguard\n",
-                  )
+                  "patch_with_a_negative_guard #-aguard\n")
 
         applied = list(planex.patchqueue.parse_patchseries(series))
 
@@ -43,6 +41,7 @@ class BasicTests(unittest.TestCase):
         self.assertIn("patch_with_a_negative_guard", applied)
 
     def test_rewrite_spec(self):
+        """Patches are inserted into rewritten spec file"""
         spec = Spec("tests/data/manifest/branding-xenserver.spec",
                     check_package_name=False)
         patches = ["first.patch", "second.patch", "third.patch"]
@@ -52,22 +51,20 @@ class BasicTests(unittest.TestCase):
         self.assertIn("Patch2: third.patch\n", rewritten)
 
     def test_autosetup_present(self):
+        """Patchqueue application succeeds if %autosetup is present"""
         spec = Spec("tests/data/manifest/branding-xenserver.spec",
                     check_package_name=False)
         patches = ["first.patch"]
-        planex.patchqueue.expand_patchqueue(spec, patches)
+        rewritten = planex.patchqueue.expand_patchqueue(spec, patches)
+        self.assertIn("Patch0: first.patch\n", rewritten)
 
     def test_autosetup_missing(self):
+        """Patchqueue application fails if %autosetup is not present"""
         spec = Spec("tests/data/ocaml-uri.spec", check_package_name=False)
         patches = ["first.patch"]
         with self.assertRaises(planex.patchqueue.SpecMissingAutosetup):
             planex.patchqueue.expand_patchqueue(spec, patches)
 
-
-from hypothesis import given
-from nose.plugins.attrib import attr
-
-import tests.strategies as tst
 
 # Mercurial's guard logic is documented in:
 #
