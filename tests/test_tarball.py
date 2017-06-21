@@ -1,12 +1,8 @@
-# Run these tests with 'nosetests':
-#   install the 'python-nose' package (Fedora/CentOS or Ubuntu)
-#   run 'nosetests' in the root of the repository
+"""Test tarball handling"""
 
-import glob
 import os
 import os.path
 import shutil
-import sys
 import tempfile
 import unittest
 
@@ -14,8 +10,7 @@ import planex.tarball
 
 
 class BasicTests(unittest.TestCase):
-    # unittest.TestCase has more methods than Pylint permits
-    # pylint: disable=R0904
+    """Basic tarball tests"""
 
     def setUp(self):
         # Create a temporary directory
@@ -28,9 +23,11 @@ class BasicTests(unittest.TestCase):
         self.tarball.close()
 
     def test_archive_root(self):
+        """Tarball root prefix is detected correctly"""
         self.assertEqual(self.tarball.archive_root, "patchqueue")
 
     def test_getnames(self):
+        """Tarball listing without prefix includes all members"""
         expected = ["test.spec",
                     "SOURCES/test1.source",
                     "SOURCES/test2.source"]
@@ -38,6 +35,7 @@ class BasicTests(unittest.TestCase):
         self.assertItemsEqual(expected, actual)
 
     def test_getnames_prefix(self):
+        """Tarball listing with prefix only includes members under prefix"""
         self.tarball.prefix = "SOURCES"
         expected = ["test1.source",
                     "test2.source"]
@@ -45,19 +43,22 @@ class BasicTests(unittest.TestCase):
         self.assertItemsEqual(expected, actual)
 
     def test_extractfile(self):
-        file = self.tarball.extractfile("SOURCES/test1.source")
+        """Members can be extracted to a file-like object"""
+        extracted = self.tarball.extractfile("SOURCES/test1.source")
         expected = ["test1.source contents\n"]
-        actual = file.readlines()
+        actual = extracted.readlines()
         self.assertItemsEqual(expected, actual)
 
     def test_extractfile_prefix(self):
+        """Members under prefix can be extracted to a file-like object"""
         self.tarball.prefix = "SOURCES"
-        file = self.tarball.extractfile("test1.source")
+        extracted = self.tarball.extractfile("test1.source")
         expected = ["test1.source contents\n"]
-        actual = file.readlines()
+        actual = extracted.readlines()
         self.assertItemsEqual(expected, actual)
 
     def test_extract(self):
+        """Members can be extracted to the filesystem"""
         self.tarball.extract("SOURCES/test1.source", self.tmpdir)
         with open(os.path.join(self.tmpdir, "test1.source")) as output:
             expected = ["test1.source contents\n"]
@@ -65,6 +66,7 @@ class BasicTests(unittest.TestCase):
         self.assertItemsEqual(expected, actual)
 
     def test_extract_prefix(self):
+        """Members under prefix can be extracted to the filesystem"""
         self.tarball.prefix = "SOURCES"
         self.tarball.extract("test1.source", self.tmpdir)
         with open(os.path.join(self.tmpdir, "test1.source")) as output:

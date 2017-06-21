@@ -1,6 +1,4 @@
-# Run these tests with 'nosetests':
-#   install the 'python-nose' package (Fedora/CentOS or Ubuntu)
-#   run 'nosetests' in the root of the repository
+"""Tests for Spec class"""
 
 import unittest
 import platform
@@ -8,14 +6,14 @@ import planex.spec
 
 
 def get_rpm_machine():
+    """Return the RPM architecture name for the local machine"""
     if platform.machine() == 'x86_64':
         return 'x86_64'
     return 'i386'
 
 
 class RpmTests(unittest.TestCase):
-    # unittest.TestCase has more methods than Pylint permits
-    # pylint: disable=R0904
+    """Basic Spec class tests"""
 
     def setUp(self):
         rpm_defines = [("dist", ".el6"),
@@ -25,24 +23,30 @@ class RpmTests(unittest.TestCase):
                                      defines=rpm_defines)
 
     def test_bad_filename(self):
+        """Exception is raised if filenname does not match package name"""
         self.assertRaises(planex.spec.SpecNameMismatch, planex.spec.Spec,
                           "tests/data/bad-name.spec")
 
     def test_name(self):
+        """Package name is correct"""
         self.assertEqual(self.spec.name(), "ocaml-cohttp")
 
     def test_specpath(self):
+        """Path to spec file on disk is correct"""
         self.assertEqual(self.spec.specpath(), "tests/data/ocaml-cohttp.spec")
 
     def test_version(self):
+        """Package version is correct"""
         self.assertEqual(self.spec.version(), "0.9.8")
 
     def test_provides(self):
+        """Package provides are correct"""
         self.assertItemsEqual(
             self.spec.provides(),
             ["ocaml-cohttp", "ocaml-cohttp-devel"])
 
     def test_source_urls(self):
+        """Package source URLs are correct"""
         self.assertItemsEqual(
             self.spec.source_urls(),
             ["https://github.com/mirage/ocaml-cohttp/archive/"
@@ -53,6 +57,7 @@ class RpmTests(unittest.TestCase):
              "cohttp1.patch"])
 
     def test_source_paths(self):
+        """Package source paths on disk are correct"""
         self.assertItemsEqual(
             self.spec.source_paths(),
             ["./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz",
@@ -62,6 +67,7 @@ class RpmTests(unittest.TestCase):
              "./SOURCES/ocaml-cohttp/cohttp1.patch"])
 
     def test_buildrequires(self):
+        """Package build-time requirements are correct"""
         self.assertEqual(
             self.spec.buildrequires(),
             set(["ocaml", "ocaml-findlib", "ocaml-re-devel",
@@ -71,11 +77,13 @@ class RpmTests(unittest.TestCase):
                  "openssl", "openssl-devel"]))
 
     def test_source_package_path(self):
+        """Path to resulting source RPM is correct"""
         self.assertEqual(
             self.spec.source_package_path(),
             "./SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm")
 
     def test_binary_package_paths(self):
+        """Paths to resulting binary RPMs are correct"""
         machine = get_rpm_machine()
 
         self.assertItemsEqual(
@@ -87,6 +95,7 @@ class RpmTests(unittest.TestCase):
         )
 
     def test_local_sources(self):
+        """Paths to local source files are correct"""
         self.assertItemsEqual(
             self.spec.local_sources(),
             ["ocaml-cohttp-init",
@@ -94,6 +103,7 @@ class RpmTests(unittest.TestCase):
         )
 
     def test_local_patches(self):
+        """Paths to local patch files are correct"""
         self.assertItemsEqual(
             self.spec.local_patches(),
             ["cohttp0.patch",

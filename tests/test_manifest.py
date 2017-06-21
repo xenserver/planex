@@ -1,3 +1,5 @@
+"""Tests for manifest generation"""
+
 import json
 import unittest
 import mock
@@ -8,8 +10,8 @@ import planex.spec
 
 
 class BasicTests(unittest.TestCase):
-    # unittest.TestCase has more methods than Pylint permits
-    # pylint: disable=R0904
+    """Basic manifest generation tests"""
+
     def setUp(self):
         path = 'tests/data/manifest/{}.{}'
         self.name_1 = 'branding-xenserver'
@@ -49,7 +51,7 @@ class BasicTests(unittest.TestCase):
 
     @mock.patch('planex.repository.git_ls_remote')
     def test_generate_manifest_1(self, mock_git_ls_remote):
-        # Standard repo (specfile only)
+        """Manifest for standard repo (specfile only)"""
 
         mock_git_ls_remote.return_value = self.git_ls_remote_out[self.name_1]
 
@@ -62,7 +64,7 @@ class BasicTests(unittest.TestCase):
 
     @mock.patch('planex.repository.git_ls_remote')
     def test_generate_manifest_2(self, mock_git_ls_remote):
-        # Source tarball and patchqueue (specfile and lnkfile)
+        """Manifest for source tarball and patchqueue (specfile and lnkfile)"""
 
         mock_git_ls_remote.return_value = self.git_ls_remote_out[self.name_2]
 
@@ -75,7 +77,7 @@ class BasicTests(unittest.TestCase):
 
     @mock.patch('planex.repository.git_ls_remote')
     def test_generate_manifest_3(self, mock_git_ls_remote):
-        # Repo and patchqueue (specfile and lnkfile)
+        """Manifest for repo and patchqueue (specfile and lnkfile)"""
 
         mock_git_ls_remote.side_effect = self.git_ls_remote_out[self.name_3]
 
