@@ -3,7 +3,6 @@ planex-depend: Generate Makefile-format dependencies from spec files
 """
 
 import argparse
-import glob
 import os
 import sys
 import urlparse
@@ -120,9 +119,6 @@ def parse_args_or_exit(argv=None):
         "-D", "--define", default=[], action="append", type=rpm_macro,
         help="--define='MACRO EXPR' define MACRO with value EXPR")
     parser.add_argument(
-        "-P", "--pins-dir", default="PINS",
-        help="Directory containing pin overlays")
-    parser.add_argument(
         "--no-buildrequires", dest="buildrequires",
         action="store_false", default=True,
         help="Don't generate dependency rules for BuildRequires")
@@ -150,12 +146,9 @@ def main(argv=None):
     print "# -*- makefile -*-"
     print "# vim:ft=make:"
 
-    pins = {}
-    if args.pins_dir:
-        pins_glob = os.path.join(args.pins_dir, "*.pin")
-        pins = {pkgname(pin): pin for pin in glob.glob(pins_glob)}
-
-    links = {pkgname(lnk): lnk for lnk in args.specs if lnk.endswith(".lnk")}
+    links = {pkgname(lnk): lnk
+             for lnk in args.specs
+             if lnk.endswith(".lnk") or lnk.endswith(".pin")}
 
     for spec_path in [spec for spec in args.specs if spec.endswith(".spec")]:
         try:
@@ -177,14 +170,11 @@ def main(argv=None):
         # otherwise manifest.json will be the SRPM's first dependency
         # and will be passed to rpmbuild in the spec position.
         create_manifest_deps(spec)
-        if spec.name() in links or spec.name() in pins:
+        if spec.name() in links:
             srpmpath = spec.source_package_path()
             patchpath = spec.expand_macro("%_sourcedir/patches.tar")
             print '%s: %s' % (srpmpath, patchpath)
-            if spec.name() in pins:
-                print '%s: %s' % (srpmpath, pins[spec.name()])
-            elif spec.name() in links:
-                print '%s: %s' % (srpmpath, links[spec.name()])
+            print '%s: %s' % (srpmpath, links[spec.name()])
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
         if args.buildrequires:

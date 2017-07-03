@@ -45,7 +45,7 @@ MOCK_FLAGS ?= ${QUIET+--quiet} \
               $(MOCK_EXTRA_FLAGS)
 
 DEPEND ?= planex-depend
-DEPEND_FLAGS ?= $(RPM_DEFINES) --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
+DEPEND_FLAGS ?= $(RPM_DEFINES) $(DEPEND_EXTRA_FLAGS)
 
 MANIFEST ?= planex-manifest
 MANIFEST_FLAGS ?=
