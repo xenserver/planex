@@ -13,7 +13,7 @@ import tempfile
 
 import argparse
 import argcomplete
-from planex.util import add_common_parser_options
+from planex.cmd.args import add_common_parser_options
 from planex.spec import Spec
 from planex.link import Link
 from planex.patchqueue import Patchqueue

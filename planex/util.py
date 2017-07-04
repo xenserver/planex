@@ -12,8 +12,6 @@ import signal
 import subprocess
 import sys
 
-import pkg_resources
-
 import __main__
 
 
@@ -81,21 +79,6 @@ def setup_logging(args):
 
     logging.basicConfig(format=fmt, datefmt=datefmt, level=loglevel)
     logging.debug("Initialised logging.")
-
-
-def add_common_parser_options(parser):
-    """
-    Takes a parser and adds the following command line flags:
-        * --quiet/--warn
-        * -v/--verbose/--debug
-        * --version
-    """
-    parser.add_argument('--quiet', '--warn', action='store_true',
-                        help='Only log warnings and errors')
-    parser.add_argument('-v', '--verbose', '--debug', action='store_true',
-                        help='Enable debug logging')
-    parser.add_argument('--version', action='version', version="%%(prog)s %s" %
-                        pkg_resources.require("planex")[0].version)
 
 
 def hash_of_file(path):

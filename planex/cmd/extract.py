@@ -12,7 +12,7 @@ import tarfile
 import argcomplete
 
 from planex.link import Link
-from planex.util import add_common_parser_options
+from planex.cmd.args import add_common_parser_options
 from planex.util import setup_logging
 from planex.util import setup_sigint_handler
 
