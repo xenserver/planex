@@ -10,7 +10,7 @@ import os
 
 import argcomplete
 
-from planex.util import add_common_parser_options
+from planex.cmd.args import add_common_parser_options
 from planex.util import setup_logging
 from planex.link import Link
 from planex.spec import Spec
