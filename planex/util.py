@@ -92,26 +92,3 @@ def makedirs(path):
             pass
         else:
             raise
-
-
-def git_ls_remote(url, ref=None, *options):
-    """
-    Run 'git ls-remote' command.
-    """
-    cmd = ['git', 'ls-remote'] + list(options) + [url]
-
-    if ref is not None:
-        cmd.append(ref)
-
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-
-    stdout, stderr = proc.communicate()
-
-    if stderr:
-        raise RuntimeError(stderr)
-
-    return stdout

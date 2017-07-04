@@ -114,3 +114,26 @@ def origin_url(repo):
     match = re.search(r'origin\s*(\S*)\s*\(fetch\)', remotes)
 
     return match.group(1).strip()
+
+
+def ls_remote(url, ref=None, *options):
+    """
+    Run 'git ls-remote' command.
+    """
+    cmd = ['git', 'ls-remote'] + list(options) + [url]
+
+    if ref is not None:
+        cmd.append(ref)
+
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+
+    stdout, stderr = proc.communicate()
+
+    if stderr:
+        raise RuntimeError(stderr)
+
+    return stdout
