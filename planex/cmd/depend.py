@@ -9,7 +9,7 @@ import sys
 import urlparse
 
 import argcomplete
-from planex.cmd.args import add_common_parser_options
+from planex.cmd.args import add_common_parser_options, rpm_macro
 from planex.util import setup_sigint_handler
 from planex.cmd import manifest
 import planex.spec as pkg
@@ -119,7 +119,7 @@ def parse_args_or_exit(argv=None):
         action="store_false", default=True,
         help="Don't check that package name matches spec file name")
     parser.add_argument(
-        "-D", "--define", default=[], action="append",
+        "-D", "--define", default=[], action="append", type=rpm_macro,
         help="--define='MACRO EXPR' define MACRO with value EXPR")
     parser.add_argument(
         "-P", "--pins-dir", default="PINS",
@@ -152,13 +152,6 @@ def main(argv=None):
     print "# -*- makefile -*-"
     print "# vim:ft=make:"
 
-    macros = [tuple(macro.split(' ', 1)) for macro in args.define]
-
-    if any(len(macro) != 2 for macro in macros):
-        _err = [macro for macro in macros if len(macro) != 2]
-        print "error: malformed macro passed to --define: %r" % _err
-        sys.exit(1)
-
     pins = []
     if args.pins_dir:
         pins_glob = os.path.join(args.pins_dir, "*.pin")
@@ -170,7 +163,7 @@ def main(argv=None):
         try:
             spec = pkg.Spec(spec_path,
                             check_package_name=args.check_package_names,
-                            defines=macros)
+                            defines=args.define)
             spec_name = os.path.basename(spec_path)
             specs[spec_name] = spec
 

@@ -14,7 +14,7 @@ import pkg_resources
 import pycurl
 
 from planex.link import Link
-from planex.cmd.args import add_common_parser_options
+from planex.cmd.args import add_common_parser_options, rpm_macro
 from planex.util import run
 from planex.util import setup_logging
 from planex.util import setup_sigint_handler
@@ -168,7 +168,8 @@ def parse_args_or_exit(argv=None):
                         "file name")
     parser.add_argument('--mirror',
                         help="Set the URL to a local mirror for downloads")
-    parser.add_argument("-D", "--define", default=[], action="append",
+    parser.add_argument("-D", "--define", default=[],
+                        action="append", type=rpm_macro,
                         help="--define='MACRO EXPR' define MACRO with "
                         "value EXPR")
     argcomplete.autocomplete(parser)
@@ -181,16 +182,9 @@ def fetch_sources(args):
     appropriate.
     """
 
-    macros = [tuple(macro.split(' ', 1)) for macro in args.define]
-
-    if any(len(macro) != 2 for macro in macros):
-        _err = [macro for macro in macros if len(macro) != 2]
-        print "error: malformed macro passed to --define: %r" % _err
-        sys.exit(1)
-
     spec = planex.spec.Spec(args.spec_or_link,
                             check_package_name=args.check_package_names,
-                            defines=macros)
+                            defines=args.define)
 
     try:
         sources = [url_for_source(spec, source) for source in args.sources]
