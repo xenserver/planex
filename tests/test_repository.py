@@ -15,7 +15,7 @@ class BasicTests(unittest.TestCase):
             self.data = json.load(fileh)
 
     @mock.patch('planex.repository.requests.get')
-    @mock.patch('planex.repository.git_ls_remote')
+    @mock.patch('planex.git.ls_remote')
     def test_urls(self, mock_git_ls_remote, mock_requests_get):
         """Well-formed BitBucket URLs are parsed correctly"""
         for tcase in self.data:
@@ -38,7 +38,7 @@ class GitHubTests(unittest.TestCase):
         with open("tests/data/github-repo.json") as fileh:
             self.data = json.load(fileh)
 
-    @mock.patch('planex.repository.git_ls_remote')
+    @mock.patch('planex.git.ls_remote')
     def test_urls(self, mock_git_ls_remote):
         """Well-formed GitHub URLs are parsed correctly"""
         for tcase in self.data:
@@ -57,7 +57,7 @@ class GitWebTests(unittest.TestCase):
         with open("tests/data/gitweb-repo.json") as fileh:
             self.data = json.load(fileh)
 
-    @mock.patch('planex.repository.git_ls_remote')
+    @mock.patch('planex.git.ls_remote')
     def test_urls(self, mock_git_ls_remote):
         """Well-formed GitWeb URLs are parsed correctly"""
         for tcase in self.data:

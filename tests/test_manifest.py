@@ -49,7 +49,7 @@ class BasicTests(unittest.TestCase):
         with open(path.format('git_ls_remote_out', 'json')) as fileh:
             self.git_ls_remote_out = json.load(fileh)
 
-    @mock.patch('planex.repository.git_ls_remote')
+    @mock.patch('planex.git.ls_remote')
     def test_generate_manifest_1(self, mock_git_ls_remote):
         """Manifest for standard repo (specfile only)"""
 
@@ -62,7 +62,7 @@ class BasicTests(unittest.TestCase):
 
         self.assertEqual(manifest, self.expected_manifest[self.name_1])
 
-    @mock.patch('planex.repository.git_ls_remote')
+    @mock.patch('planex.git.ls_remote')
     def test_generate_manifest_2(self, mock_git_ls_remote):
         """Manifest for source tarball and patchqueue (specfile and lnkfile)"""
 
@@ -75,7 +75,7 @@ class BasicTests(unittest.TestCase):
 
         self.assertEqual(manifest, self.expected_manifest[self.name_2])
 
-    @mock.patch('planex.repository.git_ls_remote')
+    @mock.patch('planex.git.ls_remote')
     def test_generate_manifest_3(self, mock_git_ls_remote):
         """Manifest for repo and patchqueue (specfile and lnkfile)"""
 

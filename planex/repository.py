@@ -8,7 +8,7 @@ import urlparse
 import re
 import requests
 
-from planex.util import git_ls_remote
+import planex.git as git
 
 
 class Repository(object):
@@ -85,7 +85,7 @@ class Repository(object):
         # Example command:
         # git ls-remote -t \
         #     git://hg.uk.xensource.com/carbon/trunk/blktap.git v3.3.0*
-        remote_refs = git_ls_remote(self._query_url, ref + '*', option)
+        remote_refs = git.ls_remote(self._query_url, ref + '*', option)
 
         # Example output of above command:
         # db8d9edd203460adba4b9175971c2cfc14ac0f64  refs/tags/v3.3.0
@@ -130,7 +130,7 @@ class Repository(object):
             path[2]
         )
 
-        remote_ref = git_ls_remote(self._query_url, path[4])
+        remote_ref = git.ls_remote(self._query_url, path[4])
 
         if remote_ref and remote_ref.split('/', 2)[1] == 'tags':
             self.tag = path[4]
