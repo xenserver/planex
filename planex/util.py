@@ -3,11 +3,9 @@ Library of generic functions used by other planex components
 """
 
 import errno
-import hashlib
 import logging
 import os
 import pipes
-import shutil
 import signal
 import subprocess
 import sys
@@ -79,26 +77,6 @@ def setup_logging(args):
 
     logging.basicConfig(format=fmt, datefmt=datefmt, level=loglevel)
     logging.debug("Initialised logging.")
-
-
-def hash_of_file(path):
-    """
-    Return the md5sum of the contents of a file at a given path.
-    """
-    md5sum = hashlib.md5()
-    with open(path, 'r') as in_f:
-        md5sum.update(in_f.read())
-    return md5sum.digest()
-
-
-def maybe_copy(src, dst, force=False):
-    """
-    Copy a file from src to dst only if their contents differ.
-    """
-    if force or not (os.path.exists(dst) and
-                     os.stat(src).st_size == os.stat(dst).st_size and
-                     hash_of_file(src) == hash_of_file(dst)):
-        shutil.copy(src, dst)
 
 
 def makedirs(path):
