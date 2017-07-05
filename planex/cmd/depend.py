@@ -113,9 +113,6 @@ def parse_args_or_exit(argv=None):
     add_common_parser_options(parser)
     parser.add_argument("specs", metavar="SPEC", nargs="+", help="spec file")
     parser.add_argument(
-        "-r", "--repos_path", metavar="DIR", default="repos",
-        help='Local path to the repositories')
-    parser.add_argument(
         "--no-package-name-check", dest="check_package_names",
         action="store_false", default=True,
         help="Don't check that package name matches spec file name")
