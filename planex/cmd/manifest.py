@@ -54,7 +54,7 @@ def parse_args_or_exit(argv=None):
 
 def get_path(package_name):
     """Get relative path to manifest file for package."""
-    return './MANIFESTS/{}.json'.format(package_name)
+    return '_build/MANIFESTS/{}.json'.format(package_name)
 
 
 def get_name(spec_path, link_path):
