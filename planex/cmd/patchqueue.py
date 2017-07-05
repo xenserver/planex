@@ -19,7 +19,7 @@ from planex.spec import Spec
 import planex.git as git
 import planex.tarball as tarball
 import planex.util as util
-from planex.cmd.args import add_common_parser_options
+from planex.cmd.args import common_base_parser
 
 
 def parse_args_or_exit(argv=None):
@@ -27,8 +27,8 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(
-        description='Create a patchqueue from a linked Git repository')
-    add_common_parser_options(parser)
+        description='Create a patchqueue from a linked Git repository',
+        parents=[common_base_parser()])
     parser.add_argument("link", metavar="LINK", help="link file")
     parser.add_argument("tarball", metavar="TARBALL", help="tarball")
     parser.add_argument("--repos", default="repos",

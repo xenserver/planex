@@ -11,7 +11,7 @@ import sys
 import argcomplete
 from pkg_resources import resource_filename
 
-from planex.cmd.args import add_common_parser_options
+from planex.cmd.args import common_base_parser
 from planex.util import setup_sigint_handler
 
 
@@ -68,8 +68,8 @@ def parse_args_or_exit(argv=None):
     """
     Parse command line options
     """
-    parser = argparse.ArgumentParser(description='Download package sources')
-    add_common_parser_options(parser)
+    parser = argparse.ArgumentParser(description='Download package sources',
+                                     parents=[common_base_parser()])
     parser.add_argument('--rules', dest="rules",
                         action="store_true", default=False,
                         help="Print the full path to Makefile.rules")

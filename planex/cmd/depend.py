@@ -10,7 +10,7 @@ import sys
 import urlparse
 
 import argcomplete
-from planex.cmd.args import add_common_parser_options, rpm_macro
+from planex.cmd.args import common_base_parser, rpm_macro
 from planex.util import setup_sigint_handler, dedupe
 from planex.cmd import manifest
 from planex.spec import Spec, SpecNameMismatch
@@ -114,8 +114,8 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(
-        description="Generate Makefile dependencies from RPM Spec files")
-    add_common_parser_options(parser)
+        description="Generate Makefile dependencies from RPM Spec files",
+        parents=[common_base_parser()])
     parser.add_argument("specs", metavar="SPEC", nargs="+", help="spec file")
     parser.add_argument(
         "--no-package-name-check", dest="check_package_names",

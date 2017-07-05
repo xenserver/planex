@@ -13,7 +13,7 @@ from uuid import uuid4
 
 import argparse
 import argcomplete
-from planex.cmd.args import add_common_parser_options
+from planex.cmd.args import common_base_parser
 
 
 def parse_args_or_exit(argv=None):
@@ -21,8 +21,8 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(
-        description='Planex build system in a chroot (a mock wrapper)')
-    add_common_parser_options(parser)
+        description='Planex build system in a chroot (a mock wrapper)',
+        parents=[common_base_parser()])
     parser.add_argument(
         "--configdir", metavar="CONFIGDIR", default="/etc/mock",
         help="Change where the config files are found")

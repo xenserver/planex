@@ -14,7 +14,7 @@ import tempfile
 
 import argparse
 import argcomplete
-from planex.cmd.args import add_common_parser_options
+from planex.cmd.args import common_base_parser
 from planex.spec import Spec
 from planex.link import Link
 from planex.patchqueue import Patchqueue
@@ -26,8 +26,8 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(
-        description='Pack sources and patchqueues into a source RPM')
-    add_common_parser_options(parser)
+        description='Pack sources and patchqueues into a source RPM',
+        parents=[common_base_parser()])
     parser.add_argument("spec", metavar="SPEC", help="Spec file")
     parser.add_argument("sources", metavar="SOURCE/PATCHQUEUE", nargs='*',
                         help="Source and patchqueue files")

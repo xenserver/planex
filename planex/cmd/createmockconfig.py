@@ -14,7 +14,7 @@ import StringIO
 import yum
 import argcomplete
 
-from planex.cmd.args import add_common_parser_options
+from planex.cmd.args import common_base_parser
 from planex.util import setup_logging
 from planex.util import setup_sigint_handler
 
@@ -110,8 +110,8 @@ def parse_args_or_exit(argv=None):
     """
     Parse command line options
     """
-    parser = argparse.ArgumentParser(description='Create mock config')
-    add_common_parser_options(parser)
+    parser = argparse.ArgumentParser(description='Create mock config',
+                                     parents=[common_base_parser()])
     parser.add_argument("mockconfig", metavar="OUTCFG",
                         help="output file")
     parser.add_argument("--configdir", metavar="CONFIGDIR", required=True,
