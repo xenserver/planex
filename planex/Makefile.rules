@@ -62,6 +62,11 @@ endif
 # Main targets
 ############################################################################
 
+# Always delete a target if its recipe fails.
+# For debugging, use make's --ignore-errors flag to keep targets and continue
+# if recipes fail.
+.DELETE_ON_ERROR:
+
 .PHONY: all rpms
 all: $(TOPDIR) $(RPMS)
 
@@ -80,7 +85,6 @@ clean:
 	rm -rf $(TOPDIR) RPMS MANIFESTS
 
 
-.DELETE_ON_ERROR: $(TOPDIR)
 $(TOPDIR):
 	@echo -n Populating build directory: $(TOPDIR)...
 	@mkdir -p $(TOPDIR)
@@ -116,7 +120,6 @@ MANIFESTS/%.json:
 ############################################################################
 
 # Fetch a source tarball listed in a spec file.
-.DELETE_ON_ERROR: $(TOPDIR)/SOURCES/%
 $(TOPDIR)/SOURCES/%:
 	@echo [FETCH] $@
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
@@ -186,7 +189,6 @@ $(TOPDIR)/SPECS/%.spec: SPECS/%.lnk $(TOPDIR)/SOURCES/%/patches.tar
 # for RPM or Debian builds depending on the host distribution.
 # If dependency generation fails, the deps file is deleted to avoid
 # problems with empty, incomplete or corrupt deps.   
-.DELETE_ON_ERROR: $(DEPS)
 $(DEPS): $(TOPDIR) \
 		$(patsubst SPECS/%.spec,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.spec)) \
 		$(patsubst SPECS/%.lnk,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.lnk))
