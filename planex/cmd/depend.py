@@ -27,6 +27,8 @@ def create_manifest_deps(spec):
         prereqs += ' ' + lnk_path
 
     print '{}: {}'.format(manifest.get_path(spec_name), prereqs)
+    print '{}: {}'.format(spec.source_package_path(),
+                          manifest.get_path(spec.name()))
 
 
 def build_srpm_from_spec(spec, lnk=False):
@@ -35,7 +37,6 @@ def build_srpm_from_spec(spec, lnk=False):
     """
     srpmpath = spec.source_package_path()
     print '%s: %s' % (srpmpath, spec.specpath())
-    print '%s: %s' % (srpmpath, manifest.get_path(spec.name()))
     for (url, path) in zip(spec.source_urls(), spec.source_paths()):
         source = urlparse.urlparse(url)
         if source.scheme in ["http", "https", "file", "ftp"]:
@@ -174,8 +175,11 @@ def main(argv=None):
     provides_to_rpm = package_to_rpm_map(specs.values())
 
     for spec in specs.itervalues():
-        create_manifest_deps(spec)
         build_srpm_from_spec(spec, (spec.name() in links))
+        # Manifest dependencies must come after spec dependencies
+        # otherwise manifest.json will be the SRPM's first dependency
+        # and will be passed to rpmbuild in the spec position.
+        create_manifest_deps(spec)
         if spec.name() in links or spec.name() in pins:
             srpmpath = spec.source_package_path()
             patchpath = spec.expand_macro("%_sourcedir/patches.tar")
