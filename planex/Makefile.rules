@@ -41,7 +41,7 @@ MOCK ?= planex-build-mock
 MOCK_FLAGS ?= ${QUIET+--quiet} \
               --configdir=$(MOCK_CONFIGDIR) \
               --root=$(MOCK_ROOT) \
-              --resultdir=$(dir $@) \
+              --resultdir=$(@D) \
               $(MOCK_EXTRA_FLAGS)
 
 DEPEND ?= planex-depend
@@ -85,24 +85,14 @@ clean:
 	rm -rf $(TOPDIR) RPMS MANIFESTS
 
 
-$(TOPDIR):
-	@echo -n Populating build directory: $(TOPDIR)...
-	@mkdir -p $(TOPDIR)
-	@mkdir -p SPECS SOURCES
-	@mkdir -p $(TOPDIR)/RPMS
-	@mkdir -p $(TOPDIR)/SPECS
-	@mkdir -p $(TOPDIR)/MANIFESTS
-	@ln -s $(TOPDIR)/RPMS RPMS
-	@ln -s $(TOPDIR)/MANIFESTS MANIFESTS
-	@echo done
-
-
 ############################################################################
 # Manifest creation rules
 ############################################################################
 
-MANIFESTS/%.json:
+$(TOPDIR)/MANIFESTS/%.json:
 	@echo [MANIFEST] $@
+	$(AT) mkdir -p $(@D)
+	$(AT) ln -sf $(@D)
 	$(AT)$(MANIFEST) $(MANIFEST_FLAGS) $^ > $@
 
 
@@ -113,6 +103,7 @@ MANIFESTS/%.json:
 # Fetch a source tarball listed in a spec or link file.
 $(TOPDIR)/SOURCES/%:
 	@echo [FETCH] $@
+	$(AT) mkdir -p $(@D)
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
 # Create a patchqueue tarball for a pinned package.
@@ -122,6 +113,7 @@ FORCE:
 
 $(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin FORCE
 	@echo [PATCHQUEUE] $@
+	$(AT) mkdir -p $(@D)
 	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
 
 
@@ -136,6 +128,7 @@ $(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin FORCE
 # (Fedora host) and foo-1.0.el6.x86_64.rpm (CentOS chroot).
 %.src.rpm:
 	@echo [RPMBUILD] $@ 
+	$(AT) mkdir -p $(@D)
 	$(AT)$(RPMBUILD) $(RPMBUILD_FLAGS) $^
 
 # Build one or more binary RPMs from a source RPM.   A typical source RPM
@@ -146,6 +139,8 @@ $(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin FORCE
 # to find and install it.
 %.rpm:
 	@echo [MOCK] $<
+	$(AT) mkdir -p $(@D)
+	$(AT) ln -sf $(@D)
 	$(AT)$(MOCK) $(MOCK_FLAGS) --rebuild $<
 
 
@@ -158,8 +153,9 @@ $(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin FORCE
 # for RPM or Debian builds depending on the host distribution.
 # If dependency generation fails, the deps file is deleted to avoid
 # problems with empty, incomplete or corrupt deps.   
-$(DEPS): $(SPECS) $(LINKS) | $(TOPDIR)
+$(DEPS): $(SPECS) $(LINKS)
 	@echo Updating dependencies...
+	$(AT) mkdir -p $(@D)
 	$(AT)$(DEPEND) $(DEPEND_FLAGS) $^ > $@
 
 # vim:ft=make:
