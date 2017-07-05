@@ -30,8 +30,6 @@ class BasicTests(unittest.TestCase):
             "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
             "tests/data/ocaml-cohttp.spec\n"
             "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
-            "./MANIFESTS/ocaml-cohttp.json\n"
-            "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
             "_build/SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz\n"
             "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
             "SOURCES/ocaml-cohttp/ocaml-cohttp-init\n"
