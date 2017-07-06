@@ -183,7 +183,7 @@ def main(argv=None):
             print '%s: %s' % (srpmpath, patchpath)
         if spec.name() in pins:
             print '%s: %s' % (srpmpath, pins[spec.name()])
-        if spec.name() in links:
+        elif spec.name() in links:
             print '%s: %s' % (srpmpath, links[spec.name()])
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
