@@ -92,3 +92,18 @@ def makedirs(path):
             pass
         else:
             raise
+
+
+def dedupe(items, key):
+    """
+    Return items with all but the first of each item matching key removed
+    Order of items is preserved.
+    """
+    seen = set()
+    ret = []
+    for item in items:
+        _key = key(item)
+        if _key not in seen:
+            seen.add(_key)
+            ret.append(item)
+    return ret

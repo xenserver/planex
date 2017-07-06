@@ -4,14 +4,15 @@ planex-depend: Generate Makefile-format dependencies from spec files
 
 import argparse
 import os
+import re
 import sys
 import urlparse
 
 import argcomplete
 from planex.cmd.args import add_common_parser_options, rpm_macro
-from planex.util import setup_sigint_handler
+from planex.util import setup_sigint_handler, dedupe
 from planex.cmd import manifest
-import planex.spec as pkg
+from planex.spec import Spec, SpecNameMismatch
 from planex.link import Link
 
 
@@ -134,6 +135,15 @@ def pkgname(path):
     return os.path.splitext(os.path.basename(path))[0]
 
 
+def dedupe_key(path):
+    """
+    Return the key of path for deduplication.
+    Filnames are stripped of their paths, and .pin files are equivalent
+    to .lnk files.
+    """
+    return os.path.basename(re.sub(r"\.pin$", ".lnk", path))
+
+
 def main(argv=None):
     """
     Entry point
@@ -142,28 +152,25 @@ def main(argv=None):
 
     setup_sigint_handler()
     args = parse_args_or_exit(argv)
-    specs = {}
+    allspecs = dedupe(args.specs, dedupe_key)
+    print "# inputs: %s" % " ".join(allspecs)
+
+    try:
+        specs = {pkgname(path): Spec(path, defines=args.define)
+                 for path in allspecs
+                 if path.endswith(".spec")}
+    except SpecNameMismatch as exn:
+        sys.stderr.write("error: %s\n" % exn.message)
+        sys.exit(1)
+
+    links = {pkgname(path): Link(path)
+             for path in allspecs
+             if path.endswith(".lnk") or path.endswith(".pin")}
+
+    provides_to_rpm = package_to_rpm_map(specs.values())
 
     print "# -*- makefile -*-"
     print "# vim:ft=make:"
-
-    links = {pkgname(lnk): Link(lnk)
-             for lnk in args.specs
-             if lnk.endswith(".lnk") or lnk.endswith(".pin")}
-
-    for spec_path in [spec for spec in args.specs if spec.endswith(".spec")]:
-        try:
-            spec = pkg.Spec(spec_path,
-                            check_package_name=args.check_package_names,
-                            defines=args.define)
-            spec_name = os.path.basename(spec_path)
-            specs[spec_name] = spec
-
-        except pkg.SpecNameMismatch as exn:
-            sys.stderr.write("error: %s\n" % exn.message)
-            sys.exit(1)
-
-    provides_to_rpm = package_to_rpm_map(specs.values())
 
     for spec in specs.itervalues():
         build_srpm_from_spec(spec, (spec.name() in links))
