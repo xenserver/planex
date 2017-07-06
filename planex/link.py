@@ -9,8 +9,14 @@ class Link(object):
     """Represents pinned or linked repository"""
 
     def __init__(self, path):
+        self.path = path
         with open(path) as fileh:
             self.link = json.load(fileh)
+
+    @property
+    def linkpath(self):
+        """Return the path to the link file"""
+        return self.path
 
     @property
     def url(self):

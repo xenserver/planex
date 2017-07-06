@@ -12,6 +12,7 @@ from planex.cmd.args import add_common_parser_options, rpm_macro
 from planex.util import setup_sigint_handler
 from planex.cmd import manifest
 import planex.spec as pkg
+from planex.link import Link
 
 
 def create_manifest_deps(spec):
@@ -146,7 +147,7 @@ def main(argv=None):
     print "# -*- makefile -*-"
     print "# vim:ft=make:"
 
-    links = {pkgname(lnk): lnk
+    links = {pkgname(lnk): Link(lnk)
              for lnk in args.specs
              if lnk.endswith(".lnk") or lnk.endswith(".pin")}
 
@@ -174,7 +175,7 @@ def main(argv=None):
             srpmpath = spec.source_package_path()
             patchpath = spec.expand_macro("%_sourcedir/patches.tar")
             print '%s: %s' % (srpmpath, patchpath)
-            print '%s: %s' % (srpmpath, links[spec.name()])
+            print '%s: %s' % (srpmpath, links[spec.name()].linkpath)
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
         if args.buildrequires:
