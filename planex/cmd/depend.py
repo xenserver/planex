@@ -150,10 +150,10 @@ def main(argv=None):
     print "# -*- makefile -*-"
     print "# vim:ft=make:"
 
-    pins = []
+    pins = {}
     if args.pins_dir:
         pins_glob = os.path.join(args.pins_dir, "*.pin")
-        pins = [pkgname(pin) for pin in glob.glob(pins_glob)]
+        pins = {pkgname(pin): pin for pin in glob.glob(pins_glob)}
 
     links = {pkgname(lnk): lnk for lnk in args.specs if lnk.endswith(".lnk")}
 
@@ -182,11 +182,9 @@ def main(argv=None):
             patchpath = spec.expand_macro("%_sourcedir/patches.tar")
             print '%s: %s' % (srpmpath, patchpath)
         if spec.name() in pins:
-            pinpath = "%s/%s.pin" % (args.pins_dir, spec.name())
-            print '%s: %s' % (srpmpath, pinpath)
+            print '%s: %s' % (srpmpath, pins[spec.name()])
         if spec.name() in links:
-            linkpath = "SPECS/%s.lnk" % spec.name()
-            print '%s: %s' % (srpmpath, linkpath)
+            print '%s: %s' % (srpmpath, links[spec.name()])
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
         if args.buildrequires:
