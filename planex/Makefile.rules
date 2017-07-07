@@ -33,7 +33,7 @@ EXTRACT ?= planex-extract
 EXTRACT_FLAGS ?= $(EXTRACT_EXTRA_FLAGS)
 
 RPMBUILD ?= planex-make-srpm
-RPMBUILD_FLAGS ?= ${QUIET+--quiet} $(RPM_DEFINES)
+RPMBUILD_FLAGS ?= ${QUIET+--quiet} $(RPM_DEFINES) $(RPMBUILD_EXTRA_FLAGS)
 
 CREATEREPO ?= createrepo
 CREATEREPO_FLAGS ?= ${QUIET+--quiet}
