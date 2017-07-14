@@ -181,10 +181,10 @@ def main(argv=None):
             srpmpath = spec.source_package_path()
             patchpath = spec.expand_macro("%_sourcedir/patches.tar")
             print '%s: %s' % (srpmpath, patchpath)
-        if spec.name() in pins:
-            print '%s: %s' % (srpmpath, pins[spec.name()])
-        elif spec.name() in links:
-            print '%s: %s' % (srpmpath, links[spec.name()])
+            if spec.name() in pins:
+                print '%s: %s' % (srpmpath, pins[spec.name()])
+            elif spec.name() in links:
+                print '%s: %s' % (srpmpath, links[spec.name()])
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
         if args.buildrequires:
