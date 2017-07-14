@@ -183,6 +183,7 @@ def main(argv=None):
             patchpath = spec.expand_macro("%_sourcedir/patches.tar")
             print '%s: %s' % (srpmpath, patchpath)
             print '%s: %s' % (srpmpath, links[spec.name()].linkpath)
+            print '%s: %s' % (patchpath, links[spec.name()].linkpath)
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
         if args.buildrequires:

@@ -57,6 +57,7 @@ ifdef QUIET
 AT = @
 endif
 
+
 ############################################################################
 # Main targets
 ############################################################################
@@ -104,11 +105,12 @@ MANIFESTS/%.json:
 	@echo [MANIFEST] $@
 	$(AT)$(MANIFEST) $(MANIFEST_FLAGS) $^ > $@
 
+
 ############################################################################
 # Source download rules
 ############################################################################
 
-# Fetch a source tarball listed in a spec file.
+# Fetch a source tarball listed in a spec or link file.
 $(TOPDIR)/SOURCES/%:
 	@echo [FETCH] $@
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
@@ -130,10 +132,6 @@ $(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin SPECS/%.lnk FORCE
 $(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin FORCE
 	@echo [PATCHQUEUE] $@
 	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
-
-$(TOPDIR)/SOURCES/%/patches.tar: SPECS/%.lnk
-	@echo [FETCH] $@
-	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
 
 ############################################################################
