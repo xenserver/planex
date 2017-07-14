@@ -115,19 +115,10 @@ $(TOPDIR)/SOURCES/%:
 	@echo [FETCH] $@
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
-# Always regenerate pinned patch queues
+# Create a patchqueue tarball for a pinned package.
+# Pinned patchqueues are always regenerated.
 .PHONY: FORCE
 FORCE:
-
-# Fetch a patch tarball listed in a link file.
-.PRECIOUS: $(TOPDIR)/SOURCES/%/patches.tar
-$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin SPECS/%.spec FORCE
-	@echo [PATCHQUEUE] $@
-	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
-
-$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin SPECS/%.lnk FORCE
-	@echo [PATCHQUEUE] $@
-	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
 
 $(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin FORCE
 	@echo [PATCHQUEUE] $@
