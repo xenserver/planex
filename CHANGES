@@ -1,3 +1,8 @@
+0.23.1
+* depend: Do not make an SRPM depend on a link if a pin is also present
+* Makefile.rules: add RPMBUILD_EXTRA_FLAGS variable
+* depend: Remove unused --repos_path argument
+
 0.23.0
 * planex-makesrpm: Do not rewrite %autosetup rules in spec files
 

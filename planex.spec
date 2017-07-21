@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.23.0
+Version: 0.23.1
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -54,9 +54,13 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
-* Mon May 8 2017 Euan Harris <euan.harris@citrix.com> - 0.23.0-1
-- planex-makesrpm: Do not rewrite %autosetup rules in spec files
+* Fri Jul 21 2017 Euan Harris <euan.harris@citrix.com> - 0.23.1-1
+- depend: Do not make an SRPM depend on a link if a pin is also present
+- Makefile.rules: add RPMBUILD_EXTRA_FLAGS variable
+- depend: Remove unused --repos_path argument
 
+* Mon May 8 2017 Euan Harris <euan.harris@citrix.com> - 0.23.0-1
+- planex-makesrpm: Do not rewrite 'autosetup' rules in spec files
 
 * Mon May 8 2017 Euan Harris <euan.harris@citrix.com> - 0.22.1-1
 - planex-patchqueue: Handle static tarballs in patchqueue repositories
@@ -90,7 +94,7 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
   so that logs are produced inside docker with concurrent builds which
   use make's output --output-sync=target option
 - planex-patchqueue: Check that pinned spec file contains the 
-  %autosetup -p1 macro which is needed to apply patch queue
+  'autosetup -p1' macro which is needed to apply patch queue
 - planex-clone: Improve handling of pins to branches, tags and commit
   hashes
 
