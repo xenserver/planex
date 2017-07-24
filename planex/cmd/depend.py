@@ -3,16 +3,17 @@ planex-depend: Generate Makefile-format dependencies from spec files
 """
 
 import argparse
-import glob
 import os
+import re
 import sys
 import urlparse
 
 import argcomplete
 from planex.cmd.args import add_common_parser_options, rpm_macro
-from planex.util import setup_sigint_handler
+from planex.util import setup_sigint_handler, dedupe
 from planex.cmd import manifest
-import planex.spec as pkg
+from planex.spec import Spec, SpecNameMismatch
+from planex.link import Link
 
 
 def create_manifest_deps(spec):
@@ -120,9 +121,6 @@ def parse_args_or_exit(argv=None):
         "-D", "--define", default=[], action="append", type=rpm_macro,
         help="--define='MACRO EXPR' define MACRO with value EXPR")
     parser.add_argument(
-        "-P", "--pins-dir", default="PINS",
-        help="Directory containing pin overlays")
-    parser.add_argument(
         "--no-buildrequires", dest="buildrequires",
         action="store_false", default=True,
         help="Don't generate dependency rules for BuildRequires")
@@ -137,6 +135,15 @@ def pkgname(path):
     return os.path.splitext(os.path.basename(path))[0]
 
 
+def dedupe_key(path):
+    """
+    Return the key of path for deduplication.
+    Filnames are stripped of their paths, and .pin files are equivalent
+    to .lnk files.
+    """
+    return os.path.basename(re.sub(r"\.pin$", ".lnk", path))
+
+
 def main(argv=None):
     """
     Entry point
@@ -145,31 +152,25 @@ def main(argv=None):
 
     setup_sigint_handler()
     args = parse_args_or_exit(argv)
-    specs = {}
+    allspecs = dedupe(args.specs, dedupe_key)
+    print "# inputs: %s" % " ".join(allspecs)
+
+    try:
+        specs = {pkgname(path): Spec(path, defines=args.define)
+                 for path in allspecs
+                 if path.endswith(".spec")}
+    except SpecNameMismatch as exn:
+        sys.stderr.write("error: %s\n" % exn.message)
+        sys.exit(1)
+
+    links = {pkgname(path): Link(path)
+             for path in allspecs
+             if path.endswith(".lnk") or path.endswith(".pin")}
+
+    provides_to_rpm = package_to_rpm_map(specs.values())
 
     print "# -*- makefile -*-"
     print "# vim:ft=make:"
-
-    pins = {}
-    if args.pins_dir:
-        pins_glob = os.path.join(args.pins_dir, "*.pin")
-        pins = {pkgname(pin): pin for pin in glob.glob(pins_glob)}
-
-    links = {pkgname(lnk): lnk for lnk in args.specs if lnk.endswith(".lnk")}
-
-    for spec_path in [spec for spec in args.specs if spec.endswith(".spec")]:
-        try:
-            spec = pkg.Spec(spec_path,
-                            check_package_name=args.check_package_names,
-                            defines=args.define)
-            spec_name = os.path.basename(spec_path)
-            specs[spec_name] = spec
-
-        except pkg.SpecNameMismatch as exn:
-            sys.stderr.write("error: %s\n" % exn.message)
-            sys.exit(1)
-
-    provides_to_rpm = package_to_rpm_map(specs.values())
 
     for spec in specs.itervalues():
         build_srpm_from_spec(spec, (spec.name() in links))
@@ -177,14 +178,12 @@ def main(argv=None):
         # otherwise manifest.json will be the SRPM's first dependency
         # and will be passed to rpmbuild in the spec position.
         create_manifest_deps(spec)
-        if spec.name() in links or spec.name() in pins:
+        if spec.name() in links:
             srpmpath = spec.source_package_path()
             patchpath = spec.expand_macro("%_sourcedir/patches.tar")
             print '%s: %s' % (srpmpath, patchpath)
-            if spec.name() in pins:
-                print '%s: %s' % (srpmpath, pins[spec.name()])
-            elif spec.name() in links:
-                print '%s: %s' % (srpmpath, links[spec.name()])
+            print '%s: %s' % (srpmpath, links[spec.name()].linkpath)
+            print '%s: %s' % (patchpath, links[spec.name()].linkpath)
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
         if args.buildrequires:

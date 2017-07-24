@@ -5,6 +5,8 @@
 
 DIST ?= .el6
 TOPDIR ?= _build
+SPECS ?= $(wildcard SPECS/*.spec)
+LINKS ?= $(wildcard SPECS/*.lnk)
 DEPS = $(TOPDIR)/deps
 PINSDIR ?= PINS
 REPOSDIR ?= repos
@@ -29,9 +31,6 @@ endif
 FETCH ?= planex-fetch
 FETCH_FLAGS ?= $(RPM_DEFINES) $(FETCH_EXTRA_FLAGS)
 
-EXTRACT ?= planex-extract
-EXTRACT_FLAGS ?= $(EXTRACT_EXTRA_FLAGS)
-
 RPMBUILD ?= planex-make-srpm
 RPMBUILD_FLAGS ?= ${QUIET+--quiet} $(RPM_DEFINES) $(RPMBUILD_EXTRA_FLAGS)
 
@@ -46,7 +45,7 @@ MOCK_FLAGS ?= ${QUIET+--quiet} \
               $(MOCK_EXTRA_FLAGS)
 
 DEPEND ?= planex-depend
-DEPEND_FLAGS ?= $(RPM_DEFINES) --pins-dir $(PINSDIR) $(DEPEND_EXTRA_FLAGS)
+DEPEND_FLAGS ?= $(RPM_DEFINES) $(DEPEND_EXTRA_FLAGS)
 
 MANIFEST ?= planex-manifest
 MANIFEST_FLAGS ?=
@@ -57,6 +56,7 @@ PATCHQUEUE_FLAGS ?= --repos $(REPOSDIR)
 ifdef QUIET
 AT = @
 endif
+
 
 ############################################################################
 # Main targets
@@ -98,16 +98,6 @@ $(TOPDIR):
 
 
 ############################################################################
-# Spec file transformation rules
-############################################################################
-
-# Placeholder
-$(TOPDIR)/SPECS/%.spec: SPECS/%.spec
-	$(AT) mkdir -p $(dir $@)
-	$(AT) cp -lf $< $@
-
-
-############################################################################
 # Manifest creation rules
 ############################################################################
 
@@ -115,45 +105,24 @@ MANIFESTS/%.json:
 	@echo [MANIFEST] $@
 	$(AT)$(MANIFEST) $(MANIFEST_FLAGS) $^ > $@
 
+
 ############################################################################
 # Source download rules
 ############################################################################
 
-# Fetch a source tarball listed in a spec file.
+# Fetch a source tarball listed in a spec or link file.
 $(TOPDIR)/SOURCES/%:
 	@echo [FETCH] $@
 	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
 
-# Always regenerate pinned patch queues
+# Create a patchqueue tarball for a pinned package.
+# Pinned patchqueues are always regenerated.
 .PHONY: FORCE
 FORCE:
-
-# Fetch a patch tarball listed in a link file.
-.PRECIOUS: $(TOPDIR)/SOURCES/%/patches.tar
-$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin SPECS/%.spec FORCE
-	@echo [PATCHQUEUE] $@
-	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
-
-$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin SPECS/%.lnk FORCE
-	@echo [PATCHQUEUE] $@
-	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
 
 $(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin FORCE
 	@echo [PATCHQUEUE] $@
 	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
-
-$(TOPDIR)/SOURCES/%/patches.tar: SPECS/%.lnk
-	@echo [FETCH] $@
-	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
-
-
-############################################################################
-# Patch extraction rules
-############################################################################
-
-# Extract a spec file from a patch tarball.
-$(TOPDIR)/SPECS/%.spec: SPECS/%.lnk $(TOPDIR)/SOURCES/%/patches.tar
-	$(AT)$(EXTRACT) $(EXTRACT_FLAGS) --output $@ --link $^
 
 
 ############################################################################
@@ -189,10 +158,8 @@ $(TOPDIR)/SPECS/%.spec: SPECS/%.lnk $(TOPDIR)/SOURCES/%/patches.tar
 # for RPM or Debian builds depending on the host distribution.
 # If dependency generation fails, the deps file is deleted to avoid
 # problems with empty, incomplete or corrupt deps.   
-$(DEPS): $(TOPDIR) \
-		$(patsubst SPECS/%.spec,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.spec)) \
-		$(patsubst SPECS/%.lnk,$(TOPDIR)/SPECS/%.spec,$(wildcard SPECS/*.lnk))
+$(DEPS): $(SPECS) $(LINKS) | $(TOPDIR)
 	@echo Updating dependencies...
-	$(AT)$(DEPEND) $(DEPEND_FLAGS) SPECS/*.lnk $(TOPDIR)/SPECS/*.spec > $@
+	$(AT)$(DEPEND) $(DEPEND_FLAGS) $^ > $@
 
 # vim:ft=make:
