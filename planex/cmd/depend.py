@@ -153,7 +153,6 @@ def main(argv=None):
     setup_sigint_handler()
     args = parse_args_or_exit(argv)
     allspecs = dedupe(args.specs, dedupe_key)
-    print "# inputs: %s" % " ".join(allspecs)
 
     try:
         specs = {pkgname(path): Spec(path, defines=args.define)
@@ -171,6 +170,8 @@ def main(argv=None):
 
     print "# -*- makefile -*-"
     print "# vim:ft=make:"
+    if args.verbose:
+        print "# inputs: %s" % " ".join(allspecs)
 
     for spec in specs.itervalues():
         build_srpm_from_spec(spec, (spec.name() in links))
