@@ -101,7 +101,7 @@ def add_manifest_entry(manifests, specfile):
     # add one higher
     source = re.compile(r'^Source0: .*$')
     for line in fileinput.input(specfile, inplace=True):
-        print(line, end=' ')
+        print(line, end="")
         match = source.match(line)
         if match:
             add_gitsha_provides(manifests)
