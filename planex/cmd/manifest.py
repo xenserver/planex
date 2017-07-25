@@ -3,6 +3,7 @@ planex-manifest: Generate manifest in JSON format from spec/link files.
 
 Every invocation prints the manifest for a single package in stdout.
 """
+from __future__ import print_function
 
 import argparse
 import json
@@ -152,4 +153,4 @@ def main(argv=None):
         pin = pinfile
 
     manifest = generate_manifest(spec, link, pin)
-    print json.dumps(manifest, indent=4)
+    print(json.dumps(manifest, indent=4))

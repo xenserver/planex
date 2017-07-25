@@ -1,6 +1,7 @@
 """
 planex-clone: Checkout sources referred to by a pin file
 """
+from __future__ import print_function
 
 from string import Template
 import argparse
@@ -52,10 +53,10 @@ CHECKOUT_TEMPLATE = Template("""checkout poll: true,
 def clone_jenkins(url, destination, commitish, credentials):
     """Print Jenkinsfile fragment to clone repository"""
     destination = join(destination, repo_name(url))
-    print CHECKOUT_TEMPLATE.substitute(url=url,
+    print(CHECKOUT_TEMPLATE.substitute(url=url,
                                        branch=commitish,
                                        checkoutdir=destination,
-                                       credentials=credentials)
+                                       credentials=credentials))
 
 
 def clone(url, destination, commitish):
@@ -120,19 +121,19 @@ def main(argv=None):
         pin = Link(pinpath)
 
         if args.jenkins:
-            print 'echo "Cloning %s"' % pin.url
+            print('echo "Cloning %s"' % pin.url)
             clone_jenkins(pin.url, args.repos, pin.commitish, args.credentials)
 
         else:
             try:
-                print "Cloning %s" % pin.url
+                print("Cloning %s" % pin.url)
                 util.makedirs(args.repos)
                 pq_repo = clone(pin.url, args.repos, pin.commitish)
 
                 if pin.base is not None:
-                    print "Cloning %s" % pin.base
+                    print("Cloning %s" % pin.base)
                     base_repo = clone(pin.base, args.repos, pin.base_commitish)
                     apply_patchqueue(base_repo, pq_repo, pin.patchqueue)
 
             except git.GitCommandError as gce:
-                print gce.stderr
+                print(gce.stderr)

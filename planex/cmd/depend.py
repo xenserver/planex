@@ -1,6 +1,7 @@
 """
 planex-depend: Generate Makefile-format dependencies from spec files
 """
+from __future__ import print_function
 
 import argparse
 import os
@@ -27,9 +28,9 @@ def create_manifest_deps(spec):
     if os.path.isfile(lnk_path):
         prereqs += ' ' + lnk_path
 
-    print '{}: {}'.format(manifest.get_path(spec_name), prereqs)
-    print '{}: {}'.format(spec.source_package_path(),
-                          manifest.get_path(spec.name()))
+    print('{}: {}'.format(manifest.get_path(spec_name), prereqs))
+    print('{}: {}'.format(spec.source_package_path(),
+                          manifest.get_path(spec.name())))
 
 
 def build_srpm_from_spec(spec, lnk=False):
@@ -37,15 +38,15 @@ def build_srpm_from_spec(spec, lnk=False):
     Generate rules to build SRPM from spec
     """
     srpmpath = spec.source_package_path()
-    print '%s: %s' % (srpmpath, spec.specpath())
+    print('%s: %s' % (srpmpath, spec.specpath()))
     for (url, path) in zip(spec.source_urls(), spec.source_paths()):
         source = urlparse.urlparse(url)
         if source.scheme in ["http", "https", "file", "ftp"]:
             # Source was downloaded to _build/SOURCES
-            print '%s: %s' % (srpmpath, path)
+            print('%s: %s' % (srpmpath, path))
         elif not lnk:
             # Source is local
-            print '%s: %s' % (srpmpath, "/".join(path.split("/")[1:]))
+            print('%s: %s' % (srpmpath, "/".join(path.split("/")[1:])))
 
 
 def download_rpm_sources(spec):
@@ -56,7 +57,7 @@ def download_rpm_sources(spec):
         source = urlparse.urlparse(url)
         if source.scheme in ["http", "https", "file", "ftp"]:
             # Source can be fetched by fetch
-            print '%s: %s' % (path, spec.specpath())
+            print('%s: %s' % (path, spec.specpath()))
 
 
 def build_rpm_from_srpm(spec):
@@ -78,7 +79,7 @@ def build_rpm_from_srpm(spec):
 
     rpm_path = spec.binary_package_paths()[-1]
     srpm_path = spec.source_package_path()
-    print '%s: %s' % (rpm_path, srpm_path)
+    print('%s: %s' % (rpm_path, srpm_path))
 
 
 def package_to_rpm_map(specs):
@@ -102,7 +103,7 @@ def buildrequires_for_rpm(spec, provides_to_rpm):
         # Some buildrequires come from the system repository
         if buildreq in provides_to_rpm:
             buildreqrpm = provides_to_rpm[buildreq]
-            print "%s: %s" % (rpmpath, buildreqrpm)
+            print("%s: %s" % (rpmpath, buildreqrpm))
 
 
 def parse_args_or_exit(argv=None):
@@ -168,10 +169,10 @@ def main(argv=None):
 
     provides_to_rpm = package_to_rpm_map(specs.values())
 
-    print "# -*- makefile -*-"
-    print "# vim:ft=make:"
+    print("# -*- makefile -*-")
+    print("# vim:ft=make:")
     if args.verbose:
-        print "# inputs: %s" % " ".join(allspecs)
+        print("# inputs: %s" % " ".join(allspecs))
 
     for spec in specs.itervalues():
         build_srpm_from_spec(spec, (spec.name() in links))
@@ -182,14 +183,14 @@ def main(argv=None):
         if spec.name() in links:
             srpmpath = spec.source_package_path()
             patchpath = spec.expand_macro("%_sourcedir/patches.tar")
-            print '%s: %s' % (srpmpath, patchpath)
-            print '%s: %s' % (srpmpath, links[spec.name()].linkpath)
-            print '%s: %s' % (patchpath, links[spec.name()].linkpath)
+            print('%s: %s' % (srpmpath, patchpath))
+            print('%s: %s' % (srpmpath, links[spec.name()].linkpath))
+            print('%s: %s' % (patchpath, links[spec.name()].linkpath))
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
         if args.buildrequires:
             buildrequires_for_rpm(spec, provides_to_rpm)
-        print ""
+        print()
 
     # Generate targets to build all srpms and all rpms
     all_rpms = []
@@ -198,10 +199,10 @@ def main(argv=None):
         rpm_path = spec.binary_package_paths()[-1]
         all_rpms.append(rpm_path)
         all_srpms.append(spec.source_package_path())
-        print "%s: %s" % (spec.name(), rpm_path)
-        print "%s.srpm: %s" % (spec.name(), spec.source_package_path())
-    print ""
+        print("%s: %s" % (spec.name(), rpm_path))
+        print("%s.srpm: %s" % (spec.name(), spec.source_package_path()))
+    print()
 
-    print "RPMS := " + " \\\n\t".join(all_rpms)
-    print ""
-    print "SRPMS := " + " \\\n\t".join(all_srpms)
+    print("RPMS := " + " \\\n\t".join(all_rpms))
+    print()
+    print("SRPMS := " + " \\\n\t".join(all_srpms))

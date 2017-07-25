@@ -1,6 +1,7 @@
 """
 Creates or regenerates a Makefile with special planex-init comments
 """
+from __future__ import print_function
 
 import argparse
 import logging
@@ -19,7 +20,7 @@ def print_rules_path():
     Print the path to Makefile.rules, which is installed in the Python
     package directory.
     """
-    print resource_filename("planex", "Makefile.rules")
+    print(resource_filename("planex", "Makefile.rules"))
 
 
 def create_makefile():

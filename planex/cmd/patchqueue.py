@@ -2,6 +2,7 @@
 planex-patchqueue: Create a patchqueue containing the difference between
 the tag pointed to by a spec file and a Git repository.
 """
+from __future__ import print_function
 
 import argparse
 import os
@@ -129,6 +130,6 @@ def main(argv=None):
 
     finally:
         if args.keeptmp:
-            print "Working directory retained at %s" % tmpdir
+            print("Working directory retained at %s" % tmpdir)
         else:
             shutil.rmtree(tmpdir)

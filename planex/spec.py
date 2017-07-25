@@ -1,6 +1,7 @@
 """Classes for handling RPM spec files.   The classes defined here
    are mostly just wrappers around rpm.rpm, adding information which
    the rpm library does not currently provide."""
+from __future__ import print_function
 
 from collections import OrderedDict
 
@@ -111,7 +112,7 @@ class Spec(object):
                     for line in nullfh:
                         line = line.strip()
                         if not line.endswith(': No such file or directory'):
-                            print >>sys.stderr, line
+                            print(line, file=sys.stderr)
                     exn.args = (exn.args[0].rstrip() + ' ' + path, )
                     raise
 
