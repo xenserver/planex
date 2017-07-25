@@ -1,6 +1,7 @@
 """
 planex-build-mock: Wrapper around mock
 """
+from __future__ import print_function
 
 import os
 import pty
@@ -66,12 +67,12 @@ def pty_check_call(cmd):
         returncode = 0
     elif os.WIFEXITED(status):
         returncode = os.WEXITSTATUS(status)
-        print "PID %d exited with status %d" % (pid, returncode)
+        print("PID %d exited with status %d" % (pid, returncode))
     elif os.WIFSIGNALED(status):
         signal = os.WTERMSIG(status)
-        print "PID %d exited with signal %d" % (pid, signal)
+        print("PID %d exited with signal %d" % (pid, signal))
     else:
-        print "PID %d exited with non-zero status 0x%02x" % (pid, status)
+        print("PID %d exited with non-zero status 0x%02x" % (pid, status))
     if returncode > 0:
         raise subprocess.CalledProcessError(returncode, cmd)
 
@@ -80,7 +81,7 @@ def mock(args, tmp_config_dir, *extra_params):
     """
     Return mock command line and arguments
     """
-    print "Mock args are %s" % args
+    print("Mock args are %s" % args)
     cmd = ['mock']
     cmd += ["--uniqueext", uuid4().hex]
     cmd += ['--configdir', tmp_config_dir]
@@ -186,6 +187,6 @@ def main(argv=None):
 
     finally:
         if args.keeptmp:
-            print "Working directory retained at %s" % tmpdir
+            print("Working directory retained at %s" % tmpdir)
         else:
             shutil.rmtree(tmpdir)

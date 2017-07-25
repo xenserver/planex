@@ -1,6 +1,7 @@
 """
 planex-make-srpm: Wrapper around rpmbuild
 """
+from __future__ import print_function
 
 import sys
 import subprocess
@@ -89,7 +90,7 @@ def add_gitsha_provides(manifests):
     Add the source line and additional provides to the current location
     """
     for key in manifests:
-        print 'Provides: gitsha({0}) = {1}'.format(key, manifests[key])
+        print('Provides: gitsha({0}) = {1}'.format(key, manifests[key]))
 
 
 def add_manifest_entry(manifests, specfile):
@@ -100,7 +101,7 @@ def add_manifest_entry(manifests, specfile):
     # add one higher
     source = re.compile(r'^Source0: .*$')
     for line in fileinput.input(specfile, inplace=True):
-        print line,
+        print(line, end=' ')
         match = source.match(line)
         if match:
             add_gitsha_provides(manifests)
@@ -143,7 +144,7 @@ def populate_working_directory(tmpdir, spec, link, sources, patchqueue):
     if manifests:
         add_manifest_entry(manifests, tmp_specfile)
     else:
-        print "No .gitarchive-info found for {0}".format(spec)
+        print("No .gitarchive-info found for {0}".format(spec))
 
     spec = Spec(tmp_specfile, check_package_name=False)
 
@@ -186,12 +187,12 @@ def main(argv=None):
         sys.exit(rpmbuild(args, tmpdir, specfile))
 
     except (tarfile.TarError, tarfile.ReadError) as exc:
-        print "Error when extracting patchqueue from tarfile"
-        print "Exception: %s" % exc
+        print("Error when extracting patchqueue from tarfile")
+        print("Exception: %s" % exc)
 
     finally:
         # Clean temporary area (unless debugging)
         if args.keeptmp:
-            print "Working directory retained at %s" % tmpdir
+            print("Working directory retained at %s" % tmpdir)
         else:
             shutil.rmtree(tmpdir)
