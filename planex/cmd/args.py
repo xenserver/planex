@@ -28,6 +28,24 @@ def common_base_parser():
     return parser
 
 
+def rpm_define_parser():
+    """
+    Returns a parser which handles rpmbuild-style "--define 'name macro'"
+    options.
+
+    This parser can then be used as a 'parent' to other parsers
+    which will inherit these options.
+
+    See https://docs.python.org/2.7/library/argparse.html#parents
+    """
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-D", "--define", default=[], action="append",
+                        type=rpm_macro,
+                        help="--define='MACRO EXPR' "
+                             "define MACRO with value EXPR")
+    return parser
+
+
 def rpm_macro(string):
     """
     Argparse type handler for RPM macro command line arguments of the form:

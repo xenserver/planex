@@ -13,7 +13,7 @@ from uuid import uuid4
 
 import argparse
 import argcomplete
-from planex.cmd.args import common_base_parser
+from planex.cmd.args import common_base_parser, rpm_define_parser
 
 
 def parse_args_or_exit(argv=None):
@@ -22,7 +22,7 @@ def parse_args_or_exit(argv=None):
     """
     parser = argparse.ArgumentParser(
         description='Planex build system in a chroot (a mock wrapper)',
-        parents=[common_base_parser()])
+        parents=[common_base_parser(), rpm_define_parser()])
     parser.add_argument(
         "--configdir", metavar="CONFIGDIR", default="/etc/mock",
         help="Change where the config files are found")
@@ -35,10 +35,6 @@ def parse_args_or_exit(argv=None):
     parser.add_argument(
         "--keeptmp", action="store_true",
         help="Keep temporary files")
-    parser.add_argument(
-        "-D", "--define", default=[], action="append",
-        help="--define='MACRO EXPR' \
-              define MACRO with value EXPR for the build")
     parser.add_argument(
         "--init", action="store_true",
         help="initialize the chroot, do not build anything")
@@ -94,7 +90,7 @@ def mock(args, tmp_config_dir, *extra_params):
         cmd += ["--resultdir", args.resultdir]
 
     for define in args.define:
-        cmd += ['--define', define]
+        cmd += ['--define', " ".join(define)]
 
     cmd.extend(extra_params)
     # mock produces more output when stderr isatty, so use a pty to fake that

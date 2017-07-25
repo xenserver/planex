@@ -10,7 +10,7 @@ import sys
 import urlparse
 
 import argcomplete
-from planex.cmd.args import common_base_parser, rpm_macro
+from planex.cmd.args import common_base_parser, rpm_define_parser
 from planex.util import setup_sigint_handler, dedupe
 from planex.cmd import manifest
 from planex.spec import Spec, SpecNameMismatch
@@ -115,15 +115,12 @@ def parse_args_or_exit(argv=None):
     """
     parser = argparse.ArgumentParser(
         description="Generate Makefile dependencies from RPM Spec files",
-        parents=[common_base_parser()])
+        parents=[common_base_parser(), rpm_define_parser()])
     parser.add_argument("specs", metavar="SPEC", nargs="+", help="spec file")
     parser.add_argument(
         "--no-package-name-check", dest="check_package_names",
         action="store_false", default=True,
         help="Don't check that package name matches spec file name")
-    parser.add_argument(
-        "-D", "--define", default=[], action="append", type=rpm_macro,
-        help="--define='MACRO EXPR' define MACRO with value EXPR")
     parser.add_argument(
         "--no-buildrequires", dest="buildrequires",
         action="store_false", default=True,
