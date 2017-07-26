@@ -19,7 +19,7 @@ from planex.spec import Spec
 import planex.git as git
 import planex.tarball as tarball
 import planex.util as util
-from planex.cmd.args import common_base_parser
+from planex.cmd.args import common_base_parser, keeptmp_parser
 
 
 def parse_args_or_exit(argv=None):
@@ -28,13 +28,11 @@ def parse_args_or_exit(argv=None):
     """
     parser = argparse.ArgumentParser(
         description='Create a patchqueue from a linked Git repository',
-        parents=[common_base_parser()])
+        parents=[common_base_parser(), keeptmp_parser()])
     parser.add_argument("link", metavar="LINK", help="link file")
     parser.add_argument("tarball", metavar="TARBALL", help="tarball")
     parser.add_argument("--repos", default="repos",
                         help="Local repository directory")
-    parser.add_argument("--keeptmp", action="store_true",
-                        help="Do not clean up working directory")
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 

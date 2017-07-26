@@ -46,6 +46,21 @@ def rpm_define_parser():
     return parser
 
 
+def keeptmp_parser():
+    """
+    Returns a parser which handles the "--keeptmp" option.
+
+    This parser can then be used as a 'parent' to other parsers
+    which will inherit these options.
+
+    See https://docs.python.org/2.7/library/argparse.html#parents
+    """
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--keeptmp", action="store_true",
+                        help="Keep temporary files")
+    return parser
+
+
 def rpm_macro(string):
     """
     Argparse type handler for RPM macro command line arguments of the form:

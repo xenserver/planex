@@ -13,7 +13,7 @@ from uuid import uuid4
 
 import argparse
 import argcomplete
-from planex.cmd.args import common_base_parser, rpm_define_parser
+import planex.cmd.args
 
 
 def parse_args_or_exit(argv=None):
@@ -22,7 +22,9 @@ def parse_args_or_exit(argv=None):
     """
     parser = argparse.ArgumentParser(
         description='Planex build system in a chroot (a mock wrapper)',
-        parents=[common_base_parser(), rpm_define_parser()])
+        parents=[planex.cmd.args.common_base_parser(),
+                 planex.cmd.args.rpm_define_parser(),
+                 planex.cmd.args.keeptmp_parser()])
     parser.add_argument(
         "--configdir", metavar="CONFIGDIR", default="/etc/mock",
         help="Change where the config files are found")
@@ -32,9 +34,6 @@ def parse_args_or_exit(argv=None):
     parser.add_argument(
         "--resultdir", metavar="RESULTDIR", default=None,
         help="Path for resulting files to be put")
-    parser.add_argument(
-        "--keeptmp", action="store_true",
-        help="Keep temporary files")
     parser.add_argument(
         "--init", action="store_true",
         help="initialize the chroot, do not build anything")

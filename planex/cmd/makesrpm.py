@@ -14,7 +14,7 @@ import tempfile
 
 import argparse
 import argcomplete
-from planex.cmd.args import common_base_parser, rpm_define_parser
+import planex.cmd.args
 from planex.spec import Spec
 from planex.link import Link
 from planex.patchqueue import Patchqueue
@@ -27,13 +27,12 @@ def parse_args_or_exit(argv=None):
     """
     parser = argparse.ArgumentParser(
         description='Pack sources and patchqueues into a source RPM',
-        parents=[common_base_parser(), rpm_define_parser()])
+        parents=[planex.cmd.args.common_base_parser(),
+                 planex.cmd.args.rpm_define_parser(),
+                 planex.cmd.args.keeptmp_parser()])
     parser.add_argument("spec", metavar="SPEC", help="Spec file")
     parser.add_argument("sources", metavar="SOURCE/PATCHQUEUE", nargs='*',
                         help="Source and patchqueue files")
-    parser.add_argument(
-        "--keeptmp", action="store_true",
-        help="keep temporary files")
     argcomplete.autocomplete(parser)
 
     parsed_args = parser.parse_args(argv)
