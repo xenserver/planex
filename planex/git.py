@@ -33,32 +33,6 @@ def dotgitdir_of_path(repo):
         raise Exception("Not a git repository: '%s'" % repo)
 
 
-def describe(repo, treeish="HEAD"):
-    """
-    Return an RPM compatible version string for a git repo at a given commit
-    """
-    dotgitdir = dotgitdir_of_path(repo)
-
-    # First, get the hash of the commit
-    cmd = ["git", "--git-dir=%s" % dotgitdir, "rev-parse", treeish]
-    sha = run(cmd)['stdout'].strip()
-
-    # Now lets describe that hash
-    cmd = ["git", "--git-dir=%s" % dotgitdir, "describe", "--tags", sha]
-    description = run(cmd, check=False)['stdout'].strip()
-
-    # if there are no tags, use the number of commits
-    if description == "":
-        cmd = ["git", "--git-dir=%s" % dotgitdir, "log", "--oneline", sha]
-        commits = run(cmd)['stdout'].strip()
-        description = str(len(commits.splitlines()))
-
-    # replace '-' with '+' in description to not confuse rpm
-    match = re.search("[^0-9]*", description)
-    matchlen = len(match.group())
-    return description[matchlen:].replace('-', '+')
-
-
 def archive(repo, commit_hash, output, prefix=None):
     """
     Archive a git repo at a given commit with a specified version prefix.
