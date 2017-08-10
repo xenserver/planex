@@ -1,3 +1,11 @@
+2.0.0
+* patchqueue: Patch queues no longer contain spec files
+* depend: Specs and links listed earlier on the command line override
+  those listed later
+* depend: Remove --pins-dir option
+* extract: Remove obsolete utility
+* link: Store the path from which the link was loaded
+
 1.0.0
 * git: Remove unused describe() and current_branch() methods
 
