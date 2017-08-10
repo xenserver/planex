@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 1.0.0
+Version: 2.0.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -53,6 +53,14 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Wed Aug 16 2017 Euan Harris <euan.harris@citrix.com> - 2.0.0-1
+- patchqueue: Patch queues no longer contain spec files
+- depend: Specs and links listed earlier on the command line override
+  those listed later
+- depend: Remove --pins-dir option
+- extract: Remove obsolete utility
+- link: Store the path from which the link was loaded
+
 * Mon Aug 14 2017 Euan Harris <euan.harris@citrix.com> - 1.0.0-1
 * git: Remove unused describe() and current_branch() methods
 

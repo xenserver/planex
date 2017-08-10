@@ -5,7 +5,7 @@ python-setuptools definition for planex
 from setuptools import setup
 
 setup(name='planex',
-      version='1.0.0',
+      version='2.0.0',
       packages=['planex', 'planex.cmd'],
       include_package_data=True,
       package_data={'planex': ['Makefile.rules']},
