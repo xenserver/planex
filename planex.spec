@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 0.23.1
+Version: 1.0.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -54,6 +54,9 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Mon Aug 14 2017 Euan Harris <euan.harris@citrix.com> - 1.0.0-1
+* git: Remove unused describe() and current_branch() methods
+
 * Fri Jul 21 2017 Euan Harris <euan.harris@citrix.com> - 0.23.1-1
 - depend: Do not make an SRPM depend on a link if a pin is also present
 - Makefile.rules: add RPMBUILD_EXTRA_FLAGS variable
