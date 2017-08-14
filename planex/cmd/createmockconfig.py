@@ -18,6 +18,27 @@ from planex.util import setup_logging
 from planex.util import setup_sigint_handler
 
 
+class DictAction(argparse.Action):
+    """
+    Action subclass to form a dict from a sequence of arguments
+    """
+    # pylint: disable=R0903
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        if nargs is not None:
+            raise ValueError("nargs not allowed")
+        super(DictAction, self).__init__(option_strings, dest, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if '=' not in values:
+            raise ValueError("invalid option: "+values)
+        key, value = values.split('=', 1)
+        dictvalue = getattr(namespace, self.dest)
+        if dictvalue is None:
+            dictvalue = {}
+        dictvalue[key] = value
+        setattr(namespace, self.dest, dictvalue)
+
+
 def load_mock_reference(fname):
     """
     read in the reference mock configuration
@@ -90,6 +111,8 @@ def parse_args_or_exit(argv=None):
                         help="reference chroot config")
     parser.add_argument("--enablerepo", action="append",
                         help="Repository to include")
+    parser.add_argument("--config_opt", action=DictAction, metavar="OPT=VALUE",
+                        help="Define configuration settings")
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
@@ -107,6 +130,8 @@ def main(argv=None):
     # load the reference config
     reference = os.path.join(args.configdir, args.root + '.cfg')
     config_opts = load_mock_reference(reference)
+    if args.config_opt:
+        config_opts.update(args.config_opt)
     conf_key = 'dnf.conf' if 'dnf.conf' in config_opts else 'yum.conf'
     mock_config_fp = StringIO.StringIO(config_opts[conf_key])
     mock_repos = ConfigParser.SafeConfigParser()
