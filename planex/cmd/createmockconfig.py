@@ -4,6 +4,7 @@ planex-create-mock-config: Populate mock config with yum repositories
 
 from __future__ import print_function
 import argparse
+import ast
 import ConfigParser
 import os
 import os.path
@@ -35,7 +36,7 @@ class DictAction(argparse.Action):
         dictvalue = getattr(namespace, self.dest)
         if dictvalue is None:
             dictvalue = {}
-        dictvalue[key] = value
+        dictvalue[key] = ast.literal_eval(value)
         setattr(namespace, self.dest, dictvalue)
 
 
@@ -84,7 +85,7 @@ def update_mock_repos(config, yum_repos, yum_config_opt):
 
         if yum_config_opt:
             for key, value in yum_config_opt.items():
-                config.set('main', key, value)
+                config.set('main', key, str(value))
 
 
 def write_mock_cfg(fileh, cfg):
