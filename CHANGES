@@ -1,3 +1,6 @@
+1.0.0
+* git: Remove unused describe() and current_branch() methods
+
 0.23.1
 * depend: Do not make an SRPM depend on a link if a pin is also present
 * Makefile.rules: add RPMBUILD_EXTRA_FLAGS variable
