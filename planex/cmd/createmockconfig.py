@@ -63,7 +63,7 @@ def load_yum_repos(repo_names):
     return yum_repos
 
 
-def update_mock_repos(config, yum_repos):
+def update_mock_repos(config, yum_repos, yum_config_opt):
     """
     Replace all repository sections with a new one derived from yum
     """
@@ -81,6 +81,10 @@ def update_mock_repos(config, yum_repos):
             config.set(repo.id, 'gpgkey', ' '.join(repo.gpgkey))
         else:
             config.set(repo.id, 'gpgcheck', '0')
+
+        if yum_config_opt:
+            for key, value in yum_config_opt.items():
+                config.set('main', key, value)
 
 
 def write_mock_cfg(fileh, cfg):
@@ -112,7 +116,10 @@ def parse_args_or_exit(argv=None):
     parser.add_argument("--enablerepo", action="append",
                         help="Repository to include")
     parser.add_argument("--config_opt", action=DictAction, metavar="OPT=VALUE",
-                        help="Define configuration settings")
+                        help="Define mock configuration settings")
+    parser.add_argument("--yum-config_opt", action=DictAction,
+                        metavar="OPT=VALUE",
+                        help="Define yum/dnf configuration settings")
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
@@ -138,7 +145,7 @@ def main(argv=None):
     mock_repos.readfp(mock_config_fp)
 
     # replace repo sections in the mock config
-    update_mock_repos(mock_repos, yum_repos)
+    update_mock_repos(mock_repos, yum_repos, args.yum_config_opt)
     mock_config_fp.truncate(0)
     mock_repos.write(mock_config_fp)
     config_opts[conf_key] = mock_config_fp.getvalue()
