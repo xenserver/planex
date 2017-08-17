@@ -23,6 +23,9 @@ def parse_args_or_exit(argv=None):
                         help="Directory containing pin overlays")
     parser.add_argument("--jenkins", action="store_true",
                         help="Print Jenkinsfile fragment")
+    parser.add_argument("--skip-base", dest="clone_base",
+                        default=True, action="store_false",
+                        help="Do not clone the base repository")
     parser.add_argument("--credentials", metavar="CREDS", default="",
                         help="Credentials")
     parser.add_argument(
@@ -130,7 +133,7 @@ def main(argv=None):
                 util.makedirs(args.repos)
                 pq_repo = clone(pin.url, args.repos, pin.commitish)
 
-                if pin.base is not None:
+                if args.clone_base and pin.base:
                     print("Cloning %s" % pin.base)
                     base_repo = clone(pin.base, args.repos, pin.base_commitish)
                     apply_patchqueue(base_repo, pq_repo, pin.patchqueue)
