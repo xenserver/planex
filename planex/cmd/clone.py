@@ -19,8 +19,6 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(description='Clone sources')
-    parser.add_argument("-P", "--pins-dir", default="PINS",
-                        help="Directory containing pin overlays")
     parser.add_argument("--jenkins", action="store_true",
                         help="Print Jenkinsfile fragment")
     parser.add_argument("--skip-base", dest="clone_base",
