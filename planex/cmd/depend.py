@@ -33,7 +33,7 @@ def create_manifest_deps(spec):
                           manifest.get_path(spec.name())))
 
 
-def build_srpm_from_spec(spec, lnk=False):
+def build_srpm_from_spec(spec, lnk=None):
     """
     Generate rules to build SRPM from spec
     """
@@ -44,7 +44,10 @@ def build_srpm_from_spec(spec, lnk=False):
         if source.scheme in ["http", "https", "file", "ftp"]:
             # Source was downloaded to _build/SOURCES
             print('%s: %s' % (srpmpath, path))
-        elif not lnk:
+        elif lnk and lnk.sources:
+            # Use sources from patchqueue
+            pass
+        else:
             # Source is local
             print('%s: %s' % (srpmpath, "/".join(path.split("/")[1:])))
 
@@ -175,7 +178,7 @@ def main(argv=None):
         print("# inputs: %s" % " ".join(allspecs))
 
     for spec in specs.itervalues():
-        build_srpm_from_spec(spec, (spec.name() in links))
+        build_srpm_from_spec(spec, links.get(spec.name()))
         # Manifest dependencies must come after spec dependencies
         # otherwise manifest.json will be the SRPM's first dependency
         # and will be passed to rpmbuild in the spec position.
