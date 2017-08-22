@@ -121,6 +121,9 @@ def parse_args_or_exit(argv=None):
     parser.add_argument("--yum-config_opt", action=DictAction,
                         metavar="OPT=VALUE",
                         help="Define yum/dnf configuration settings")
+    parser.add_argument("--environment", action=DictAction,
+                        metavar="OPT=VALUE",
+                        help="Define chroot environment variables")
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
@@ -140,6 +143,10 @@ def main(argv=None):
     config_opts = load_mock_reference(reference)
     if args.config_opt:
         config_opts.update(args.config_opt)
+    if args.environment:
+        if 'environment' not in config_opts:
+            config_opts['environment'] = {}
+        config_opts['environment'].update(args.environment)
     conf_key = 'dnf.conf' if 'dnf.conf' in config_opts else 'yum.conf'
     mock_config_fp = StringIO.StringIO(config_opts[conf_key])
     mock_repos = ConfigParser.SafeConfigParser()
