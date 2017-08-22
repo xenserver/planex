@@ -44,7 +44,7 @@ def build_srpm_from_spec(spec, lnk=None):
         if source.scheme in ["http", "https", "file", "ftp"]:
             # Source was downloaded to _build/SOURCES
             print('%s: %s' % (srpmpath, path))
-        elif lnk and lnk.sources:
+        elif lnk and (lnk.sources is not None or lnk.patches is not None):
             # Use sources from patchqueue
             pass
         else:
