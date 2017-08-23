@@ -200,3 +200,25 @@ class Repository(object):
     commitish_to_sha1s = {
         'code.citrite.net': commitish_to_sha1_bitbucket
     }
+
+    def repository_url(self):
+        """
+        Return the first non-null value among self.clone_url and
+        self.url as a readable url. If they are all None, it returns None.
+        """
+        if self.clone_url is not None:
+            return self.clone_url
+        if self.url is not None:
+            return urlparse.urlunparse(self.url)
+
+    def commitish_tag_or_branch(self):
+        """
+        Return the first non-null value among the repository commitish,
+        tag or branch. If they are all None, it returns None.
+        """
+        if self.commitish is not None:
+            return self.commitish
+        if self.tag is not None:
+            return self.tag
+        if self.branch is not None:
+            return self.branch

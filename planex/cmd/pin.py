@@ -8,27 +8,11 @@ import argparse
 import json
 import os
 import sys
-from urlparse import urlunparse
 
 from planex.cmd.args import add_common_parser_options
 from planex.link import Link
 from planex.repository import Repository
 from planex.spec import Spec
-from planex.util import makedirs
-
-
-def heuristic_is_spec_repo_root(xs_path):
-    """
-    Heuristic check for a spec repository root folder.
-    Looks for the presence of xs_path/.git, xs_path/SPECS and xs_path/mock.
-    Raise and error if any of those is not present.
-    """
-
-    if not (os.path.exists("%s/.git" % xs_path) and
-                os.path.exists("%s/SPECS" % xs_path) and
-                os.path.exists("%s/mock" % xs_path)):
-        print("Spec repo not found in %s" % xs_path)
-        sys.exit(1)
 
 
 def spec_and_lnk(repo_path, package_name):
@@ -68,30 +52,6 @@ def repository_of(spec_or_link):
         sys.exit(1)
 
 
-def repository_url(repo):
-    """
-    Return the first non-null value among repo.clone_url and
-    repo.url. If they are all None, it returns None.
-    """
-    if repo.clone_url is not None:
-        return repo.clone_url
-    if repo.url is not None:
-        return urlunparse(repo.url)
-
-
-def commitish_tag_or_branch(repo):
-    """
-    Return the first non-null value among the repository commitish,
-    tag or branch. If they are all None, it returns None.
-    """
-    if repo.commitish is not None:
-        return repo.commitish
-    if repo.tag is not None:
-        return repo.tag
-    if repo.branch is not None:
-        return repo.branch
-
-
 def get_pin_content(args, pq_name, spec, link):
     """
     Generate the pinfile content for a Spec.
@@ -99,21 +59,20 @@ def get_pin_content(args, pq_name, spec, link):
     base_repo = repository_of(spec)
     pq_repo = repository_of(link)
 
-    if args.url is not None:
-        url = args.url
-    else:
-        if link is not None:
-            url = repository_url(pq_repo)
+    if args.repo is not None:
+        repository = args.repo
+        if '#' not in repository:
+            url = repository
+            commitish = "master"
         else:
-            url = repository_url(base_repo)
-
-    if args.branch is not None:
-        commitish = args.branch
+            url, commitish = args.repo.split("#", 1)
     else:
         if link is not None:
+            url = pq_repo.repository_url()
             # A link specifies a tag, version or commitish
-            commitish = commitish_tag_or_branch(pq_repo)
+            commitish = pq_repo.commitish_tag_or_branch()
         else:
+            url = base_repo.repository_url()
             commitish = "master"
 
     pinfile = {
@@ -128,15 +87,14 @@ def get_pin_content(args, pq_name, spec, link):
             base = base_url
             base_commitish = base_commitish
         else:
-            base = repository_url(base_repo)
-            # TODO: what whould we do if base is a url to a non-git tarball and the following is None?
-            base_commitish = commitish_tag_or_branch(base_repo)
+            base = base_repo.repository_url()
+            base_commitish = base_repo.commitish_tag_or_branch()
 
-        # TODO: Should we take into account here if a spec is already in PINS?
-        pinfile.update({
-            'base': base,
-            'base_commitish': base_commitish
-        })
+        # base can be none for repatched components
+        if base is not None:
+            pinfile['base'] = base
+
+        pinfile['base_commitish'] = base_commitish
 
         if link.sources is not None:
             pinfile["sources"] = link.sources
@@ -152,15 +110,13 @@ def make_pin(args, xs_path, package_name):
     Return the pinfile path and a dict containing the content of the pinfile
     """
 
-    # TODO: make the 'patchqueue' field customisable?
-    pin_pq_name = "master"
     spec, link = spec_and_lnk(xs_path, package_name)
 
     if link is None and args.base is not None:
         print("Argument --base is allowed only for lnk packages")
         sys.exit(1)
 
-    return get_pin_content(args, pin_pq_name, spec, link)
+    return get_pin_content(args, args.patchqueue, spec, link)
 
 
 def parse_args_or_exit(argv=None):
@@ -174,25 +130,17 @@ def parse_args_or_exit(argv=None):
                     "this tool from the root of a spec repository.")
     add_common_parser_options(parser)
     parser.add_argument("package", help="package name")
-    parser.add_argument("--pinsdir", default="PINS",
-                        help="use custom pin folder (default to PINS)")
-    parser.add_argument("--url", metavar="URL", default=None,
-                        help="Source repository URL. It can be local "
-                             "e.g. repos/package)")
-    parser.add_argument("--branch", default=None,
-                        help="branch, hash or tag name to specify "
-                             "the source tree to compile (defaults to "
-                             "master or the tag in the lnk file)")
+    parser.add_argument("--repo", metavar="URL#COMMITISH", default=None,
+                        help="Source repository URL and commitish."
+                             "It can be local e.g. repos/package#master. "
+                             "The commitish defaults to master.")
     parser.add_argument("--base", metavar="BASE#COMMITISH", default=None,
                         help="Base repository URL and commitish. "
                              "It can be local e.g. repos/package#master. "
                              "This is used only for lnk packages.")
-    parser.add_argument("--dry-run", dest="dry", action="store_true",
-                        help="perform a dry-run only showing the "
-                             "performed steps")
-    parser.add_argument("--no-checks", dest="nochecks", action="store_true",
-                        help="prevent check for the presence of a spec "
-                             "repository")
+    parser.add_argument("--patchqueue", default="master",
+                        help="Value for the patchqueue field of the pin file. "
+                             "Defaults to master. ")
     return parser.parse_args(argv)
 
 
@@ -203,31 +151,13 @@ def main(argv=None):
 
     args = parse_args_or_exit(argv)
 
-    if args.dry:
-        print("======= running in dry-run mode =======")
-
-    xs_path = os.getcwd()
-    if not args.nochecks:
-        heuristic_is_spec_repo_root(xs_path)
-
     if args.base is not None and len(args.base.split("#", 1)) != 2:
         print("Error: --base argument must be of the form BASE#COMMITISH, "
               "got '{}' instead".format(args.base))
         sys.exit(1)
 
-    pinsdir = "%s/%s" % (xs_path, args.pinsdir)
-    if not args.dry and not os.path.exists(pinsdir):
-        print("Creating pins directory {}".format(pinsdir))
-        makedirs(pinsdir)
-
     package_name = args.package
+    xs_path = os.getcwd()
     pin = make_pin(args, xs_path, package_name)
-    pinfile = "{}/{}.pin".format(pinsdir, package_name)
 
-    if not args.dry:
-        with open(pinfile, "w") as pf:
-            json.dump(pin, pf, indent=2)
-
-    print("Pin file for {} saved in {} with the following content".format(
-        package_name, pinfile))
     print(json.dumps(pin, indent=2))
