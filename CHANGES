@@ -1,3 +1,6 @@
+2.0.1
+* depend: Handle pinned packages without patchqueues correctly
+
 2.0.0
 * patchqueue: Patch queues no longer contain spec files
 * depend: Specs and links listed earlier on the command line override
