@@ -52,6 +52,7 @@ def repository_of(spec_or_link):
         sys.exit(1)
 
 
+# pylint: disable=too-many-branches
 def get_pin_content(args, pq_name, spec, link):
     """
     Generate the pinfile content for a Spec.
@@ -59,21 +60,19 @@ def get_pin_content(args, pq_name, spec, link):
     base_repo = repository_of(spec)
     pq_repo = repository_of(link)
 
-    if args.repo is not None:
-        repository = args.repo
-        if '#' not in repository:
-            url = repository
-            commitish = "master"
-        else:
-            url, commitish = args.repo.split("#", 1)
-    else:
+    url = args.url
+    if url is None:
         if link is not None:
             url = pq_repo.repository_url()
-            # A link specifies a tag, version or commitish
-            commitish = pq_repo.commitish_tag_or_branch()
         else:
             url = base_repo.repository_url()
-            commitish = "master"
+
+    commitish = args.commitish
+    if commitish is None:
+        if link is not None:
+            commitish = pq_repo.commitish_tag_or_branch()
+        else:
+            commitish = base_repo.commitish_tag_or_branch()
 
     pinfile = {
         'URL': url,
@@ -82,17 +81,14 @@ def get_pin_content(args, pq_name, spec, link):
     }
 
     if link is not None:
-        if args.base is not None:
-            base_url, base_commitish = args.base.split("#", 1)
-            # this is to allow setting the base_commitish (but not base)
-            # for repatched components
-            base = base_url if base_url else None
-            base_commitish = base_commitish if base_commitish else None
+        if args.base_commitish is not None:
+            base = args.base  # This can be None
+            base_commitish = args.base_commitish
         else:
             base = base_repo.repository_url()
             base_commitish = base_repo.commitish_tag_or_branch()
 
-        # base_commitish can be none for repatched components
+        # base_commitish can be None, it happens for repatched components
         if base_commitish is not None:
             if base is not None:
                 pinfile['base'] = base
@@ -132,13 +128,21 @@ def parse_args_or_exit(argv=None):
                     "this tool from the root of a spec repository.")
     add_common_parser_options(parser)
     parser.add_argument("package", help="package name")
-    parser.add_argument("--repo", metavar="URL#COMMITISH", default=None,
-                        help="Source repository URL and commitish."
-                             "It can be local e.g. repos/package#master. "
-                             "The commitish defaults to master.")
-    parser.add_argument("--base", metavar="BASE#COMMITISH", default=None,
-                        help="Base repository URL and commitish. "
-                             "It can be local e.g. repos/package#master. "
+    parser.add_argument("--url", metavar="URL", default=None,
+                        help="Source repository URL."
+                             "It can be local e.g. repos/package.")
+    parser.add_argument("--commitish", default=None,
+                        help="Source repository commitish, tag or branch)."
+                             "Defaults to the one inferred from the SPEC "
+                             "or link file.")
+    parser.add_argument("--base", metavar="URL", default=None,
+                        help="Base repository URL. "
+                             "It can be local e.g. repos/package. "
+                             "This is used only for lnk packages.")
+    parser.add_argument("--base_commitish", metavar="COMMITISH",
+                        default=None,
+                        help="Base repository commitish, tag or branch. "
+                             "This is required when using --base. "
                              "This is used only for lnk packages.")
     parser.add_argument("--patchqueue", default="master",
                         help="Value for the patchqueue field of the pin file. "
@@ -153,9 +157,8 @@ def main(argv=None):
 
     args = parse_args_or_exit(argv)
 
-    if args.base is not None and len(args.base.split("#", 1)) != 2:
-        print("Error: --base argument must be of the form BASE#COMMITISH, "
-              "got '{}' instead".format(args.base))
+    if args.base is not None and args.base_commitish is None:
+        print("Error: --base_commitish is required if --base is used.")
         sys.exit(1)
 
     package_name = args.package
