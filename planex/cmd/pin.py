@@ -84,17 +84,19 @@ def get_pin_content(args, pq_name, spec, link):
     if link is not None:
         if args.base is not None:
             base_url, base_commitish = args.base.split("#", 1)
-            base = base_url
-            base_commitish = base_commitish
+            # this is to allow setting the base_commitish (but not base)
+            # for repatched components
+            base = base_url if base_url else None
+            base_commitish = base_commitish if base_commitish else None
         else:
             base = base_repo.repository_url()
             base_commitish = base_repo.commitish_tag_or_branch()
 
-        # base can be none for repatched components
-        if base is not None:
-            pinfile['base'] = base
-
-        pinfile['base_commitish'] = base_commitish
+        # base_commitish can be none for repatched components
+        if base_commitish is not None:
+            if base is not None:
+                pinfile['base'] = base
+            pinfile['base_commitish'] = base_commitish
 
         if link.sources is not None:
             pinfile["sources"] = link.sources
