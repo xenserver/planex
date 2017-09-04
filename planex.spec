@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 2.0.1
+Version: 2.1.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -47,12 +47,21 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %{_bindir}/planex-make-srpm
 %{_bindir}/planex-manifest
 %{_bindir}/planex-patchqueue
+%{_bindir}/planex-pin
 %{python_sitelib}/planex
 %{python_sitelib}/planex-*.egg-info
 %{_datadir}/planex/Makefile.rules
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Mon Sep 4 2017 Euan Harris <euan.harris@citrix.com> - 2.1.0-1
+- planex-pin: Reintroduce utility to override a package's sources with
+  a local repo
+- Makefile.rules: Split up centralized _build/ directory creation
+- planex-clone: Remove unused --pins-dir argument
+- planex-clone: Add --skip-base argument
+- planex-create-mock-config: add --environment argument
+
 * Wed Aug 23 2017 Euan Harris <euan.harris@citrix.com> - 2.0.1-1
 - depend: Handle pinned packages without patchqueues correctly
 

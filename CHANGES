@@ -1,3 +1,11 @@
+2.1.0
+* planex-pin: Reintroduce utility to override a package's sources with
+  a local repo
+* Makefile.rules: Split up centralized _build/ directory creation
+* planex-clone: Remove unused --pins-dir argument
+* planex-clone: Add --skip-base argument
+* planex-create-mock-config: add --environment argument
+
 2.0.1
 * depend: Handle pinned packages without patchqueues correctly
 
