@@ -147,6 +147,10 @@ def parse_args_or_exit(argv=None):
     parser.add_argument("--patchqueue", default="master",
                         help="Value for the patchqueue field of the pin file. "
                              "Defaults to master. ")
+    parser.add_argument("--to", default=None,
+                        help="Path of the pinfile to write. "
+                             "When used, it overwrites the file "
+                             "if present.")
     return parser.parse_args(argv)
 
 
@@ -158,7 +162,8 @@ def main(argv=None):
     args = parse_args_or_exit(argv)
 
     if args.base is not None and args.base_commitish is None:
-        print("Error: --base_commitish is required if --base is used.")
+        print("Error: --base_commitish is required if --base is used.",
+              file=sys.stderr)
         sys.exit(1)
 
     package_name = args.package
@@ -166,3 +171,12 @@ def main(argv=None):
     pin = make_pin(args, xs_path, package_name)
 
     print(json.dumps(pin, indent=2))
+
+    if args.to:
+        path = os.path.basename(args.to)
+        if os.path.exists(path):
+            with open(args.to, "w") as out:
+                json.dump(pin, out, indent=2)
+        else:
+            print("Error: path {} does not exist.".format(path),
+                  file=sys.stderr)
