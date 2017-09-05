@@ -111,8 +111,7 @@ def make_pin(args, xs_path, package_name):
     spec, link = spec_and_lnk(xs_path, package_name)
 
     if link is None and args.base is not None:
-        print("Argument --base is allowed only for lnk packages")
-        sys.exit(1)
+        sys.exit("Argument --base is allowed only for lnk packages")
 
     return get_pin_content(args, args.patchqueue, spec, link)
 
@@ -147,7 +146,7 @@ def parse_args_or_exit(argv=None):
     parser.add_argument("--patchqueue", default="master",
                         help="Value for the patchqueue field of the pin file. "
                              "Defaults to master. ")
-    parser.add_argument("--to", default=None,
+    parser.add_argument("--o", default=None,
                         help="Path of the pinfile to write. "
                              "When used, it overwrites the file "
                              "if present.")
@@ -162,9 +161,7 @@ def main(argv=None):
     args = parse_args_or_exit(argv)
 
     if args.base is not None and args.base_commitish is None:
-        print("Error: --base_commitish is required if --base is used.",
-              file=sys.stderr)
-        sys.exit(1)
+        sys.exit("Error: --base_commitish is required if --base is used.")
 
     package_name = args.package
     xs_path = os.getcwd()
@@ -172,11 +169,10 @@ def main(argv=None):
 
     print(json.dumps(pin, indent=2))
 
-    if args.to:
-        path = os.path.basename(args.to)
+    if args.o:
+        path = os.path.dirname(args.o)
         if os.path.exists(path):
-            with open(args.to, "w") as out:
+            with open(args.o, "w") as out:
                 json.dump(pin, out, indent=2)
         else:
-            print("Error: path {} does not exist.".format(path),
-                  file=sys.stderr)
+            sys.exit("Error: path {} does not exist.".format(path))
