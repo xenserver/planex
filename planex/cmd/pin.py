@@ -146,7 +146,7 @@ def parse_args_or_exit(argv=None):
     parser.add_argument("--patchqueue", default="master",
                         help="Value for the patchqueue field of the pin file. "
                              "Defaults to master. ")
-    parser.add_argument("--o", default=None,
+    parser.add_argument("-o", "--output", default=None,
                         help="Path of the pinfile to write. "
                              "When used, it overwrites the file "
                              "if present.")
@@ -169,10 +169,10 @@ def main(argv=None):
 
     print(json.dumps(pin, indent=2))
 
-    if args.o:
-        path = os.path.dirname(args.o)
+    if args.output:
+        path = os.path.dirname(args.output)
         if os.path.exists(path):
-            with open(args.o, "w") as out:
+            with open(args.output, "w") as out:
                 json.dump(pin, out, indent=2)
         else:
             sys.exit("Error: path {} does not exist.".format(path))
