@@ -44,7 +44,7 @@ def build_srpm_from_spec(spec, lnk=None):
         if source.scheme in ["http", "https", "file", "ftp"]:
             # Source was downloaded to _build/SOURCES
             print('%s: %s' % (srpmpath, path))
-        elif lnk and (lnk.sources is not None or lnk.patches is not None):
+        elif lnk and (lnk.sources is not None or lnk.has_patches):
             # Use sources from patchqueue
             pass
         else:
@@ -149,6 +149,13 @@ def dedupe_key(path):
     return os.path.basename(re.sub(r"\.pin$", ".lnk", path))
 
 
+def patch_depends(patch_name, spec, srpmpath, linkpath):
+    """Output the dependencies for a patchset"""
+    patchpath = spec.expand_macro('%_sourcedir/{}.tar'.format(patch_name))
+    print('%s: %s' % (srpmpath, patchpath))
+    print('%s: %s' % (patchpath, linkpath))
+
+
 def main(argv=None):
     """
     Entry point
@@ -179,17 +186,32 @@ def main(argv=None):
         print("# inputs: %s" % " ".join(allspecs))
 
     for spec in specs.itervalues():
+        print('# %s' % (spec.name()))
+
         build_srpm_from_spec(spec, links.get(spec.name()))
         # Manifest dependencies must come after spec dependencies
         # otherwise manifest.json will be the SRPM's first dependency
         # and will be passed to rpmbuild in the spec position.
         create_manifest_deps(spec)
         if spec.name() in links:
+            link = links[spec.name()]
             srpmpath = spec.source_package_path()
-            patchpath = spec.expand_macro("%_sourcedir/patches.tar")
-            print('%s: %s' % (srpmpath, patchpath))
-            print('%s: %s' % (srpmpath, links[spec.name()].linkpath))
-            print('%s: %s' % (patchpath, links[spec.name()].linkpath))
+            print('%s: %s' % (srpmpath, link.linkpath))
+            if link.schema_version == 1:
+                patch_depends('patches', spec, srpmpath, link.linkpath)
+            elif link.schema_version >= 2:
+                patches = link.patch_sources
+                for patch in patches:
+                    patch_url = patches[patch]['URL']
+                    print('# %s => %s' % (patch, patch_url))
+                    patch_depends(patch, spec, srpmpath, link.linkpath)
+
+                patchqueues = link.patchqueue_sources
+                for patchqueue in patchqueues:
+                    patch_url = patchqueues[patchqueue]['URL']
+                    print('# %s => %s' % (patchqueue, patch_url))
+                    patch_depends(patchqueue, spec, srpmpath, link.linkpath)
+
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
         if args.buildrequires:
