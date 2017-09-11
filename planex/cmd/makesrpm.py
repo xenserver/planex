@@ -42,7 +42,8 @@ def parse_args_or_exit(argv=None):
     if links:
         parsed_args.link = Link(links[0])
 
-    patchqueues = [arg for arg in argv if arg.endswith("patches.tar")]
+    patch_re = re.compile(r'.*patches\d*.tar$')
+    patchqueues = [arg for arg in argv if patch_re.match(arg)]
     parsed_args.patchqueue = None
     if patchqueues:
         parsed_args.patchqueue = patchqueues[0]
