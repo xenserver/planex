@@ -59,7 +59,7 @@ def curl_get(url_string, out_file):
     # If we use threads, we should also set NOSIGNAL and ignore SIGPIPE
 
     # Set URL to fetch and file to which to write the response
-    curl.setopt(pycurl.URL, url_string)
+    curl.setopt(pycurl.URL, str(url_string))
     curl.setopt(pycurl.WRITEDATA, out_file)
 
     try:
@@ -225,15 +225,10 @@ def fetch_sources(args):
                      (sys.argv[0], url.scheme))
 
 
-def fetch_via_link(args):
-    """
-    Parse link file and download patch tarball.
-    """
-    link = Link(args.spec_or_link)
-
-    url = urlparse.urlparse(str(link.url))
+def fetch_url(url, sources, retries):
+    """Fetch from specified URL"""
     try:
-        fetch_http(url, args.sources[0], args.retries + 1)
+        fetch_http(url, sources, retries)
 
     except pycurl.error as exn:
         # Curl download failed
@@ -244,6 +239,30 @@ def fetch_via_link(args):
         # IO error saving source file
         sys.exit("%s: %s: %s" %
                  (sys.argv[0], exn.strerror, exn.filename))
+
+
+def fetch_via_link(args):
+    """
+    Parse link file and download patch tarball.
+    """
+    link = Link(args.spec_or_link)
+
+    if link.schema_version == 1:
+        url = urlparse.urlparse(str(link.url))
+        fetch_url(url, args.sources[0], args.retries + 1)
+    else:
+        target, _ = os.path.splitext(os.path.basename(args.sources[0]))
+        patch_urls = link.patch_sources
+        if target in patch_urls:
+            patch = patch_urls.get(target)
+            url = urlparse.urlparse(patch['URL'])
+            fetch_url(url, args.sources[0], args.retries + 1)
+
+        patchqueues = link.patchqueue_sources
+        if target in patchqueues:
+            patchqueue = patchqueues.get(target)
+            url = urlparse.urlparse(patchqueue['URL'])
+            fetch_url(url, args.sources[0], args.retries + 1)
 
 
 def main(argv=None):
