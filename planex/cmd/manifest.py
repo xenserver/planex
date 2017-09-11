@@ -111,7 +111,7 @@ def generate_manifest(spec, link=None, pin=None):
 
         manifest['spec']['source' + str(i)] = {'url': url, 'sha1': sha1}
 
-    if link is not None:
+    if link is not None and link.url:
         repo_ref = Repository(link.url)
         sha1 = repo_ref.sha1
         manifest['lnk'] = {'url': link.url, 'sha1': sha1}
