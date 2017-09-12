@@ -20,6 +20,9 @@ from planex.link import Link
 from planex.patchqueue import Patchqueue
 from planex.tarball import Tarball
 
+PATCHQUEUES = 'patchqueues'
+PATCHES = 'patches'
+
 
 def parse_args_or_exit(argv=None):
     """
@@ -42,11 +45,27 @@ def parse_args_or_exit(argv=None):
     if links:
         parsed_args.link = Link(links[0])
 
-    patch_re = re.compile(r'.*patches\d*.tar$')
-    patchqueues = [arg for arg in argv if patch_re.match(arg)]
-    parsed_args.patchqueue = None
-    if patchqueues:
-        parsed_args.patchqueue = patchqueues[0]
+    parsed_args.patchdata = {}
+    if parsed_args.link:
+        link = parsed_args.link
+        if link.schema_version == 1:
+            patchqueues = [arg for arg in argv if arg.endswith("patches.tar")]
+            if patchqueues:
+                parsed_args.patchdata[PATCHES] = patchqueues
+        else:
+            parsed_args.patchdata[PATCHES] = []
+            for patch in link.patch_sources:
+                target = [arg for arg in argv if
+                          arg.endswith('%s.tar' % (patch))]
+                if target:
+                    parsed_args.patchdata[PATCHES].append(target[0])
+
+            parsed_args.patchdata[PATCHQUEUES] = []
+            for patchqueue in link.patchqueue_sources:
+                target = [arg for arg in argv if
+                          arg.endswith('%s.tar' % (patchqueue))]
+                if target:
+                    parsed_args.patchdata[PATCHQUEUES].append(target[0])
 
     return parsed_args
 
@@ -128,7 +147,46 @@ def extract_commit(source, manifests):
                 pass
 
 
-def populate_working_directory(tmpdir, spec, link, sources, patchqueue):
+def extract_tarball_patches(tmpdir, spec, tarball, sources, patches):
+    """ Extract a set of patches from a tarball """
+    if sources is not None:
+        for source in spec.local_sources():
+            path = os.path.join(sources, source)
+            tarball.extract(path, tmpdir)
+    if patches is not None:
+        for patch in spec.local_patches():
+            path = os.path.join(patches, patch)
+            tarball.extract(path, tmpdir)
+
+
+def extract_v2_patches(tmpdir, spec, tmp_specfile, link, patchdata):
+    """ Extract patches from a v2 lnk/pin file """
+    if PATCHES in patchdata:
+        patches = patchdata[PATCHES]
+        for patchsource in link.patch_sources:
+            tarname = '%s.tar' % patchsource
+            patchset = [patch for patch in patches
+                        if os.path.basename(patch) == tarname][0]
+            with Tarball(patchset) as tarball:
+                extract_tarball_patches(
+                    tmpdir, spec, tarball, None,
+                    link.patch_sources[patchsource]['patches'])
+
+    if PATCHQUEUES in patchdata:
+        patchqueues = patchdata[PATCHQUEUES]
+        sources = link.patchqueue_sources
+        for patchqueue in sources:
+            tarname = '%s.tar' % patchqueue
+            patchset = [pq for pq in patchqueues
+                        if os.path.basename(pq) == tarname][0]
+            with Patchqueue(patchset,
+                            branch=sources[patchqueue]
+                            ['patchqueue']) as patches:
+                patches.extract_all(tmpdir)
+                patches.add_to_spec(spec, tmp_specfile)
+
+
+def populate_working_directory(tmpdir, spec, link, sources, patchdata):
     """
     Build a working directory containing everything needed to build the SRPM.
     """
@@ -151,24 +209,23 @@ def populate_working_directory(tmpdir, spec, link, sources, patchqueue):
     spec = Spec(tmp_specfile, check_package_name=False)
 
     # Expand patchqueue to working area, rewriting spec as needed
-    if link and patchqueue:
-        # Extract patches
-        if link.patchqueue is not None:
-            with Patchqueue(patchqueue,
-                            branch=link.patchqueue) as patches:
-                patches.extract_all(tmpdir)
-                patches.add_to_spec(spec, tmp_specfile)
+    if link:
+        if link.schema_version == 1 and 'patches' in patchdata:
+            patch_path = str(patchdata['patches'][0])
+            # Extract patches
+            if link.patchqueue is not None:
+                print ('patches %s' % (patch_path))
+                with Patchqueue(patch_path,
+                                branch=link.patchqueue) as patches:
+                    patches.extract_all(tmpdir)
+                    patches.add_to_spec(spec, tmp_specfile)
 
-        # Extract non-patchqueue sources
-        with Tarball(patchqueue) as tarball:
-            if link.sources is not None:
-                for source in spec.local_sources():
-                    path = os.path.join(link.sources, source)
-                    tarball.extract(path, tmpdir)
-            if link.patches is not None:
-                for patch in spec.local_patches():
-                    path = os.path.join(link.patches, patch)
-                    tarball.extract(path, tmpdir)
+            # Extract non-patchqueue sources
+            with Tarball(patch_path) as tarball:
+                extract_tarball_patches(tmpdir, spec, tarball, link.sources,
+                                        link.patches)
+        elif link.schema_version >= 2:
+            extract_v2_patches(tmpdir, spec, tmp_specfile, link, patchdata)
 
     return tmp_specfile
 
@@ -185,7 +242,7 @@ def main(argv=None):
 
     try:
         specfile = populate_working_directory(tmpdir, args.spec, args.link,
-                                              args.sources, args.patchqueue)
+                                              args.sources, args.patchdata)
         sys.exit(rpmbuild(args, tmpdir, specfile))
 
     except (tarfile.TarError, tarfile.ReadError) as exc:
