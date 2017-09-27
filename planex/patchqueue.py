@@ -91,12 +91,15 @@ def rewrite_spec(spec, patches, patchnum):
     """
     done = False
     for line in spec.spectext:
-        if not done and line.upper().startswith('SOURCE'):
+        yield line
+        upper_line = line.upper()
+        if not done and (
+                (upper_line.startswith('SOURCE') and patchnum == -1) or
+                (upper_line.startswith('PATCH%s' % patchnum))):
             for patch in patches:
                 patchnum += 1
                 yield "Patch%d: %s\n" % (patchnum, patch)
             done = True
-        yield line
 
 
 def expand_patchqueue(spec, series):
