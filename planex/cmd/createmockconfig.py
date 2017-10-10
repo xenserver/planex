@@ -82,6 +82,10 @@ def update_mock_repos(config, yum_repos, yum_config_opt):
             config.set(repo.id, 'gpgkey', ' '.join(repo.gpgkey))
         else:
             config.set(repo.id, 'gpgcheck', '0')
+        if repo.includepkgs:
+            config.set(repo.id, 'includepkgs', ' '.join(repo.includepkgs))
+        if repo.exclude:
+            config.set(repo.id, 'exclude', ' '.join(repo.exclude))
 
         if yum_config_opt:
             for key, value in yum_config_opt.items():
