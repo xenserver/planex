@@ -7,7 +7,6 @@ from setuptools import setup
 setup(name='planex',
       version='2.1.0',
       packages=['planex', 'planex.cmd'],
-      include_package_data=True,
       package_data={'planex': ['Makefile.rules']},
       entry_points={
           'console_scripts': [
