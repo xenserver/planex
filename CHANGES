@@ -1,3 +1,6 @@
+2.0.2
+* planex-create-mock-config: honour exclude and includepkgs
+
 2.0.1
 * depend: Handle pinned packages without patchqueues correctly
 
