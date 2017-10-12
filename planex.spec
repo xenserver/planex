@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 2.0.1
+Version: 2.0.2
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
