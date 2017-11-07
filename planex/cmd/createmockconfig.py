@@ -61,6 +61,11 @@ def update_mock_repos(config, yum_repos):
         else:
             config.set(repo.id, 'gpgcheck', '0')
 
+        if repo.includepkgs:
+            config.set(repo.id, 'includepkgs', ' '.join(repo.includepkgs))
+        if repo.exclude:
+            config.set(repo.id, 'exclude', ' '.join(repo.exclude))
+
 
 def write_mock_cfg(fileh, cfg):
     """
