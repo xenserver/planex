@@ -81,6 +81,11 @@ def get_commit_id(info_file):
         match = changeset.match(line)
         if match:
             changeset = match.group(1)
+            # Skip if .gitarchive-info hasn't passed through `git archive`
+            # rpm chokes in the following way:
+            #   Illegal char '$' in: Provides: gitsha(source.tar) = $Format:%H$
+            if changeset.startswith("$Format"):
+                continue
             return changeset
     return None
 
