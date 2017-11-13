@@ -1,3 +1,6 @@
+0.23.2
+* planex-create-mock-config: Support exclude and includepkgs directives
+
 0.23.1
 * depend: Do not make an SRPM depend on a link if a pin is also present
 * Makefile.rules: add RPMBUILD_EXTRA_FLAGS variable
