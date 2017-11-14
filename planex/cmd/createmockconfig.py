@@ -91,6 +91,11 @@ def update_mock_repos(config, yum_repos, yum_config_opt):
             for key, value in yum_config_opt.items():
                 config.set('main', key, str(value))
 
+        if repo.includepkgs:
+            config.set(repo.id, 'includepkgs', ' '.join(repo.includepkgs))
+        if repo.exclude:
+            config.set(repo.id, 'exclude', ' '.join(repo.exclude))
+
 
 def write_mock_cfg(fileh, cfg):
     """
