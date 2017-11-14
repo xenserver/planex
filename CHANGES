@@ -1,3 +1,6 @@
+0.22.2
+* planex-create-mock-config: Support exclude and includepkgs directives
+
 0.22.1
 * planex-patchqueue: Handle static tarballs in patchqueue repositories
   correctly
