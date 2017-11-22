@@ -39,6 +39,7 @@ CREATEREPO_FLAGS ?= ${QUIET+--quiet}
 
 MOCK ?= planex-build-mock
 MOCK_FLAGS ?= ${QUIET+--quiet} \
+              $(RPM_DEFINES) \
               --configdir=$(MOCK_CONFIGDIR) \
               --root=$(MOCK_ROOT) \
               --resultdir=$(@D) \
