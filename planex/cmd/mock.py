@@ -91,8 +91,12 @@ def mock(args, tmp_config_dir, *extra_params):
     if args.resultdir is not None:
         cmd += ["--resultdir", args.resultdir]
 
-    for define in args.define:
-        cmd += ['--define', " ".join(define)]
+    for key, value in args.define:
+        # _topdir should only be used to figure out the RPM paths outside
+        # the chroot.  Defining it inside the mock chroot confuses the
+        # build.
+        if key != "_topdir":
+            cmd += ['--define', '%s %s' % (key, value)]
 
     cmd.extend(extra_params)
     # mock produces more output when stderr isatty, so use a pty to fake that
