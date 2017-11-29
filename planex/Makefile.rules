@@ -71,13 +71,7 @@ endif
 .PHONY: all rpms
 all: $(RPMS)
 
-$(RPMS): RPMS MANIFESTS $(MOCK_CONFIGDIR)/$(MOCK_ROOT).cfg
-
-RPMS:
-	ln -s $(TOPDIR)/RPMS RPMS
-
-MANIFESTS:
-	ln -s $(TOPDIR)/MANIFESTS MANIFESTS
+$(RPMS): $(MOCK_CONFIGDIR)/$(MOCK_ROOT).cfg
 
 $(TOPDIR)/RPMS/repodata/repomd.xml: $(RPMS)
 	$(AT)$(CREATEREPO) $(CREATEREPO_FLAGS) $(TOPDIR)/RPMS
@@ -89,7 +83,7 @@ srpms: $(SRPMS)
 
 .PHONY: clean
 clean:
-	rm -rf $(TOPDIR) RPMS MANIFESTS
+	rm -rf $(TOPDIR)
 
 
 ############################################################################
