@@ -140,7 +140,7 @@ $(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin FORCE
 %.rpm:
 	@echo [MOCK] $<
 	$(AT) mkdir -p $(@D)
-	$(AT) ln -sf $(@D)
+	$(AT) ln -sf $(TOPDIR)/RPMS
 	$(AT)$(MOCK) $(MOCK_FLAGS) --rebuild $<
 
 
