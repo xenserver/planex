@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 2.1.0
+Version: 2.1.1
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -54,6 +54,12 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Thu Nov 30 2017 Euan Harris <euan.harris@citrix.com> - 2.1.1-1
+* planex-mock: Properly create the RPMS top-level symlink
+* planex-make-srpm: Don't cause RPM to choke on a malformed gitsha
+* planex-create-mock-config: honour exclude and includepkgs
+* planex-pin: Add an option to specify the location of the pin file
+
 * Mon Sep 4 2017 Euan Harris <euan.harris@citrix.com> - 2.1.0-1
 - planex-pin: Reintroduce utility to override a package's sources with
   a local repo
