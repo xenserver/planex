@@ -1,3 +1,9 @@
+2.1.1
+* planex-mock: Properly create the RPMS top-level symlink
+* planex-make-srpm: Don't cause RPM to choke on a malformed gitsha
+* planex-create-mock-config: honour exclude and includepkgs
+* planex-pin: Add an option to specify the location of the pin file
+
 2.1.0
 * planex-pin: Reintroduce utility to override a package's sources with
   a local repo
