@@ -66,6 +66,12 @@ class RpmTests(unittest.TestCase):
              "./SOURCES/ocaml-cohttp/cohttp0.patch",
              "./SOURCES/ocaml-cohttp/cohttp1.patch"])
 
+    def test_requires(self):
+        """Package runtime requirements are correct"""
+        self.assertEqual(
+            self.spec.requires(),
+            set(["ocaml", "ocaml-findlib"]))
+
     def test_buildrequires(self):
         """Package build-time requirements are correct"""
         self.assertEqual(

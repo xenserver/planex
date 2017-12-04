@@ -184,6 +184,15 @@ class Spec(object):
 
         return paths
 
+    # RPM runtime dependencies.   These are not required to build this
+    # package, but will need to be installed when building any other
+    # package which BuildRequires this one.
+    def requires(self):
+        """Return the set of packages needed by this package at runtime
+           (Requires)"""
+        return set.union(*[set(p.header['REQUIRES'])
+                           for p in self.spec.packages])
+
     # RPM build dependencies.   The 'requires' key for the *source* RPM is
     # actually the 'buildrequires' key from the spec
     def buildrequires(self):
