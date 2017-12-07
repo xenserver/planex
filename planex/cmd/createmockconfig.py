@@ -53,15 +53,15 @@ def load_mock_reference(fname):
     return config_opts
 
 
-def load_yum_repos(repo_names):
+def load_yum_repos(includes, excludes):
     """
     read in the yum repository configuration
     """
     yum_base = yum.YumBase()
     yum_repos = []
-    for repo_id in repo_names:
+    for repo_id in includes:
         yum_repos += yum_base.repos.findRepos(repo_id)
-    return yum_repos
+    return [rp for rp in yum_repos for ex in excludes if rp.id != ex]
 
 
 def update_mock_repos(config, yum_repos, yum_config_opt):
@@ -120,6 +120,8 @@ def parse_args_or_exit(argv=None):
                         help="reference chroot config")
     parser.add_argument("--enablerepo", action="append",
                         help="Repository to include")
+    parser.add_argument("--disablerepo", action="append",
+                        help="Repository to exclude")
     parser.add_argument("--config_opt", action=DictAction, metavar="OPT=VALUE",
                         help="Define mock configuration settings")
     parser.add_argument("--yum-config_opt", action=DictAction,
@@ -140,7 +142,7 @@ def main(argv=None):
     args = parse_args_or_exit(argv)
     setup_logging(args)
 
-    yum_repos = load_yum_repos(args.enablerepo)
+    yum_repos = load_yum_repos(args.enablerepo, args.disablerepo)
 
     # load the reference config
     reference = os.path.join(args.configdir, args.root + '.cfg')
