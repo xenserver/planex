@@ -36,8 +36,8 @@ gopath=$(pwd)/gotools
 goroot=$gopath/go
 go_tool_name=go1.8.linux-amd64.tar.gz
 mkdir -p obj $gopath
-wget -O $gopath/$go_tool_name https://redirector.gvt1.com/edgedl/go/$go_tool_name
-tar -xzvf $gopath/$go_tool_name -C $gopath --overwrite
+wget -q -O $gopath/$go_tool_name https://redirector.gvt1.com/edgedl/go/$go_tool_name
+tar -xzf $gopath/$go_tool_name -C $gopath --overwrite
 GOROOT=$goroot $goroot/bin/go build -a -x -ldflags="-s -w" -o obj/xe-daemon xe-daemon/xe-daemon.go
 GOROOT=$goroot $goroot/bin/go build -a -x -ldflags="-s -w" -o obj/xenstore xenstore/xenstore.go
 

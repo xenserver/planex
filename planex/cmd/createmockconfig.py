@@ -61,7 +61,7 @@ def load_yum_repos(includes, excludes):
     yum_repos = []
     for repo_id in includes:
         yum_repos += yum_base.repos.findRepos(repo_id)
-    return [rp for rp in yum_repos for ex in excludes if rp.id != ex]
+    return [repo for repo in yum_repos if repo.id not in excludes]
 
 
 def update_mock_repos(config, yum_repos, yum_config_opt):
