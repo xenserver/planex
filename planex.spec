@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 2.1.1
+Version: 2.1.2
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -54,6 +54,9 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Mon Dec 11 2017 Euan Harris <euan.harris@citrix.com> - 2.1.2-1
+- Makefile.rules: Work around a race in the ln command
+
 * Thu Nov 30 2017 Euan Harris <euan.harris@citrix.com> - 2.1.1-1
 - planex-mock: Properly create the RPMS top-level symlink
 - planex-make-srpm: Don't cause RPM to choke on a malformed gitsha

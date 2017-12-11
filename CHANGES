@@ -1,3 +1,6 @@
+2.1.2
+* Makefile.rules: Work around a race in the ln command
+
 2.1.1
 * planex-mock: Properly create the RPMS top-level symlink
 * planex-make-srpm: Don't cause RPM to choke on a malformed gitsha
