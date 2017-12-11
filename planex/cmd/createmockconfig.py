@@ -58,10 +58,13 @@ def load_yum_repos(includes, excludes):
     read in the yum repository configuration
     """
     yum_base = yum.YumBase()
-    yum_repos = []
+    enablelist = []
+    disablelist = []
     for repo_id in includes:
-        yum_repos += yum_base.repos.findRepos(repo_id)
-    return [repo for repo in yum_repos if repo.id not in excludes]
+        enablelist += yum_base.repos.findRepos(repo_id)
+    for repo_id in excludes:
+        disablelist += yum_base.repos.findRepos(repo_id)
+    return list(set(enablelist) - set(disablelist))
 
 
 def update_mock_repos(config, yum_repos, yum_config_opt):
