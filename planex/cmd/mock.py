@@ -13,7 +13,7 @@ from uuid import uuid4
 
 import argparse
 import argcomplete
-from planex.cmd.args import add_common_parser_options
+import planex.cmd.args
 
 
 def parse_args_or_exit(argv=None):
@@ -21,8 +21,10 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(
-        description='Planex build system in a chroot (a mock wrapper)')
-    add_common_parser_options(parser)
+        description='Planex build system in a chroot (a mock wrapper)',
+        parents=[planex.cmd.args.common_base_parser(),
+                 planex.cmd.args.rpm_define_parser(),
+                 planex.cmd.args.keeptmp_parser()])
     parser.add_argument(
         "--configdir", metavar="CONFIGDIR", default="/etc/mock",
         help="Change where the config files are found")
@@ -32,13 +34,6 @@ def parse_args_or_exit(argv=None):
     parser.add_argument(
         "--resultdir", metavar="RESULTDIR", default=None,
         help="Path for resulting files to be put")
-    parser.add_argument(
-        "--keeptmp", action="store_true",
-        help="Keep temporary files")
-    parser.add_argument(
-        "-D", "--define", default=[], action="append",
-        help="--define='MACRO EXPR' \
-              define MACRO with value EXPR for the build")
     parser.add_argument(
         "--init", action="store_true",
         help="initialize the chroot, do not build anything")
@@ -94,7 +89,7 @@ def mock(args, tmp_config_dir, *extra_params):
         cmd += ["--resultdir", args.resultdir]
 
     for define in args.define:
-        cmd += ['--define', define]
+        cmd += ['--define', " ".join(define)]
 
     cmd.extend(extra_params)
     # mock produces more output when stderr isatty, so use a pty to fake that

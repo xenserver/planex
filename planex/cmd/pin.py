@@ -9,7 +9,7 @@ import json
 import os
 import sys
 
-from planex.cmd.args import add_common_parser_options
+from planex.cmd.args import common_base_parser
 from planex.link import Link
 from planex.repository import Repository
 from planex.spec import Spec
@@ -124,8 +124,8 @@ def parse_args_or_exit(argv=None):
     parser = argparse.ArgumentParser(
         description="Create a .pin file pointing to a repository "
                     "in $CWD/repos. You must run "
-                    "this tool from the root of a spec repository.")
-    add_common_parser_options(parser)
+                    "this tool from the root of a spec repository.",
+        parents=[common_base_parser()])
     parser.add_argument("package", help="package name")
     parser.add_argument("--url", metavar="URL", default=None,
                         help="Source repository URL."

@@ -14,7 +14,7 @@ import tempfile
 
 import argparse
 import argcomplete
-from planex.cmd.args import add_common_parser_options
+import planex.cmd.args
 from planex.spec import Spec
 from planex.link import Link
 from planex.patchqueue import Patchqueue
@@ -26,17 +26,13 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(
-        description='Pack sources and patchqueues into a source RPM')
-    add_common_parser_options(parser)
+        description='Pack sources and patchqueues into a source RPM',
+        parents=[planex.cmd.args.common_base_parser(),
+                 planex.cmd.args.rpm_define_parser(),
+                 planex.cmd.args.keeptmp_parser()])
     parser.add_argument("spec", metavar="SPEC", help="Spec file")
     parser.add_argument("sources", metavar="SOURCE/PATCHQUEUE", nargs='*',
                         help="Source and patchqueue files")
-    parser.add_argument(
-        "-D", "--define", default=[], action="append",
-        help="--define='MACRO EXPR' define MACRO with value EXPR")
-    parser.add_argument(
-        "--keeptmp", action="store_true",
-        help="keep temporary files")
     argcomplete.autocomplete(parser)
 
     parsed_args = parser.parse_args(argv)
@@ -63,7 +59,7 @@ def rpmbuild(args, tmpdir, specfile):
         cmd.append('--quiet')
     for define in args.define:
         cmd.append('--define')
-        cmd.append(define)
+        cmd.append(" ".join(define))
     cmd.append('--define')
     cmd.append('_sourcedir %s' % tmpdir)
     cmd.append('-bs')

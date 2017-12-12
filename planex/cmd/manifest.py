@@ -11,7 +11,7 @@ import os
 
 import argcomplete
 
-from planex.cmd.args import add_common_parser_options
+from planex.cmd.args import common_base_parser
 from planex.util import setup_logging
 from planex.link import Link
 from planex.spec import Spec
@@ -22,10 +22,9 @@ def parse_args_or_exit(argv=None):
     """Parse command line options"""
 
     parser = argparse.ArgumentParser(
-        description='Generate manifest in JSON format from spec/link files'
+        description='Generate manifest in JSON format from spec/link files',
+        parents=[common_base_parser()]
     )
-
-    add_common_parser_options(parser)
 
     parser.add_argument(
         'specfile_path',
