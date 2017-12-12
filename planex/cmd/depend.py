@@ -102,7 +102,11 @@ def buildrequires_for_rpm(spec, provides_to_rpm):
     Generate build dependency rules between binary RPMs
     """
     rpmpath = spec.binary_package_paths()[-1]
-    for buildreq in spec.buildrequires():
+    # Package's Requires must exist for it to be installed as a
+    # BuildRequire of a later package, so we make it depend on
+    # Requires as well as BuildRequires to ensure they are built.
+    buildreqs = (spec.buildrequires() | spec.requires()) - spec.provides()
+    for buildreq in buildreqs:
         # Some buildrequires come from the system repository
         if buildreq in provides_to_rpm:
             buildreqrpm = provides_to_rpm[buildreq]
