@@ -1,19 +1,22 @@
 FROM centos:7.2.1511
 MAINTAINER Euan Harris <euan.harris@citrix.com>
 
-# Install sudo and preconfigure the sudoers file for the build user
-RUN yum -y install sudo \
-  && echo 'build ALL=(ALL:ALL) NOPASSWD:ALL' >> /etc/sudoers \
-  && sed -i.bak 's/^Defaults.*requiretty//g' /etc/sudoers
-
-# Install basic prerequisites for building planex
 # yum-plugin-ovl works around problems on OverlayFS-backed containers:
 #   https://github.com/docker/docker/issues/10180
+RUN yum -y install yum-plugin-ovl \
+  && yum clean all
+
+# Install basic prerequisites for building planex
 RUN yum -y install \
   epel-release \
-  yum-plugin-ovl \
   yum-utils \
   && yum clean all
+
+# Install sudo and preconfigure the sudoers file for the build user
+RUN yum -y install sudo \
+  && yum clean all \
+  && echo 'build ALL=(ALL:ALL) NOPASSWD:ALL' >> /etc/sudoers \
+  && sed -i.bak 's/^Defaults.*requiretty//g' /etc/sudoers
 
 # Copy spec file and install dependencies.
 # The spec file rarely changes, so the dependency installation layers
