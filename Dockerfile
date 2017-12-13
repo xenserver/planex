@@ -1,4 +1,4 @@
-FROM centos:7.2.1511
+FROM centos:7.4.1708
 MAINTAINER Euan Harris <euan.harris@citrix.com>
 
 # yum-plugin-ovl works around problems on OverlayFS-backed containers:
