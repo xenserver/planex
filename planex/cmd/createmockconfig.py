@@ -119,9 +119,9 @@ def parse_args_or_exit(argv=None):
                         help="mock config directory")
     parser.add_argument("-r", "--root", metavar="INCFG", required=True,
                         help="reference chroot config")
-    parser.add_argument("--enablerepo", action="append",
+    parser.add_argument("--enablerepo", action="append", default=['*'],
                         help="Repository to include")
-    parser.add_argument("--disablerepo", action="append",
+    parser.add_argument("--disablerepo", action="append", default=[],
                         help="Repository to exclude")
     parser.add_argument("--config_opt", action=DictAction, metavar="OPT=VALUE",
                         help="Define mock configuration settings")
