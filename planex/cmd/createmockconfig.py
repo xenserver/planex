@@ -40,6 +40,46 @@ class DictAction(argparse.Action):
         setattr(namespace, self.dest, dictvalue)
 
 
+class RepoAction(argparse.Action):
+    """
+    Action subclass to form common function to add new repo config
+    """
+    # pylint: disable=R0903,W0223
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        if nargs is not None:
+            raise ValueError("nargs not allowed")
+        dest = "repo_config_list"
+        super(RepoAction, self).__init__(option_strings, dest, **kwargs)
+
+    def sub_call(self, namespace, values, repo_config='enable'):
+        """
+        A common function to implement __call__
+        """
+        repo_config_list = getattr(namespace, self.dest)
+        if repo_config_list is None:
+            repo_config_list = []
+        repo_config_list.append((repo_config, values))
+        setattr(namespace, self.dest, repo_config_list)
+
+
+class EnableRepoAction(RepoAction):
+    """
+    RepoAction subclass to form adding a enablement repo config
+    """
+    # pylint: disable=R0903
+    def __call__(self, parser, namespace, values, option_string=None):
+        self.sub_call(namespace, values, "enable")
+
+
+class DisableRepoAction(RepoAction):
+    """
+    RepoAction subclass to form adding a disablement repo config
+    """
+    # pylint: disable=R0903
+    def __call__(self, parser, namespace, values, option_string=None):
+        self.sub_call(namespace, values, "disable")
+
+
 def load_mock_reference(fname):
     """
     read in the reference mock configuration
@@ -53,16 +93,20 @@ def load_mock_reference(fname):
     return config_opts
 
 
-def load_yum_repos(includes, excludes):
+def load_yum_repos(repo_config_list):
     """
     read in the yum repository configuration
     """
     yum_base = yum.YumBase()
-    enabled_set = {repo for pattern in includes
-                   for repo in yum_base.repos.findRepos(pattern)}
-    disabled_set = {repo for pattern in excludes
-                    for repo in yum_base.repos.findRepos(pattern)}
-    return list(enabled_set - disabled_set)
+    repo_set = {repo for repo in yum_base.repos.findRepos('*')
+                if repo.enabled}
+    for config, pattern in repo_config_list:
+        if config == "enable":
+            repo_set |= set(yum_base.repos.findRepos(pattern))
+        elif config == "disable":
+            repo_set -= set(yum_base.repos.findRepos(pattern))
+
+    return list(repo_set)
 
 
 def update_mock_repos(config, yum_repos, yum_config_opt):
@@ -119,9 +163,9 @@ def parse_args_or_exit(argv=None):
                         help="mock config directory")
     parser.add_argument("-r", "--root", metavar="INCFG", required=True,
                         help="reference chroot config")
-    parser.add_argument("--enablerepo", action="append", default=['*'],
+    parser.add_argument("--enablerepo", action=EnableRepoAction, default=[],
                         help="Repository to include")
-    parser.add_argument("--disablerepo", action="append", default=[],
+    parser.add_argument("--disablerepo", action=DisableRepoAction, default=[],
                         help="Repository to exclude")
     parser.add_argument("--config_opt", action=DictAction, metavar="OPT=VALUE",
                         help="Define mock configuration settings")
@@ -143,7 +187,7 @@ def main(argv=None):
     args = parse_args_or_exit(argv)
     setup_logging(args)
 
-    yum_repos = load_yum_repos(args.enablerepo, args.disablerepo)
+    yum_repos = load_yum_repos(args.repo_config_list)
 
     # load the reference config
     reference = os.path.join(args.configdir, args.root + '.cfg')
