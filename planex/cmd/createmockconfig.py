@@ -98,8 +98,7 @@ def load_yum_repos(repo_config_list):
     read in the yum repository configuration
     """
     yum_base = yum.YumBase()
-    repo_set = {repo for repo in yum_base.repos.findRepos('*')
-                if repo.enabled}
+    repo_set = set(yum_base.repos.listEnabled())
     for config, pattern in repo_config_list:
         if config == "enable":
             repo_set |= set(yum_base.repos.findRepos(pattern))
