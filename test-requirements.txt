@@ -3,4 +3,4 @@ hypothesis
 mock
 nose
 pep8
-pylint
+pylint==1.7.5
