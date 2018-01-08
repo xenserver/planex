@@ -1,3 +1,13 @@
+2.2.0
+* planex-makesrpm: Support multiple patchqueues
+* planex-patchqueue: Insert new patches after existing patches
+* planex-manifest: Only generate manifest if link URL is present
+* planex-create-mock-config: add 'disablerepo' option
+* planex-depend: Ensure that a package's runtime dependencies
+  are available before it is built, so that the resulting package 
+  can be installed immediately
+* Docker: Use latest CentOS base image
+
 2.1.2
 * Makefile.rules: Work around a race in the ln command
 
