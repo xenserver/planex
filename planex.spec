@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 2.1.2
+Version: 2.2.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -54,6 +54,16 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Mon Jan 8 2018 Euan Harris <euan.harris@citrix.com> - 2.2.0-1
+- planex-makesrpm: Support multiple patchqueues
+- planex-patchqueue: Insert new patches after existing patches
+- planex-manifest: Only generate manifest if link URL is present
+- planex-create-mock-config: add 'disablerepo' option
+- planex-depend: Ensure that a package's runtime dependencies
+  are available before it is built, so that the resulting package
+  can be installed immediately
+- Docker: Use latest CentOS base image
+
 * Mon Dec 11 2017 Euan Harris <euan.harris@citrix.com> - 2.1.2-1
 - Makefile.rules: Work around a race in the ln command
 
