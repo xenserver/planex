@@ -92,9 +92,9 @@ def get_commit_id(info_file):
     """
     Read the commit id from the .gitarchive-info file
     """
-    changeset = re.compile(r'^Changeset: (.*)$')
+    regex = re.compile(r'^Changeset: (.*)$')
     for line in info_file:
-        match = changeset.match(line)
+        match = regex.match(line)
         if match:
             changeset = match.group(1)
             # Skip if .gitarchive-info hasn't passed through `git archive`
