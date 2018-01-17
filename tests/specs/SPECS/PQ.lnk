@@ -1,4 +1,4 @@
 {
-	"URL": "https://github.com/makunterry/xe-guest-utilities.pg/archive/PQ.tar.gz",
-	"patchequeue": "master"
+	"URL": "https://github.com/xenserver/nsource/archive/PQ.tar.gz",
+	"patchqueue": "master"
 }
