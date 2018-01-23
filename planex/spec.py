@@ -69,6 +69,36 @@ class SpecNameMismatch(Exception):
     pass
 
 
+def parse_spec_quietly(path):
+    """
+    Parse spec file at 'path' and return an rpm.spec object.
+    This function suppresses any errors about missing sources which
+    librpm writes to stderr.
+    """
+    with tempfile.TemporaryFile() as nullfh:
+        try:
+            # collect all output to stderr then filter out
+            # errors about missing sources
+            errcpy = os.dup(2)
+            try:
+                os.dup2(nullfh.fileno(), 2)
+                return rpm.ts().parseSpec(path)
+            finally:
+                os.dup2(errcpy, 2)
+                os.close(errcpy)
+
+        except ValueError as exn:
+            nullfh.seek(0, os.SEEK_SET)
+            # https://github.com/PyCQA/pylint/issues/1435
+            # pylint: disable=E1133
+            for line in nullfh:
+                line = line.strip()
+                if not line.endswith(': No such file or directory'):
+                    print(line, file=sys.stderr)
+            exn.args = (exn.args[0].rstrip() + ' ' + path, )
+            raise
+
+
 class Spec(object):
     """Represents an RPM spec file"""
 
@@ -93,28 +123,7 @@ class Spec(object):
             self.path = path
             with open(path) as spec:
                 self.spectext = spec.readlines()
-
-            with tempfile.TemporaryFile() as nullfh:
-                try:
-                    # collect all output to stderr then filter out
-                    # errors about missing sources
-                    errcpy = os.dup(2)
-                    try:
-                        os.dup2(nullfh.fileno(), 2)
-                        self.spec = rpm.ts().parseSpec(path)
-                    finally:
-                        os.dup2(errcpy, 2)
-                        os.close(errcpy)
-                except ValueError as exn:
-                    nullfh.seek(0, os.SEEK_SET)
-                    # https://github.com/PyCQA/pylint/issues/1435
-                    # pylint: disable=E1133
-                    for line in nullfh:
-                        line = line.strip()
-                        if not line.endswith(': No such file or directory'):
-                            print(line, file=sys.stderr)
-                    exn.args = (exn.args[0].rstrip() + ' ' + path, )
-                    raise
+            self.spec = parse_spec_quietly(path)
 
             if check_package_name:
                 file_basename = os.path.basename(path).split(".")[0]
