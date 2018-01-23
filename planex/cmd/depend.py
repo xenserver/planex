@@ -39,9 +39,9 @@ def build_srpm_from_spec(spec, lnk=None):
     """
     srpmpath = spec.source_package_path()
     print('%s: %s' % (srpmpath, spec.specpath()))
-    for (url, path) in zip(spec.source_urls(), spec.source_paths()):
-        source = urlparse.urlparse(url)
-        if source.scheme in ["http", "https", "file", "ftp"]:
+    for (path, source) in spec.sources():
+        url = urlparse.urlparse(source)
+        if url.scheme in ["http", "https", "file", "ftp"]:
             # Source was downloaded to _build/SOURCES
             print('%s: %s' % (srpmpath, path))
         elif lnk and (lnk.sources is not None or lnk.has_patches):
@@ -56,9 +56,9 @@ def download_rpm_sources(spec):
     """
     Generate rules to download sources
     """
-    for (url, path) in zip(spec.source_urls(), spec.source_paths()):
-        source = urlparse.urlparse(url)
-        if source.scheme in ["http", "https", "file", "ftp"]:
+    for (path, source) in spec.sources():
+        url = urlparse.urlparse(source)
+        if url.scheme in ["http", "https", "file", "ftp"]:
             # Source can be fetched by fetch
             print('%s: %s' % (path, spec.specpath()))
 
