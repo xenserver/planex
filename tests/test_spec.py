@@ -59,27 +59,6 @@ class RpmTests(unittest.TestCase):
              ("./SOURCES/ocaml-cohttp/cohttp0.patch", "cohttp0.patch"),
              ("./SOURCES/ocaml-cohttp/cohttp1.patch", "cohttp1.patch")])
 
-    def test_source_urls(self):
-        """Package source URLs are correct"""
-        self.assertItemsEqual(
-            self.spec.source_urls(),
-            ["https://github.com/mirage/ocaml-cohttp/archive/"
-             "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
-             "ocaml-cohttp-init",
-             "ocaml-cohttp-service",
-             "cohttp0.patch",
-             "cohttp1.patch"])
-
-    def test_source_paths(self):
-        """Package source paths on disk are correct"""
-        self.assertItemsEqual(
-            self.spec.source_paths(),
-            ["./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz",
-             "./SOURCES/ocaml-cohttp/ocaml-cohttp-init",
-             "./SOURCES/ocaml-cohttp/ocaml-cohttp-service",
-             "./SOURCES/ocaml-cohttp/cohttp0.patch",
-             "./SOURCES/ocaml-cohttp/cohttp1.patch"])
-
     def test_source(self):
         """URLs for individual sources are correct"""
         self.assertEqual(

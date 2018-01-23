@@ -42,7 +42,7 @@ def repository_of(spec_or_link):
     """Return the Repository of the provided Spec source url or Link url.
        None if spec_or_link is None"""
     if isinstance(spec_or_link, Spec):
-        return Repository(spec_or_link.source_urls()[0])
+        return Repository(spec_or_link.sources()[0][1])
     if isinstance(spec_or_link, Link):
         return Repository(spec_or_link.url)
     if spec_or_link is None:

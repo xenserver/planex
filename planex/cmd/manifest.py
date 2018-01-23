@@ -99,7 +99,7 @@ def generate_manifest(spec, link=None, pin=None):
     """
 
     manifest = {'spec': {}}
-    source_urls = [url for url in spec.source_urls() if '://' in url]
+    source_urls = [url for (_, url) in spec.sources() if '://' in url]
 
     for i, url in enumerate(source_urls):
         # Sources taken from artifactory do not have SHA1

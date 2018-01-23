@@ -137,29 +137,10 @@ class Spec(object):
         """Return the package version"""
         return self.spec.sourceHeader['version']
 
-    def source_urls(self):
-        """Return the URLs from which the sources can be downloaded"""
-        return [source for (source, _, _) in reversed(self.spec.sources)]
-
     def expand_macro(self, macro):
         """Return the value of macro, expanded in the package's context"""
         with rpm_macros(self.macros, nevra(self.spec.sourceHeader)):
             return rpm.expandMacro(macro)
-
-    def source_paths(self):
-        """Return the filesystem paths to source files"""
-
-        # RPM only looks at the basename part of the Source URL - the
-        # part after the rightmost /.   We must match this behaviour.
-        #
-        # Examples:
-        #    http://www.example.com/foo/bar.tar.gz -> bar.tar.gz
-        #    http://www.example.com/foo/bar.cgi#/baz.tbz -> baz.tbz
-
-        with rpm_macros(self.macros, nevra(self.spec.sourceHeader)):
-            return [os.path.join(rpm.expandMacro("%_sourcedir"),
-                                 os.path.basename(url))
-                    for url in self.source_urls()]
 
     # RPM runtime dependencies.   These are not required to build this
     # package, but will need to be installed when building any other
@@ -189,6 +170,21 @@ class Spec(object):
         # will write a new source RPM along with the binary RPMS.
         srpmname = self.spec.sourceHeader['nvr'] + ".src.rpm"
         return rpm.expandMacro(os.path.join('%_srcrpmdir', srpmname))
+
+    def sources(self):
+        """List all sources defined in the spec file"""
+
+        # RPM only looks at the basename part of the Source URL - the
+        # part after the rightmost /.   We must match this behaviour.
+        #
+        # Examples:
+        #    http://www.example.com/foo/bar.tar.gz -> bar.tar.gz
+        #    http://www.example.com/foo/bar.cgi#/baz.tbz -> baz.tbz
+
+        with rpm_macros(self.macros, nevra(self.spec.sourceHeader)):
+            return [(os.path.join(rpm.expandMacro("%_sourcedir"),
+                                  os.path.basename(url)), url)
+                    for (url, _, _) in reversed(self.spec.sources)]
 
     def source(self, target):
         """
@@ -221,10 +217,6 @@ class Spec(object):
                    if sourcetype == 2]
         patches.append(-1)
         return max(patches)
-
-    def sources(self):
-        """List all sources defined in the spec file"""
-        return zip(self.source_paths(), self.source_urls())
 
     def local_sources(self):
         """List all local sources defined in the spec file"""
