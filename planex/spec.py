@@ -226,11 +226,6 @@ class Spec(object):
         """List all sources defined in the spec file"""
         return zip(self.source_paths(), self.source_urls())
 
-    def remote_sources(self):
-        """List all sources with remote URLs defined in the spec file"""
-        return [(path, url) for (path, url) in self.all_sources()
-                if url.netloc != '']
-
     def local_sources(self):
         """List all local sources defined in the spec file"""
         patch_urls = [urlparse.urlparse(url) for (url, _, sourcetype)
