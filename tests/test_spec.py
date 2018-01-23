@@ -80,6 +80,25 @@ class RpmTests(unittest.TestCase):
              "./SOURCES/ocaml-cohttp/cohttp0.patch",
              "./SOURCES/ocaml-cohttp/cohttp1.patch"])
 
+    def test_source(self):
+        """URLs for individual sources are correct"""
+        self.assertEqual(
+            self.spec.source("path/to/ocaml-cohttp-0.9.8.tar.gz"),
+            ("./SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz",
+             "https://github.com/mirage/ocaml-cohttp/archive/"
+             "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz"))
+        self.assertEqual(
+            self.spec.source("ocaml-cohttp-init"),
+            ("./SOURCES/ocaml-cohttp/ocaml-cohttp-init", "ocaml-cohttp-init"))
+        self.assertEqual(
+            self.spec.source("somewhere/cohttp0.patch"),
+            ("./SOURCES/ocaml-cohttp/cohttp0.patch", "cohttp0.patch"))
+
+    def test_source_nonexistent(self):
+        """Nonexistent sources are handled correctly"""
+        with self.assertRaises(KeyError):
+            self.spec.source("nonexistent")
+
     def test_requires(self):
         """Package runtime requirements are correct"""
         self.assertEqual(

@@ -138,18 +138,6 @@ def check_supported_url(url):
                  (sys.argv[0], url.scheme))
 
 
-def url_for_source(spec, source):
-    """
-    Find the URL from which source should be downloaded
-    """
-    source_basename = os.path.basename(source)
-    for path, url in spec.all_sources():
-        if os.path.basename(path) == source_basename:
-            return path, url
-
-    raise KeyError(source_basename)
-
-
 def parse_args_or_exit(argv=None):
     """
     Parse command line options
@@ -184,11 +172,12 @@ def fetch_sources(args):
                             defines=args.define)
 
     try:
-        sources = [url_for_source(spec, source) for source in args.sources]
+        sources = [spec.source(source) for source in args.sources]
     except KeyError as exn:
         sys.exit("%s: No source corresponding to %s" % (sys.argv[0], exn))
 
     for path, url in sources:
+        url = urlparse.urlparse(url)
         check_supported_url(url)
         if url.scheme in SUPPORTED_URL_SCHEMES:
             if url.scheme != "file" and args.mirror:
