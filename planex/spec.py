@@ -211,10 +211,9 @@ class Spec(object):
         patches.append(-1)
         return max(patches)
 
-    def all_sources(self):
+    def sources(self):
         """List all sources defined in the spec file"""
-        urls = [urlparse.urlparse(url) for url in self.source_urls()]
-        return zip(self.source_paths(), urls)
+        return zip(self.source_paths(), self.source_urls())
 
     def remote_sources(self):
         """List all sources with remote URLs defined in the spec file"""
