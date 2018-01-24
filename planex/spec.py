@@ -18,18 +18,6 @@ import rpm
 # around methods such as 'provides'
 
 
-# Directories where rpmbuild/mock expects to find inputs
-# and writes outputs
-def rpmdir():
-    """Return the expanded value of the RPM %_rpmdir macro"""
-    return rpm.expandMacro('%_rpmdir')
-
-
-def srpmdir():
-    """Return the expanded value of the RPM %_srcrpmdir macro"""
-    return rpm.expandMacro('%_srcrpmdir')
-
-
 def flatten(lst):
     """Flatten a list of lists"""
     return sum(lst, [])
@@ -226,9 +214,7 @@ class Spec(object):
             # format. Unfortunately expanding that macro gives us a leading
             # 'src' that we don't want, so we strip that off
             srpmname = os.path.basename(rpm.expandMacro(self.srpmfilenamepat))
-            result = os.path.join(srpmdir(), srpmname)
-
-        return result
+            return rpm.expandMacro(os.path.join('%_srcrpmdir', srpmname))
 
     def binary_package_paths(self):
         """Return a list of binary packages built by this spec"""
@@ -245,9 +231,7 @@ class Spec(object):
 
             with rpm_macros(append_macros(self.macros, hardcoded_macros)):
                 rpmname = rpm.expandMacro(self.rpmfilenamepat)
-                result = os.path.join(rpmdir(), rpmname)
-
-            return result
+                return rpm.expandMacro(os.path.join('%_rpmdir', rpmname))
 
         return [rpm_name_from_header(pkg.header) for pkg in self.spec.packages]
 
