@@ -32,6 +32,21 @@ def rpm_macros(*macros):
             rpm.delMacro(key)
 
 
+def nevra(package):
+    """
+    Returns a dictionary of macro definitions for the Name, Epoch, Version,
+    Release and Architecture of package.   This dictionary can be passed to
+    rpm_macros() to set up an appropriate environment for macro expansion.
+    """
+    return {
+        'name':    package['name'],
+        'epoch':   str(package['epoch'] or 1),
+        'version': package['version'],
+        'release': package['release'],
+        'arch':    package['arch']
+    }
+
+
 class SpecNameMismatch(Exception):
     """Exception raised when a spec file's name does not match the name
        of the package defined within it"""
@@ -128,12 +143,7 @@ class Spec(object):
 
     def expand_macro(self, macro):
         """Return the value of macro, expanded in the package's context"""
-        hdr = self.spec.sourceHeader
-        hardcoded_macros = {
-            'name': hdr['name'],
-        }
-
-        with rpm_macros(self.macros, hardcoded_macros):
+        with rpm_macros(self.macros, nevra(self.spec.sourceHeader)):
             return rpm.expandMacro(macro)
 
     def source_paths(self):
@@ -146,12 +156,7 @@ class Spec(object):
         #    http://www.example.com/foo/bar.tar.gz -> bar.tar.gz
         #    http://www.example.com/foo/bar.cgi#/baz.tbz -> baz.tbz
 
-        hdr = self.spec.sourceHeader
-        hardcoded_macros = {
-            'name': hdr['name'],
-        }
-
-        with rpm_macros(self.macros, hardcoded_macros):
+        with rpm_macros(self.macros, nevra(self.spec.sourceHeader)):
             return [os.path.join(rpm.expandMacro("%_sourcedir"),
                                  os.path.basename(url))
                     for url in self.source_urls()]
@@ -187,18 +192,13 @@ class Spec(object):
 
     def binary_package_paths(self):
         """Return a list of binary packages built by this spec"""
+
         def rpm_name_from_header(hdr):
-            """Return the name of the binary package file which
-               will be built from hdr"""
-
-            hardcoded_macros = {
-                'name': hdr['name'],
-                'version': hdr['version'],
-                'release': hdr['release'],
-                'arch': hdr['arch']
-            }
-
-            with rpm_macros(self.macros, hardcoded_macros):
+            """
+            Return the name of the binary package file which
+            will be built from hdr
+            """
+            with rpm_macros(self.macros, nevra(hdr)):
                 rpmname = hdr.sprintf(rpm.expandMacro("%{_build_name_fmt}"))
                 return rpm.expandMacro(os.path.join('%_rpmdir', rpmname))
 
