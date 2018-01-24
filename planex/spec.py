@@ -18,11 +18,6 @@ import rpm
 # around methods such as 'provides'
 
 
-def flatten(lst):
-    """Flatten a list of lists"""
-    return sum(lst, [])
-
-
 @contextlib.contextmanager
 def rpm_macros(macros):
     """Context manager to add and remove all macros in the dictionary"""
@@ -129,8 +124,8 @@ class Spec(object):
 
     def provides(self):
         """Return a list of package names provided by this spec"""
-        provides = flatten([pkg.header['provides'] + [pkg.header['name']]
-                            for pkg in self.spec.packages])
+        provides = sum([pkg.header['provides'] + [pkg.header['name']]
+                        for pkg in self.spec.packages], [])
 
         # RPM 4.6 adds architecture constraints to dependencies.  Drop them.
         provides = [re.sub(r'\(x86-64\)$', '', pkg) for pkg in provides]
