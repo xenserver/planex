@@ -3,7 +3,6 @@ planex-build-mock: Wrapper around mock
 """
 from __future__ import print_function
 
-from collections import OrderedDict
 import os
 import pty
 import shutil
@@ -181,7 +180,7 @@ def main(argv=None):
                 config_out_path,
                 tmpdir,
                 args.loopback_config_extra)
-            with rpm_macros(OrderedDict(args.define)):
+            with rpm_macros(dict(args.define)):
                 rpmdir = os.path.abspath(rpm.expandMacro("%_rpmdir"))
                 createrepo(rpmdir, tmpdir, args.quiet)
             mock(args, config, "--rebuild", *args.srpms)

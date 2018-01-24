@@ -3,8 +3,6 @@
    the rpm library does not currently provide."""
 from __future__ import print_function
 
-from collections import OrderedDict
-
 import contextlib
 import os
 import re
@@ -19,31 +17,19 @@ import rpm
 
 
 @contextlib.contextmanager
-def rpm_macros(macros):
-    """Context manager to add and remove all macros in the dictionary"""
-    if macros is None:
-        macros = OrderedDict()
-
-    for key, value in macros.items():
-        rpm.addMacro(key, value)
+def rpm_macros(*macros):
+    """
+    Context manager to add and remove stacked RPM macro 'environments'.
+    Macro definitions which occur later in 'macros' override definitions
+    made earlier.
+    """
+    for macro in macros:
+        for key, value in macro.items():
+            rpm.addMacro(key, value)
     yield
-    for key, _ in reversed(macros.items()):
-        rpm.delMacro(key)
-
-
-def append_macros(macros1, macros2):
-    """Return an ordered dict, making sure that the macros of macros2 apppear
-    after the macros in macros1, preserving their order."""
-    new_dict = OrderedDict((k, v) for k, v in macros1.items())
-
-    for key, value in macros2.items():
-        # To append to an ordered dict we must first delete the duplicate key
-        # if present
-        if key in new_dict:
-            del new_dict[key]
-        new_dict[key] = value
-
-    return new_dict
+    for macro in reversed(macros):
+        for key in macro.keys():
+            rpm.delMacro(key)
 
 
 class SpecNameMismatch(Exception):
@@ -87,7 +73,7 @@ class Spec(object):
 
     def __init__(self, path, check_package_name=True, defines=None):
 
-        self.macros = OrderedDict(defines) if defines else OrderedDict()
+        self.macros = dict(defines) if defines else {}
 
         # _topdir defaults to $HOME/rpmbuild
         # If present, it needs to be applied once at the beginning
@@ -146,11 +132,11 @@ class Spec(object):
     def expand_macro(self, macro):
         """Return the value of macro, expanded in the package's context"""
         hdr = self.spec.sourceHeader
-        hardcoded_macros = OrderedDict([
-            ('name', hdr['name']),
-        ])
+        hardcoded_macros = {
+            'name': hdr['name'],
+        }
 
-        with rpm_macros(append_macros(self.macros, hardcoded_macros)):
+        with rpm_macros(self.macros, hardcoded_macros):
             return rpm.expandMacro(macro)
 
     def source_paths(self):
@@ -164,12 +150,11 @@ class Spec(object):
         #    http://www.example.com/foo/bar.cgi#/baz.tbz -> baz.tbz
 
         hdr = self.spec.sourceHeader
-        hardcoded_macros = OrderedDict([
-            ('name', hdr['name']),
-        ])
+        hardcoded_macros = {
+            'name': hdr['name'],
+        }
 
-        # apply custom macros and then append the harcoded overrides
-        with rpm_macros(append_macros(self.macros, hardcoded_macros)):
+        with rpm_macros(self.macros, hardcoded_macros):
             return [os.path.join(rpm.expandMacro("%_sourcedir"),
                                  os.path.basename(url))
                     for url in self.source_urls()]
@@ -194,14 +179,14 @@ class Spec(object):
         """Return the path of the source package which building this
            spec will produce"""
         hdr = self.spec.sourceHeader
-        hardcoded_macros = OrderedDict([
-            ('NAME', hdr['name']),
-            ('VERSION', hdr['version']),
-            ('RELEASE', hdr['release']),
-            ('ARCH', 'src')
-        ])
+        hardcoded_macros = {
+            'NAME': hdr['name'],
+            'VERSION': hdr['version'],
+            'RELEASE': hdr['release'],
+            'ARCH': 'src'
+        }
 
-        with rpm_macros(append_macros(self.macros, hardcoded_macros)):
+        with rpm_macros(self.macros, hardcoded_macros):
             # There doesn't seem to be a macro for the name of the source
             # rpm, but the name appears to be the same as the rpm name
             # format. Unfortunately expanding that macro gives us a leading
@@ -215,14 +200,14 @@ class Spec(object):
             """Return the name of the binary package file which
                will be built from hdr"""
 
-            hardcoded_macros = OrderedDict([
-                ('NAME', hdr['name']),
-                ('VERSION', hdr['version']),
-                ('RELEASE', hdr['release']),
-                ('ARCH', hdr['arch'])
-            ])
+            hardcoded_macros = {
+                'NAME': hdr['name'],
+                'VERSION': hdr['version'],
+                'RELEASE': hdr['release'],
+                'ARCH': hdr['arch']
+            }
 
-            with rpm_macros(append_macros(self.macros, hardcoded_macros)):
+            with rpm_macros(self.macros, hardcoded_macros):
                 rpmname = rpm.expandMacro(self.rpmfilenamepat)
                 return rpm.expandMacro(os.path.join('%_rpmdir', rpmname))
 
