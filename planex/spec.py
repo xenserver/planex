@@ -170,11 +170,9 @@ class Spec(object):
 
         # apply custom macros and then append the harcoded overrides
         with rpm_macros(append_macros(self.macros, hardcoded_macros)):
-            paths = [os.path.join(rpm.expandMacro("%_sourcedir"),
-                                  os.path.basename(url))
-                     for url in self.source_urls()]
-
-        return paths
+            return [os.path.join(rpm.expandMacro("%_sourcedir"),
+                                 os.path.basename(url))
+                    for url in self.source_urls()]
 
     # RPM runtime dependencies.   These are not required to build this
     # package, but will need to be installed when building any other
