@@ -101,8 +101,6 @@ class Spec(object):
                         "spec file name '%s' does not match package name '%s'"
                         % (path, self.name()))
 
-            self.rpmfilenamepat = rpm.expandMacro('%_build_name_fmt')
-
     def specpath(self):
         """Return the path to the spec file"""
         return self.path
@@ -194,14 +192,14 @@ class Spec(object):
                will be built from hdr"""
 
             hardcoded_macros = {
-                'NAME': hdr['name'],
-                'VERSION': hdr['version'],
-                'RELEASE': hdr['release'],
-                'ARCH': hdr['arch']
+                'name': hdr['name'],
+                'version': hdr['version'],
+                'release': hdr['release'],
+                'arch': hdr['arch']
             }
 
             with rpm_macros(self.macros, hardcoded_macros):
-                rpmname = rpm.expandMacro(self.rpmfilenamepat)
+                rpmname = hdr.sprintf(rpm.expandMacro("%{_build_name_fmt}"))
                 return rpm.expandMacro(os.path.join('%_rpmdir', rpmname))
 
         return [rpm_name_from_header(pkg.header) for pkg in self.spec.packages]
