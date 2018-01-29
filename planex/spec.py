@@ -102,7 +102,6 @@ class Spec(object):
                         % (path, self.name()))
 
             self.rpmfilenamepat = rpm.expandMacro('%_build_name_fmt')
-            self.srpmfilenamepat = rpm.expandMacro('%_build_name_fmt')
 
     def specpath(self):
         """Return the path to the spec file"""
@@ -176,23 +175,17 @@ class Spec(object):
         return set(self.spec.sourceHeader['requires'])
 
     def source_package_path(self):
-        """Return the path of the source package which building this
-           spec will produce"""
-        hdr = self.spec.sourceHeader
-        hardcoded_macros = {
-            'NAME': hdr['name'],
-            'VERSION': hdr['version'],
-            'RELEASE': hdr['release'],
-            'ARCH': 'src'
-        }
-
-        with rpm_macros(self.macros, hardcoded_macros):
-            # There doesn't seem to be a macro for the name of the source
-            # rpm, but the name appears to be the same as the rpm name
-            # format. Unfortunately expanding that macro gives us a leading
-            # 'src' that we don't want, so we strip that off
-            srpmname = os.path.basename(rpm.expandMacro(self.srpmfilenamepat))
-            return rpm.expandMacro(os.path.join('%_srcrpmdir', srpmname))
+        """
+        Return the path of the source package which building this spec
+        will produce
+        """
+        # There doesn't seem to be a macro for the name of the source rpm
+        # but we can construct one using the 'NVR' RPM tag which returns the
+        # package's name-version-release string.  Naming is not critically
+        # important as these source RPMs are only used internally - mock
+        # will write a new source RPM along with the binary RPMS.
+        srpmname = self.spec.sourceHeader['nvr'] + ".src.rpm"
+        return rpm.expandMacro(os.path.join('%_srcrpmdir', srpmname))
 
     def binary_package_paths(self):
         """Return a list of binary packages built by this spec"""
