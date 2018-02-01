@@ -12,9 +12,6 @@ import tempfile
 
 import rpm
 
-# Could have a decorator / context manager to set and unset all the RPM macros
-# around methods such as 'provides'
-
 
 @contextlib.contextmanager
 def rpm_macros(*macros):
