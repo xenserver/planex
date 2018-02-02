@@ -75,7 +75,7 @@ class Link(object):
     def patch_sources(self):
         """Return the ordered set of patch source definitions"""
         if self.schema_version < 2:
-            raise UnsupportedProperty('patch_sourcess requries at least'
+            raise UnsupportedProperty('patch_sources requries at least'
                                       'schema version 2')
 
         patch_matcher = re.compile(r'patch\d+', re.IGNORECASE)
@@ -87,7 +87,7 @@ class Link(object):
     def patchqueue_sources(self):
         """Return the ordered set of patchqueue definitions"""
         if self.schema_version < 2:
-            raise UnsupportedProperty('patch_sourcess requries at least'
+            raise UnsupportedProperty('patchqueue_sources requries at least'
                                       'schema version 2')
 
         patch_matcher = re.compile(r'patchqueue\d+', re.IGNORECASE)
