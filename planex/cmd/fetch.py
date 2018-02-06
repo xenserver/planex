@@ -87,16 +87,6 @@ def best_effort_file_verify(path):
                      (sys.argv[0], path, mime_type))
 
 
-def check_supported_url(url):
-    """
-    Checks that the URL we've been asked to fetch is a supported protocol.
-    This function causes the program to exit with an error if not.
-    """
-    if url.scheme and url.scheme not in SUPPORTED_URL_SCHEMES:
-        sys.exit("%s: Unimplemented protocol: %s" %
-                 (sys.argv[0], url.scheme))
-
-
 def parse_args_or_exit(argv=None):
     """
     Parse command line options
@@ -176,7 +166,6 @@ def fetch_source(args):
         sys.exit("%s: No source corresponding to %s" % (sys.argv[0], exn))
 
     url = urlparse.urlparse(url)
-    check_supported_url(url)
     if url.scheme in SUPPORTED_URL_SCHEMES:
         fetch_url(url, path, args.retries + 1)
 
