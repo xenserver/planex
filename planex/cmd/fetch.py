@@ -68,19 +68,6 @@ def curl_get(url_string, out_file):
         curl.close()
 
 
-def make_dir(path):
-    """
-    Ensure that path exists
-    """
-    try:
-        os.makedirs(path)
-    except OSError:
-        # The path may exist. Check that is exists and is actually a dir and
-        # not some other type.
-        if not os.path.isdir(path):
-            raise
-
-
 def best_effort_file_verify(path):
     """
     Given a path, check if the file at that path has a sensible format.
@@ -111,7 +98,6 @@ def fetch_http(url, filename, retries):
             url_string = urlparse.urlunparse(url)
             logging.debug("Fetching %s to %s", url_string, filename)
 
-            make_dir(os.path.dirname(filename))
             tmp_filename = filename + "~"
             with open(tmp_filename, "wb") as tmp_file:
                 curl_get(url_string, tmp_file)
