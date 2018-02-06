@@ -87,33 +87,6 @@ def best_effort_file_verify(path):
                      (sys.argv[0], path, mime_type))
 
 
-def fetch_http(url, filename, retries):
-    """
-    Download the file at url and store it as filename
-    """
-
-    while True:
-        retries -= 1
-        try:
-            url_string = urlparse.urlunparse(url)
-            logging.debug("Fetching %s to %s", url_string, filename)
-
-            tmp_filename = filename + "~"
-            with open(tmp_filename, "wb") as tmp_file:
-                curl_get(url_string, tmp_file)
-                best_effort_file_verify(tmp_filename)
-                shutil.move(tmp_filename, filename)
-                # Write an origin file for tracking.
-                with open('{0}.origin'.format(filename), 'w') as origin_file:
-                    origin_file.write('{0}\n'.format(url_string))
-                return
-
-        except pycurl.error as exn:
-            logging.debug(exn.args[1])
-            if not retries > 0:
-                raise
-
-
 def check_supported_url(url):
     """
     Checks that the URL we've been asked to fetch is a supported protocol.
@@ -147,6 +120,49 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
+def fetch_http(url, filename, retries):
+    """
+    Download the file at url and store it as filename
+    """
+
+    while True:
+        retries -= 1
+        try:
+            url_string = urlparse.urlunparse(url)
+            logging.debug("Fetching %s to %s", url_string, filename)
+
+            tmp_filename = filename + "~"
+            with open(tmp_filename, "wb") as tmp_file:
+                curl_get(url_string, tmp_file)
+                best_effort_file_verify(tmp_filename)
+                shutil.move(tmp_filename, filename)
+                # Write an origin file for tracking.
+                with open('{0}.origin'.format(filename), 'w') as origin_file:
+                    origin_file.write('{0}\n'.format(url_string))
+                return
+
+        except pycurl.error as exn:
+            logging.debug(exn.args[1])
+            if not retries > 0:
+                raise
+
+
+def fetch_url(url, source, retries):
+    """Fetch from specified URL"""
+    try:
+        fetch_http(url, source, retries)
+
+    except pycurl.error as exn:
+        # Curl download failed
+        sys.exit("%s: Failed to fetch %s: %s" %
+                 (sys.argv[0], urlparse.urlunparse(url), exn.args[1]))
+
+    except IOError as exn:
+        # IO error saving source file
+        sys.exit("%s: %s: %s" %
+                 (sys.argv[0], exn.strerror, exn.filename))
+
+
 def fetch_source(args):
     """
     Download requested source using URL from spec file.
@@ -170,18 +186,7 @@ def fetch_source(args):
             mpath = os.path.join(args.mirror, os.path.basename(url.path))
             url = urlparse.urlparse(mpath)
 
-        try:
-            fetch_http(url, path, args.retries + 1)
-
-        except pycurl.error as exn:
-            # Curl download failed
-            sys.exit("%s: Failed to fetch %s: %s" %
-                     (sys.argv[0], urlparse.urlunparse(url), exn.args[1]))
-
-        except IOError as exn:
-            # IO error saving source file
-            sys.exit("%s: %s: %s" %
-                     (sys.argv[0], exn.strerror, exn.filename))
+        fetch_url(url, path, args.retries + 1)
 
     elif url.scheme == '' and os.path.dirname(url.path) == '':
         if not os.path.exists(path):
@@ -196,22 +201,6 @@ def fetch_source(args):
     else:
         sys.exit("%s: Unsupported url scheme %s" %
                  (sys.argv[0], url.scheme))
-
-
-def fetch_url(url, sources, retries):
-    """Fetch from specified URL"""
-    try:
-        fetch_http(url, sources, retries)
-
-    except pycurl.error as exn:
-        # Curl download failed
-        sys.exit("%s: Failed to fetch %s: %s" %
-                 (sys.argv[0], urlparse.urlunparse(url), exn.args[1]))
-
-    except IOError as exn:
-        # IO error saving source file
-        sys.exit("%s: %s: %s" %
-                 (sys.argv[0], exn.strerror, exn.filename))
 
 
 def fetch_via_link(args):
