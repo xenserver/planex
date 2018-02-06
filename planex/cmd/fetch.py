@@ -114,8 +114,6 @@ def parse_args_or_exit(argv=None):
                         action="store_false", default=True,
                         help="Don't check that package name matches spec "
                         "file name")
-    parser.add_argument('--mirror',
-                        help="Set the URL to a local mirror for downloads")
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
@@ -180,12 +178,6 @@ def fetch_source(args):
     url = urlparse.urlparse(url)
     check_supported_url(url)
     if url.scheme in SUPPORTED_URL_SCHEMES:
-        if url.scheme != "file" and args.mirror:
-            if not urlparse.urlparse(args.mirror).scheme:
-                args.mirror = "file://" + args.mirror
-            mpath = os.path.join(args.mirror, os.path.basename(url.path))
-            url = urlparse.urlparse(mpath)
-
         fetch_url(url, path, args.retries + 1)
 
     elif url.scheme == '' and os.path.dirname(url.path) == '':
