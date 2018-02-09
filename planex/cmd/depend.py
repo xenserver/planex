@@ -13,7 +13,7 @@ import argcomplete
 from planex.cmd.args import common_base_parser, rpm_define_parser
 from planex.util import setup_sigint_handler, dedupe
 from planex.cmd import manifest
-from planex.spec import Spec, SpecNameMismatch
+from planex.spec import load, SpecNameMismatch
 from planex.link import Link
 
 
@@ -184,17 +184,18 @@ def main(argv=None):
     args = parse_args_or_exit(argv)
     allspecs = dedupe(args.specs, dedupe_key)
 
+    links = {pkgname(path): Link(path)
+             for path in allspecs
+             if path.endswith(".lnk") or path.endswith(".pin")}
+
     try:
-        specs = {pkgname(path): Spec(path, defines=args.define)
+        specs = {pkgname(path): load(path, link=links.get(pkgname(path)),
+                                     defines=args.define)
                  for path in allspecs
                  if path.endswith(".spec")}
     except SpecNameMismatch as exn:
         sys.stderr.write("error: %s\n" % exn.message)
         sys.exit(1)
-
-    links = {pkgname(path): Link(path)
-             for path in allspecs
-             if path.endswith(".lnk") or path.endswith(".pin")}
 
     provides_to_rpm = package_to_rpm_map(specs.values())
 

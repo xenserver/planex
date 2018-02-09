@@ -89,12 +89,129 @@ def expandmacros(func):
     return func_wrapper
 
 
+class File(object):
+    """A file which will be packed into the SRPM"""
+
+    def __init__(self, spec, name, url, defined_by):
+        self._spec = spec
+        self._name = name
+        self._url = url
+        self._defined_by = defined_by
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    @property
+    def spec(self):
+        """Return the spec which contains this resource"""
+        return self._spec
+
+    @property
+    def name(self):
+        """Return the name of this resource"""
+        return self._name
+
+    @property
+    @expandmacros
+    def url(self):
+        """Return the URL of this resource"""
+        return self._url
+
+    @property
+    def defined_by(self):
+        """Return the name of file which defined this resource"""
+        return self._defined_by
+
+    @property
+    @expandmacros
+    def path(self):
+        """ Return the local path to this resource"""
+
+        # RPM only looks at the basename part of the Source URL - the
+        # part after the rightmost /.   We must match this behaviour.
+        #
+        # Examples:
+        #    http://www.example.com/foo/bar.tar.gz -> bar.tar.gz
+        #    http://www.example.com/foo/bar.cgi#/baz.tbz -> baz.tbz
+
+        return os.path.join("%_sourcedir", os.path.basename(self.url))
+
+    @property
+    def is_remote(self):
+        """Return True if the resource is remote"""
+        return urlparse.urlparse(self.url).netloc != ''
+
+
+class Archive(File):
+    """A tarball archive which will be unpacked into the SRPM"""
+
+    def __init__(self, spec, name, url, defined_by, prefix):
+        super(Archive, self).__init__(spec, name, url, defined_by)
+        self._prefix = prefix
+
+    @property
+    @expandmacros
+    def prefix(self):
+        """Return the directory prefix of files in this resource"""
+        return os.path.normpath(self._prefix) + "/"
+
+    @property
+    @expandmacros
+    def path(self):
+        """ Return the local path to this resource"""
+
+        # RPM only looks at the basename part of the Source URL - the
+        # part after the rightmost /.   We must match this behaviour.
+        #
+        # Examples:
+        #    http://www.example.com/foo/bar.tar.gz -> bar.tar.gz
+        #    http://www.example.com/foo/bar.cgi#/baz.tbz -> baz.tbz
+
+        return os.path.join("%_sourcedir", "{}.tar".format(self.name))
+
+
+class Patchqueue(Archive):
+    """A patchqueue archive which will be unpacked into the SRPM"""
+    pass
+
+
+def load(specpath, link=None, check_package_name=True, defines=None):
+    """
+    Load the spec file at specpath and apply link if provided.
+    """
+
+    spec = Spec(specpath, check_package_name=check_package_name,
+                defines=defines)
+    if link:
+        if link.schema_version == 1:
+            if link.sources:
+                spec.add_archive("patches", link.url, link.path, link.sources)
+            if link.patches:
+                spec.add_archive("patches", link.url, link.path, link.patches)
+            if link.patchqueue:
+                spec.add_patchqueue("patches", link.url, link.path,
+                                    link.patchqueue)
+        elif link.schema_version >= 2:
+            for name, value in link.patch_sources.items():
+                spec.add_archive(name, value["URL"], link.path,
+                                 value["patches"])
+            for name, value in link.patchqueue_sources.items():
+                spec.add_patchqueue(name, value["URL"], link.path,
+                                    value["patchqueue"])
+
+    return spec
+
+
 class Spec(object):
     """Represents an RPM spec file"""
 
     def __init__(self, path, check_package_name=True, defines=None):
 
         self.macros = dict(defines) if defines else {}
+        self._sources = {}
+        self._patches = {}
+        self._archives = {}
+        self._patchqueues = {}
 
         # _topdir defaults to $HOME/rpmbuild
         # If present, it needs to be applied once at the beginning
@@ -121,6 +238,12 @@ class Spec(object):
                     raise SpecNameMismatch(
                         "spec file name '%s' does not match package name '%s'"
                         % (path, self.name()))
+
+        for source in reversed(self.spec.sources):
+            if source[2] == 1:
+                self.add_source("source%d" % source[1], source[0], path)
+            elif source[2] == 2:
+                self.add_patch("patch%d" % source[1], source[0], path)
 
     def specpath(self):
         """Return the path to the spec file"""
@@ -176,6 +299,46 @@ class Spec(object):
         # will write a new source RPM along with the binary RPMS.
         srpmname = self.spec.sourceHeader['nvr'] + ".src.rpm"
         return rpm.expandMacro(os.path.join('%_srcrpmdir', srpmname))
+
+    def add_source(self, name, url, defined_by):
+        """Add a new source file"""
+        self._sources[name] = File(self, name, url, defined_by)
+
+    def add_patch(self, name, url, defined_by):
+        """Add a new patch file"""
+        self._patches[name] = File(self, name, url, defined_by)
+
+    def add_archive(self, name, url, defined_by, prefix):
+        """Add a new tarball archive"""
+        self._archives[name] = Archive(self, name, url, defined_by, prefix)
+
+    def add_patchqueue(self, name, url, defined_by, prefix):
+        """Add a new patchqueue"""
+        self._patchqueues[name] = Patchqueue(self, name, url, defined_by,
+                                             prefix)
+
+    def resources(self):
+        """List all resources to be packed into the source package"""
+
+        return ([self._sources[key] for key
+                 in sorted(self._sources.keys())] +
+                [self._patches[key] for key
+                 in sorted(self._patches.keys())] +
+                [self._archives[key] for key
+                 in sorted(self._archives.keys())] +
+                [self._patchqueues[key] for key
+                 in sorted(self._patchqueues.keys())])
+
+    def resource(self, target):
+        """
+        Find the URL from which source should be downloaded
+        """
+        target_basename = os.path.basename(target)
+        for resource in self.resources():
+            if os.path.basename(resource.path) == target_basename:
+                return resource
+
+        raise KeyError(target_basename)
 
     def sources(self):
         """List all sources defined in the spec file"""
