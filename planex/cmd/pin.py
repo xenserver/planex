@@ -26,9 +26,8 @@ def spec_and_lnk(repo_path, package_name):
 
     specname = "%s.spec" % partial_file_path
     if not os.path.isfile(specname):
-        print("Spec file for %s not present in %s/SPECS"
-              % (package_name, repo_path))
-        sys.exit(1)
+        sys.exit(
+            "Spec file for {} not present in {}/SPECS".format(package_name, repo_path))
 
     spec = Spec(specname)
 
@@ -48,8 +47,7 @@ def repository_of(spec_or_link):
     if spec_or_link is None:
         return None
     else:
-        print("repository_of: got unexpected object {}")
-        sys.exit(1)
+        sys.exit("repository_of: got unexpected object {}".format(spec_or_link))
 
 
 # pylint: disable=too-many-branches
