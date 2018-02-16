@@ -39,6 +39,9 @@ def build_srpm_from_spec(spec, lnk=None):
     """
     srpmpath = spec.source_package_path()
     print('%s: %s' % (srpmpath, spec.specpath()))
+    if lnk:
+        print('%s: %s' % (srpmpath, lnk.linkpath))
+
     for (path, source) in spec.sources():
         url = urlparse.urlparse(source)
         if url.scheme in ["http", "https", "file", "ftp"]:
@@ -196,7 +199,6 @@ def main(argv=None):
         if spec.name() in links:
             link = links[spec.name()]
             srpmpath = spec.source_package_path()
-            print('%s: %s' % (srpmpath, link.linkpath))
             if link.schema_version == 1:
                 patch_depends('patches', spec, srpmpath, link.linkpath)
             elif link.schema_version >= 2:
