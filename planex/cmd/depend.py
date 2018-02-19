@@ -55,32 +55,13 @@ def build_srpm_from_spec(spec, lnk=None):
             print('%s: %s' % (srpmpath, "/".join(path.split("/")[1:])))
 
 
-def download_rpm_sources(spec, lnk=None):
+def download_rpm_sources(spec):
     """
     Generate rules to download sources
     """
-    for (path, source) in spec.sources():
-        url = urlparse.urlparse(source)
-        if url.scheme in ["http", "https", "file", "ftp"]:
-            # Source can be fetched by fetch
-            print('%s: %s' % (path, spec.specpath()))
-
-    if lnk:
-        srpmpath = spec.source_package_path()
-        if lnk.schema_version == 1:
-            patch_depends('patches', spec, srpmpath, lnk.linkpath)
-        elif lnk.schema_version >= 2:
-            patches = lnk.patch_sources
-            for patch in patches:
-                patch_url = patches[patch]['URL']
-                print('# %s => %s' % (patch, patch_url))
-                patch_depends(patch, spec, srpmpath, lnk.linkpath)
-
-            patchqueues = lnk.patchqueue_sources
-            for patchqueue in patchqueues:
-                patch_url = patchqueues[patchqueue]['URL']
-                print('# %s => %s' % (patchqueue, patch_url))
-                patch_depends(patchqueue, spec, srpmpath, lnk.linkpath)
+    for resource in spec.resources():
+        if resource.is_remote:
+            print ("%s: %s" % (resource.path, resource.defined_by))
 
 
 def build_rpm_from_srpm(spec):
@@ -169,13 +150,6 @@ def dedupe_key(path):
     return os.path.basename(re.sub(r"\.pin$", ".lnk", path))
 
 
-def patch_depends(patch_name, spec, srpmpath, linkpath):
-    """Output the dependencies for a patchset"""
-    patchpath = spec.expand_macro('%_sourcedir/{}.tar'.format(patch_name))
-    print('%s: %s' % (srpmpath, patchpath))
-    print('%s: %s' % (patchpath, linkpath))
-
-
 def main(argv=None):
     """
     Entry point
@@ -212,7 +186,7 @@ def main(argv=None):
         # otherwise manifest.json will be the SRPM's first dependency
         # and will be passed to rpmbuild in the spec position.
         create_manifest_deps(spec)
-        download_rpm_sources(spec, links.get(spec.name()))
+        download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
         if args.buildrequires:
             buildrequires_for_rpm(spec, provides_to_rpm)
