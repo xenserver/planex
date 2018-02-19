@@ -266,11 +266,6 @@ class Spec(object):
         """Return the package version"""
         return self.spec.sourceHeader['version']
 
-    def expand_macro(self, macro):
-        """Return the value of macro, expanded in the package's context"""
-        with rpm_macros(self.macros, nevra(self.spec.sourceHeader)):
-            return rpm.expandMacro(macro)
-
     # RPM runtime dependencies.   These are not required to build this
     # package, but will need to be installed when building any other
     # package which BuildRequires this one.
