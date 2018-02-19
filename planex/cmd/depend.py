@@ -37,22 +37,27 @@ def build_srpm_from_spec(spec, lnk=None):
     """
     Generate rules to build SRPM from spec
     """
+    # All packages must depend on a spec file, and it must be the first
+    # dependency listed
     srpmpath = spec.source_package_path()
     print('%s: %s' % (srpmpath, spec.specpath()))
-    if lnk:
-        print('%s: %s' % (srpmpath, lnk.linkpath))
 
-    for (path, source) in spec.sources():
-        url = urlparse.urlparse(source)
-        if url.scheme in ["http", "https", "file", "ftp"]:
+    # The package may also depend on one or more link files
+    nonspec_deps = {r.defined_by for r in spec.resources()} - {spec.specpath()}
+    for dep in nonspec_deps:
+        print('%s: %s' % (srpmpath, dep))
+
+    for resource in spec.resources():
+        if resource.is_remote:
             # Source was downloaded to _build/SOURCES
-            print('%s: %s' % (srpmpath, path))
+            print('%s: %s' % (srpmpath, resource.path))
         elif lnk and (lnk.sources is not None or lnk.has_patches):
             # Use sources from patchqueue
             pass
         else:
             # Source is local
-            print('%s: %s' % (srpmpath, "/".join(path.split("/")[1:])))
+            print('%s: %s' % (srpmpath,
+                              "/".join(resource.path.split("/")[1:])))
 
 
 def download_rpm_sources(spec):
@@ -61,7 +66,7 @@ def download_rpm_sources(spec):
     """
     for resource in spec.resources():
         if resource.is_remote:
-            print ("%s: %s" % (resource.path, resource.defined_by))
+            print("%s: %s" % (resource.path, resource.defined_by))
 
 
 def build_rpm_from_srpm(spec):
