@@ -7,7 +7,6 @@ import argparse
 import os
 import re
 import sys
-import urlparse
 
 import argcomplete
 from planex.cmd.args import common_base_parser, rpm_define_parser
