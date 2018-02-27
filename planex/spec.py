@@ -157,6 +157,15 @@ class File(object):
         shutil.copyfile(self.path,
                         os.path.join(destdir, os.path.basename(name)))
 
+    @property
+    def force_rebuild(self):
+        """
+        True if this source should always be re-fetched.
+        Used for pinned sources which should be recreated
+        from their repositories for each build.
+        """
+        return False
+
 
 class GitArchive(File):
     """An archive produced from a local repository"""
@@ -177,6 +186,15 @@ class GitArchive(File):
     def commitish(self):
         """Return the commitish to fetch for this resource"""
         return self._commitish
+
+    @property
+    def force_rebuild(self):
+        """
+        True if this source should always be re-fetched.
+        Pinned sources which should be recreated from their repositories
+        for each build.
+        """
+        return True
 
 
 class Archive(File):
