@@ -32,7 +32,7 @@ def create_manifest_deps(spec):
                           manifest.get_path(spec.name())))
 
 
-def build_srpm_from_spec(spec, lnk=None):
+def build_srpm_from_spec(spec):
     """
     Generate rules to build SRPM from spec
     """
@@ -47,16 +47,9 @@ def build_srpm_from_spec(spec, lnk=None):
         print('%s: %s' % (srpmpath, dep))
 
     for resource in spec.resources():
-        if resource.is_remote:
+        if resource.is_fetchable:
             # Source was downloaded to _build/SOURCES
             print('%s: %s' % (srpmpath, resource.path))
-        elif lnk and (lnk.sources is not None or lnk.has_patches):
-            # Use sources from patchqueue
-            pass
-        else:
-            # Source is local
-            print('%s: %s' % (srpmpath,
-                              "/".join(resource.path.split("/")[1:])))
 
 
 def download_rpm_sources(spec):
@@ -64,10 +57,10 @@ def download_rpm_sources(spec):
     Generate rules to download sources
     """
     for resource in spec.resources():
-        if resource.is_remote:
+        if resource.is_fetchable:
             print("%s: %s" % (resource.path, resource.defined_by))
-        if resource.force_rebuild:
-            print("%s: %s" % (resource.path, "FORCE"))
+            if resource.force_rebuild:
+                print("%s: %s" % (resource.path, "FORCE"))
 
 
 def build_rpm_from_srpm(spec):
@@ -187,7 +180,7 @@ def main(argv=None):
     for spec in specs.itervalues():
         print('# %s' % (spec.name()))
 
-        build_srpm_from_spec(spec, links.get(spec.name()))
+        build_srpm_from_spec(spec)
         # Manifest dependencies must come after spec dependencies
         # otherwise manifest.json will be the SRPM's first dependency
         # and will be passed to rpmbuild in the spec position.

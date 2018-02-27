@@ -113,22 +113,6 @@ class RpmTests(unittest.TestCase):
               "ocaml-cohttp-devel-0.9.8-1.el6.{machine}.rpm"]]
         )
 
-    def test_local_sources(self):
-        """Paths to local source files are correct"""
-        self.assertItemsEqual(
-            self.spec.local_sources(),
-            ["ocaml-cohttp-init",
-             "ocaml-cohttp-service"]
-        )
-
-    def test_local_patches(self):
-        """Paths to local patch files are correct"""
-        self.assertItemsEqual(
-            self.spec.local_patches(),
-            ["cohttp0.patch",
-             "cohttp1.patch"]
-        )
-
     def test_resources(self):
         """Package source paths and URLs are correct"""
         self.assertEqual(

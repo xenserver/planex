@@ -35,7 +35,7 @@ SUPPORTED_EXT_TO_MIME = {
     '.patch': 'text/x-diff'
 }
 
-SUPPORTED_URL_SCHEMES = ["http", "https", "file", "ftp"]
+SUPPORTED_URL_SCHEMES = ["http", "https", "ftp"]
 
 
 def curl_get(url_string, out_file):
@@ -187,15 +187,8 @@ def fetch_source(args):
             repo.archive(output, treeish=str(resource.commitish),
                          prefix=str(resource.prefix))
 
-    elif url.scheme == '' and os.path.dirname(url.path) == '':
-        if not os.path.exists(url.path):
-            sys.exit("%s: Source not found: %s" % (sys.argv[0], url.path))
-
-        # Source file is pre-populated in the SOURCES directory (part of
-        # the repository - probably a patch or local include).   Update
-        # its timestamp to placate make, but don't try to download it.
-        logging.debug("Refreshing timestamp for local source %s", url.path)
-        os.utime(url.path, None)
+    elif url.scheme in ['', 'file'] and url.netloc == '':
+        shutil.copyfile(url.path, resource.path)
 
     else:
         sys.exit("%s: Unsupported url scheme %s" %
