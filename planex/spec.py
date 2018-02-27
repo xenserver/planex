@@ -14,6 +14,7 @@ import tempfile
 import rpm
 
 from planex.tarball import Tarball
+import planex.patchqueue
 
 
 @contextlib.contextmanager
@@ -198,7 +199,11 @@ class Archive(File):
 
 class Patchqueue(Archive):
     """A patchqueue archive which will be unpacked into the SRPM"""
-    pass
+
+    def series(self):
+        """Return the contents of the patchqueue's series file"""
+        with planex.patchqueue.Patchqueue(self.path, self.prefix) as queue:
+            return queue.series()
 
 
 def load(specpath, link=None, check_package_name=True, defines=None):
@@ -274,6 +279,19 @@ class Spec(object):
     def specpath(self):
         """Return the path to the spec file"""
         return self.path
+
+    def expand_patchqueues(self):
+        """
+        Insert the names of all patchqueue patches into the spec file
+        """
+        patchqueues = [self._patchqueues[key] for key
+                       in sorted(self._patchqueues.keys())]
+        if not patchqueues:
+            return self.spectext
+
+        series = sum([pq.series() for pq in patchqueues], [])
+        spec = planex.patchqueue.expand_patchqueue(self, series)
+        return "".join(list(spec))
 
     def provides(self):
         """Return a list of package names provided by this spec"""
@@ -388,9 +406,16 @@ class Spec(object):
         #    http://www.example.com/foo/bar.cgi#/baz.tbz -> baz.tbz
 
         with rpm_macros(self.macros, nevra(self.spec.sourceHeader)):
-            return [(os.path.join(rpm.expandMacro("%_sourcedir"),
-                                  os.path.basename(url)), url)
-                    for (url, _, _) in reversed(self.spec.sources)]
+            ret = [(os.path.join(rpm.expandMacro("%_sourcedir"),
+                                 os.path.basename(url)), url)
+                   for (url, _, _) in reversed(self.spec.sources)]
+
+        patchqueues = [self._patchqueues[key] for key
+                       in sorted(self._patchqueues.keys())]
+        patches = sum([pq.series() for pq in patchqueues], [])
+        patches = [(p, "") for p in patches]
+        ret += patches
+        return ret
 
     def source(self, target):
         """
