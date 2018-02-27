@@ -30,15 +30,7 @@ class BasicTests(unittest.TestCase):
             "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
             "tests/data/ocaml-cohttp.spec\n"
             "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
-            "_build/SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz\n"
-            "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
-            "SOURCES/ocaml-cohttp/ocaml-cohttp-init\n"
-            "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
-            "SOURCES/ocaml-cohttp/ocaml-cohttp-service\n"
-            "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
-            "SOURCES/ocaml-cohttp/cohttp0.patch\n"
-            "_build/SRPMS/ocaml-cohttp-0.9.8-1.el6.src.rpm: "
-            "SOURCES/ocaml-cohttp/cohttp1.patch\n")
+            "_build/SOURCES/ocaml-cohttp/ocaml-cohttp-0.9.8.tar.gz\n")
 
     def test_download_rpm_sources(self):
         """Dependency rules to download non-local sources"""

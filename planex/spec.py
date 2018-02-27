@@ -141,9 +141,15 @@ class File(object):
         return os.path.join("%_sourcedir", os.path.basename(self.url))
 
     @property
-    def is_remote(self):
-        """Return True if the resource is remote"""
-        return urlparse.urlparse(self.url).netloc != ''
+    def is_fetchable(self):
+        """
+        Return True if the resource can be fetched.
+        A resource can be fetched if its URL points to a remote
+        server or the URL is a plain path to a file which exists
+        on the local machine.
+        """
+        return (urlparse.urlparse(self.url).netloc not in ['', 'file'] or
+                os.path.isfile(self.url))
 
     def extract_source(self, name, destdir):
         """
@@ -268,6 +274,8 @@ def load(specpath, link=None, check_package_name=True, defines=None):
                     spec.add_gitarchive(name.lower(), value["URL"],
                                         link.path, value.get("prefix"),
                                         value.get("commitish"))
+                else:
+                    spec.add_source(name.lower(), value["URL"], link.path)
             for name, value in link.patch_sources.items():
                 spec.add_archive(name.lower(), value["URL"], link.path,
                                  value["patches"])
@@ -435,7 +443,7 @@ class Spec(object):
         requested source cannot be found.
         """
         resources = [resource for resource in self.resources()
-                     if resource.is_remote]
+                     if resource.is_fetchable]
         for resource in resources:
             try:
                 resource.extract_source(source, destdir)
@@ -498,15 +506,3 @@ class Spec(object):
                    if sourcetype == 2]
         patches.append(-1)
         return max(patches)
-
-    def local_sources(self):
-        """List all local sources defined in the spec file"""
-        patch_urls = [urlparse.urlparse(url) for (url, _, sourcetype)
-                      in self.spec.sources if sourcetype == 1]
-        return [url.path for url in patch_urls if url.netloc == '']
-
-    def local_patches(self):
-        """List all local patches defined in the spec file"""
-        patch_urls = [urlparse.urlparse(url) for (url, _, sourcetype)
-                      in self.spec.sources if sourcetype == 2]
-        return [url.path for url in patch_urls if url.netloc == '']
