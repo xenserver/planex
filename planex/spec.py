@@ -7,10 +7,13 @@ import contextlib
 import os
 import re
 import urlparse
+import shutil
 import sys
 import tempfile
 
 import rpm
+
+from planex.tarball import Tarball
 
 
 @contextlib.contextmanager
@@ -141,6 +144,18 @@ class File(object):
         """Return True if the resource is remote"""
         return urlparse.urlparse(self.url).netloc != ''
 
+    def extract_source(self, name, destdir):
+        """
+        Extract source 'name' to destdir.   Raises KeyError if the
+        requested source cannot be found.
+        """
+        # For a file, extract_source copies the whole file to the
+        # destination without unpacking it.
+        if os.path.basename(name) != os.path.basename(self.path):
+            raise KeyError(name)
+        shutil.copyfile(self.path,
+                        os.path.join(destdir, os.path.basename(name)))
+
 
 class Archive(File):
     """A tarball archive which will be unpacked into the SRPM"""
@@ -168,6 +183,17 @@ class Archive(File):
         #    http://www.example.com/foo/bar.cgi#/baz.tbz -> baz.tbz
 
         return os.path.join("%_sourcedir", "{}.tar".format(self.name))
+
+    def extract_source(self, name, destdir):
+        """
+        Extract source 'name' to destdir.   Raises KeyError if the
+        requested source cannot be found.
+        """
+        # For an archive, extract_source extracts the file from the archive
+        # and writes it to the destination.
+        with Tarball(self.path) as tarball:
+            target_path = os.path.normpath(os.path.join(self.prefix, name))
+            tarball.extract(target_path, destdir)
 
 
 class Patchqueue(Archive):
@@ -334,6 +360,22 @@ class Spec(object):
                 return resource
 
         raise KeyError(target_basename)
+
+    def extract_source(self, source, destdir):
+        """
+        Extract source 'name' to destdir.   Raises KeyError if the
+        requested source cannot be found.
+        """
+        resources = [resource for resource in self.resources()
+                     if resource.is_remote]
+        for resource in resources:
+            try:
+                resource.extract_source(source, destdir)
+                print("Extracted %s from %s" % (source, resource.name))
+                return
+            except KeyError:
+                pass
+        raise KeyError(source)
 
     def sources(self):
         """List all sources defined in the spec file"""
