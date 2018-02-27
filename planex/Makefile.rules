@@ -51,9 +51,6 @@ DEPEND_FLAGS ?= $(RPM_DEFINES) $(DEPEND_EXTRA_FLAGS)
 MANIFEST ?= planex-manifest
 MANIFEST_FLAGS ?=
 
-PATCHQUEUE ?= planex-patchqueue
-PATCHQUEUE_FLAGS ?= --repos $(REPOSDIR)
-
 ifdef QUIET
 AT = @
 endif
@@ -110,11 +107,6 @@ $(TOPDIR)/SOURCES/%:
 # Pinned patchqueues are always regenerated.
 .PHONY: FORCE
 FORCE:
-
-$(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin FORCE
-	@echo [PATCHQUEUE] $@
-	$(AT) mkdir -p $(@D)
-	$(AT)$(PATCHQUEUE) $(PATCHQUEUE_FLAGS) $< $@
 
 
 ############################################################################
