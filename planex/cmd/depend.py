@@ -66,6 +66,8 @@ def download_rpm_sources(spec):
     for resource in spec.resources():
         if resource.is_remote:
             print("%s: %s" % (resource.path, resource.defined_by))
+        if resource.force_rebuild:
+            print("%s: %s" % (resource.path, "FORCE"))
 
 
 def build_rpm_from_srpm(spec):
