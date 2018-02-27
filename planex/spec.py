@@ -80,6 +80,15 @@ def parse_spec_quietly(path):
             raise
 
 
+def expandmacros(func):
+    """Decorator to expand RPM macros in strings"""
+    def func_wrapper(self):
+        """Decorator wrapper"""
+        with rpm_macros(self.spec.macros, nevra(self.spec.spec.sourceHeader)):
+            return rpm.expandMacro(func(self))
+    return func_wrapper
+
+
 class Spec(object):
     """Represents an RPM spec file"""
 
