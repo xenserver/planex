@@ -156,56 +156,42 @@ def fetch_source(args):
     Download requested source using URL from spec file.
     """
 
-    spec = planex.spec.Spec(args.spec_or_link,
+    # XXX hack until we start passing spec and link together
+    # which needs dependency generator and makefile changes
+    if args.spec_or_link.endswith(".spec"):
+        specpath = args.spec_or_link
+        link = None
+    else:
+        specname = os.path.splitext(os.path.basename(args.spec_or_link))[0]
+        specpath = 'SPECS/{}.spec'.format(specname)
+        link = Link(args.spec_or_link)
+
+    spec = planex.spec.load(specpath, link=link,
                             check_package_name=args.check_package_names,
                             defines=args.define)
 
     try:
-        path, url = spec.source(args.source)
+        resource = spec.resource(args.source)
     except KeyError as exn:
         sys.exit("%s: No source corresponding to %s" % (sys.argv[0], exn))
 
-    url = urlparse.urlparse(url)
+    url = urlparse.urlparse(resource.url)
     if url.scheme in SUPPORTED_URL_SCHEMES:
-        fetch_url(url, path, args.retries + 1)
+        fetch_url(url, resource.path, args.retries + 1)
 
     elif url.scheme == '' and os.path.dirname(url.path) == '':
-        if not os.path.exists(path):
-            sys.exit("%s: Source not found: %s" % (sys.argv[0], path))
+        if not os.path.exists(url.path):
+            sys.exit("%s: Source not found: %s" % (sys.argv[0], url.path))
 
         # Source file is pre-populated in the SOURCES directory (part of
         # the repository - probably a patch or local include).   Update
         # its timestamp to placate make, but don't try to download it.
-        logging.debug("Refreshing timestamp for local source %s", path)
-        os.utime(path, None)
+        logging.debug("Refreshing timestamp for local source %s", url.path)
+        os.utime(url.path, None)
 
     else:
         sys.exit("%s: Unsupported url scheme %s" %
                  (sys.argv[0], url.scheme))
-
-
-def fetch_via_link(args):
-    """
-    Parse link file and download patch tarball.
-    """
-    link = Link(args.spec_or_link)
-
-    if link.schema_version == 1:
-        url = urlparse.urlparse(str(link.url))
-        fetch_url(url, args.source, args.retries + 1)
-    else:
-        target, _ = os.path.splitext(os.path.basename(args.source))
-        patch_urls = link.patch_sources
-        if target in patch_urls:
-            patch = patch_urls.get(target)
-            url = urlparse.urlparse(patch['URL'])
-            fetch_url(url, args.source, args.retries + 1)
-
-        patchqueues = link.patchqueue_sources
-        if target in patchqueues:
-            patchqueue = patchqueues.get(target)
-            url = urlparse.urlparse(patchqueue['URL'])
-            fetch_url(url, args.source, args.retries + 1)
 
 
 def main(argv=None):
@@ -216,10 +202,4 @@ def main(argv=None):
     args = parse_args_or_exit(argv)
     setup_logging(args)
 
-    if args.spec_or_link.endswith('.spec'):
-        fetch_source(args)
-    elif args.spec_or_link.endswith('.lnk'):
-        fetch_via_link(args)
-    else:
-        sys.exit("%s: Unsupported file type: %s" % (sys.argv[0],
-                                                    args.spec_or_link))
+    fetch_source(args)
