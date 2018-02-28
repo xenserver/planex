@@ -53,7 +53,13 @@ class Link(object):
     @property
     def sources(self):
         """Return the path to extra sources inside the patchqueue tarball"""
-        return self.link.get('sources', None)
+        if self.schema_version < 2:
+            return self.link.get('sources', None)
+
+        patch_matcher = re.compile(r'source\d+', re.IGNORECASE)
+        return {k: v for k, v
+                in self.link.iteritems()
+                if patch_matcher.match(k)}
 
     @property
     def patches(self):

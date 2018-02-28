@@ -158,6 +158,27 @@ class File(object):
                         os.path.join(destdir, os.path.basename(name)))
 
 
+class GitArchive(File):
+    """An archive produced from a local repository"""
+
+    def __init__(self, spec, name, url, defined_by, prefix, commitish):
+        super(GitArchive, self).__init__(spec, name, url, defined_by)
+        self._prefix = prefix
+        self._commitish = commitish
+
+    @property
+    @expandmacros
+    def prefix(self):
+        """Return the directory prefix of files in this resource"""
+        return os.path.normpath(self._prefix) + "/"
+
+    @property
+    @expandmacros
+    def commitish(self):
+        """Return the commitish to fetch for this resource"""
+        return self._commitish
+
+
 class Archive(File):
     """A tarball archive which will be unpacked into the SRPM"""
 
@@ -223,11 +244,17 @@ def load(specpath, link=None, check_package_name=True, defines=None):
                 spec.add_patchqueue("patches", link.url, link.path,
                                     link.patchqueue)
         elif link.schema_version >= 2:
+            # hack - this should parse the names store them with just indices
+            for name, value in link.sources.items():
+                if value["URL"].startswith("ssh://"):
+                    spec.add_gitarchive(name.lower(), value["URL"],
+                                        link.path, value.get("prefix"),
+                                        value.get("commitish"))
             for name, value in link.patch_sources.items():
-                spec.add_archive(name, value["URL"], link.path,
+                spec.add_archive(name.lower(), value["URL"], link.path,
                                  value["patches"])
             for name, value in link.patchqueue_sources.items():
-                spec.add_patchqueue(name, value["URL"], link.path,
+                spec.add_patchqueue(name.lower(), value["URL"], link.path,
                                     value["patchqueue"])
 
     return spec
@@ -350,6 +377,11 @@ class Spec(object):
     def add_archive(self, name, url, defined_by, prefix):
         """Add a new tarball archive"""
         self._archives[name] = Archive(self, name, url, defined_by, prefix)
+
+    def add_gitarchive(self, name, url, defined_by, prefix, commitish):
+        """Add a new Git archive"""
+        self._sources[name] = GitArchive(self, name, url, defined_by, prefix,
+                                         commitish)
 
     def add_patchqueue(self, name, url, defined_by, prefix):
         """Add a new patchqueue"""

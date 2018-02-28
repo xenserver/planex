@@ -10,6 +10,7 @@ import sys
 import urlparse
 
 import argcomplete
+import git
 import pkg_resources
 import pycurl
 
@@ -178,6 +179,13 @@ def fetch_source(args):
     url = urlparse.urlparse(resource.url)
     if url.scheme in SUPPORTED_URL_SCHEMES:
         fetch_url(url, resource.path, args.retries + 1)
+
+    elif url.scheme == 'ssh':
+        reponame = os.path.basename(url.path).rsplit(".git")[0]
+        repo = git.Repo(os.path.join("repos", reponame))
+        with open(resource.path, "wb") as output:
+            repo.archive(output, treeish=str(resource.commitish),
+                         prefix=str(resource.prefix))
 
     elif url.scheme == '' and os.path.dirname(url.path) == '':
         if not os.path.exists(url.path):
