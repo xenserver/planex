@@ -110,7 +110,8 @@ def expand_patchqueue(spec, series):
     patchnum = spec.highest_patch()
     found_autosetup = False
     for line in spec.spectext:
-        if line.startswith("%autosetup") and "-p1" in line:
+        if "-p1 in line" and (line.startswith("%autosetup") or
+                              line.startswith("%autopatch")):
             found_autosetup = True
             break
     if not found_autosetup:
