@@ -1,10 +1,23 @@
+3.0.0
+* Makefile.rules: Do not make links to _build/RPMS and _build/MANIFESTS
+* planex-fetch: Remove --mirror argument
+* planex-fetch: Do not create path to downloaded file - Makefile.rules
+  now does this
+* planex-mock: Do not pass _topdir through to mock
+* planex-mock: Use RPM library to find the correct repository path for
+  createrepo, instead of a hard-coded path
+* planex-make-srpm: Fix crash when reading a .gitarchive-info file
+  containing unexpanded Git format strings
+* planex-patchqueue: Apply patchqueues to specs with %autopatch directives
+  as well as %autosetup directives
+
 2.2.0
 * planex-makesrpm: Support multiple patchqueues
 * planex-patchqueue: Insert new patches after existing patches
 * planex-manifest: Only generate manifest if link URL is present
 * planex-create-mock-config: add 'disablerepo' option
 * planex-depend: Ensure that a package's runtime dependencies
-  are available before it is built, so that the resulting package 
+  are available before it is built, so that the resulting package
   can be installed immediately
 * Docker: Use latest CentOS base image
 

@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 2.2.0
+Version: 3.0.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -54,6 +54,19 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Mon Mar 12 2018 Euan Harris <euan.harris@citrix.com> - 3.0.0-1
+- Makefile.rules: Do not make links to _build/RPMS and _build/MANIFESTS
+- planex-fetch: Remove --mirror argument
+- planex-fetch: Do not create path to downloaded file - Makefile.rules
+  now does this
+- planex-mock: Do not pass _topdir through to mock
+- planex-mock: Use RPM library to find the correct repository path for
+  createrepo, instead of a hard-coded path
+- planex-make-srpm: Fix crash when reading a .gitarchive-info file
+  containing unexpanded Git format strings
+- planex-patchqueue: Apply patchqueues to specs with %autopatch directives
+  as well as %autosetup directives
+
 * Mon Jan 8 2018 Euan Harris <euan.harris@citrix.com> - 2.2.0-1
 - planex-makesrpm: Support multiple patchqueues
 - planex-patchqueue: Insert new patches after existing patches
