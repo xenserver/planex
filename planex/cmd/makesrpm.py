@@ -169,8 +169,9 @@ def extract_v2_patches(tmpdir, spec, tmp_specfile, link, patchdata):
                         if os.path.basename(patch) == tarname][0]
             with Tarball(patchset) as tarball:
                 extract_tarball_patches(
-                    tmpdir, spec, tarball, None,
-                    link.patch_sources[patchsource]['patches'])
+                    tmpdir, spec, tarball,
+                    link.patch_sources[patchsource].get('sources'),
+                    link.patch_sources[patchsource].get('patches'))
 
     if PATCHQUEUES in patchdata:
         patchqueues = patchdata[PATCHQUEUES]
