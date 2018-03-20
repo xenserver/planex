@@ -1,3 +1,6 @@
+3.1.0
+* planex-makesrpm: Search for source files in patch archives
+
 3.0.0
 * Makefile.rules: Do not make links to _build/RPMS and _build/MANIFESTS
 * planex-fetch: Remove --mirror argument

@@ -1,6 +1,6 @@
 Summary: RPM build tool
 Name: planex
-Version: 3.0.0
+Version: 3.1.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -54,6 +54,9 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Tue Mar 20 2018 Euan Harris <euan.harris@citrix.com> - 3.1.0-1
+- planex-makesrpm: Search for source files in patch archives
+
 * Mon Mar 12 2018 Euan Harris <euan.harris@citrix.com> - 3.0.0-1
 - Makefile.rules: Do not make links to _build/RPMS and _build/MANIFESTS
 - planex-fetch: Remove --mirror argument
