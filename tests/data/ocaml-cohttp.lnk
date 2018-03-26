@@ -1,0 +1,19 @@
+{
+    "SchemaVersion": "2",
+    "Source1":
+    {
+        "URL": "tests/data/ocaml-cohttp-init"
+    },
+    "Source2":
+    {
+        "URL": "tests/data/ocaml-cohttp-service"
+    },
+    "Source3":
+    {
+        "URL": "tests/data/cohttp0.patch"
+    },
+    "Source4":
+    {
+        "URL": "tests/data/cohttp1.patch"
+    }
+}
