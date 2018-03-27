@@ -3,7 +3,7 @@
 import unittest
 import platform
 import planex.spec
-from planex.spec import File, Archive, Patchqueue
+from planex.spec import Blob, Archive, Patchqueue
 
 
 def get_rpm_machine():
@@ -98,17 +98,17 @@ class RpmTests(unittest.TestCase):
         """Package source paths and URLs are correct"""
         self.assertEqual(
             self.spec.resources(),
-            [File(self.spec, "source0",
+            [Blob(self.spec, "source0",
                   "https://github.com/mirage/ocaml-cohttp/archive/"
                   "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
                   "tests/data/ocaml-cohttp.spec"),
-             File(self.spec, "source1", "ocaml-cohttp-init",
+             Blob(self.spec, "source1", "ocaml-cohttp-init",
                   "tests/data/ocaml-cohttp.spec"),
-             File(self.spec, "source2", "ocaml-cohttp-service",
+             Blob(self.spec, "source2", "ocaml-cohttp-service",
                   "tests/data/ocaml-cohttp.spec"),
-             File(self.spec, "patch0", "cohttp0.patch",
+             Blob(self.spec, "patch0", "cohttp0.patch",
                   "tests/data/ocaml-cohttp.spec"),
-             File(self.spec, "patch1", "cohttp1.patch",
+             Blob(self.spec, "patch1", "cohttp1.patch",
                   "tests/data/ocaml-cohttp.spec")])
 
     def test_resources_override(self):
@@ -119,16 +119,16 @@ class RpmTests(unittest.TestCase):
         self.spec.add_patch("patch3", "http://extra", "link4")
         self.assertEqual(
             self.spec.resources(),
-            [File(self.spec, "source0", "http://elsewhere", "link1"),
-             File(self.spec, "source1", "ocaml-cohttp-init",
+            [Blob(self.spec, "source0", "http://elsewhere", "link1"),
+             Blob(self.spec, "source1", "ocaml-cohttp-init",
                   "tests/data/ocaml-cohttp.spec"),
-             File(self.spec, "source2", "ocaml-cohttp-service",
+             Blob(self.spec, "source2", "ocaml-cohttp-service",
                   "tests/data/ocaml-cohttp.spec"),
-             File(self.spec, "source3", "http://additional", "link2"),
-             File(self.spec, "patch0", "cohttp0.patch",
+             Blob(self.spec, "source3", "http://additional", "link2"),
+             Blob(self.spec, "patch0", "cohttp0.patch",
                   "tests/data/ocaml-cohttp.spec"),
-             File(self.spec, "patch1", "http://a.n.other", "link3"),
-             File(self.spec, "patch3", "http://extra", "link4")])
+             Blob(self.spec, "patch1", "http://a.n.other", "link3"),
+             Blob(self.spec, "patch3", "http://extra", "link4")])
 
     def test_resources_extras(self):
         """Package source paths and URLs are correct"""
@@ -138,17 +138,17 @@ class RpmTests(unittest.TestCase):
                                  "link1", "PATCHES/")
         self.assertEqual(
             self.spec.resources(),
-            [File(self.spec, "source0",
+            [Blob(self.spec, "source0",
                   "https://github.com/mirage/ocaml-cohttp/archive/"
                   "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
                   "tests/data/ocaml-cohttp.spec"),
-             File(self.spec, "source1", "ocaml-cohttp-init",
+             Blob(self.spec, "source1", "ocaml-cohttp-init",
                   "tests/data/ocaml-cohttp.spec"),
-             File(self.spec, "source2", "ocaml-cohttp-service",
+             Blob(self.spec, "source2", "ocaml-cohttp-service",
                   "tests/data/ocaml-cohttp.spec"),
-             File(self.spec, "patch0", "cohttp0.patch",
+             Blob(self.spec, "patch0", "cohttp0.patch",
                   "tests/data/ocaml-cohttp.spec"),
-             File(self.spec, "patch1", "cohttp1.patch",
+             Blob(self.spec, "patch1", "cohttp1.patch",
                   "tests/data/ocaml-cohttp.spec"),
              Archive(self.spec, "archive0", "http://foo/patches.tar", "link1",
                      "SOURCES/"),
@@ -159,17 +159,17 @@ class RpmTests(unittest.TestCase):
         """URLs for individual resources are correct"""
         self.assertEqual(
             self.spec.resource("path/to/ocaml-cohttp-0.9.8.tar.gz"),
-            File(self.spec, "source0",
+            Blob(self.spec, "source0",
                  "https://github.com/mirage/ocaml-cohttp/archive/"
                  "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
                  "tests/data/ocaml-cohttp.spec"))
         self.assertEqual(
             self.spec.resource("ocaml-cohttp-init"),
-            File(self.spec, "source1", "ocaml-cohttp-init",
+            Blob(self.spec, "source1", "ocaml-cohttp-init",
                  "tests/data/ocaml-cohttp.spec"))
         self.assertEqual(
             self.spec.resource("somewhere/cohttp0.patch"),
-            File(self.spec, "patch0", "cohttp0.patch",
+            Blob(self.spec, "patch0", "cohttp0.patch",
                  "tests/data/ocaml-cohttp.spec"))
         self.spec.add_archive("archive0", "http://foo/patches.tar",
                               "link1", "SOURCES/")
