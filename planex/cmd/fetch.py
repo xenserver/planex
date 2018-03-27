@@ -95,7 +95,8 @@ def parse_args_or_exit(argv=None):
     parser = argparse.ArgumentParser(description='Download package sources',
                                      parents=[common_base_parser(),
                                               rpm_define_parser()])
-    parser.add_argument('spec_or_link', help='RPM Spec or link file')
+    parser.add_argument('spec', help='RPM Spec')
+    parser.add_argument('link', help='Link file', nargs="?")
     parser.add_argument("source", metavar="SOURCE",
                         help="Source file to fetch")
     parser.add_argument('--retries', '-r',
@@ -157,17 +158,11 @@ def fetch_source(args):
     Download requested source using URL from spec file.
     """
 
-    # XXX hack until we start passing spec and link together
-    # which needs dependency generator and makefile changes
-    if args.spec_or_link.endswith(".spec"):
-        specpath = args.spec_or_link
-        link = None
-    else:
-        specname = os.path.splitext(os.path.basename(args.spec_or_link))[0]
-        specpath = 'SPECS/{}.spec'.format(specname)
-        link = Link(args.spec_or_link)
+    link = None
+    if args.link:
+        link = Link(args.link)
 
-    spec = planex.spec.load(specpath, link=link,
+    spec = planex.spec.load(args.spec, link=link,
                             check_package_name=args.check_package_names,
                             defines=args.define)
 
