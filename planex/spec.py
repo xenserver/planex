@@ -93,8 +93,11 @@ def expandmacros(func):
     return func_wrapper
 
 
-class File(object):
-    """A file which will be packed into the SRPM"""
+class Blob(object):
+    """
+    A file which will be packed into the SRPM.   The file is treated
+    as an opaque blob - the tools will not look inside it.
+    """
 
     def __init__(self, spec, name, url, defined_by):
         self._spec = spec
@@ -173,11 +176,13 @@ class File(object):
         return False
 
 
-class GitArchive(File):
-    """An archive produced from a local repository"""
-
+class GitBlob(Blob):
+    """
+    A blob produced from a local repository.   The blob is a tarball
+    produced by `git archive` but the tools will not look inside it.
+    """
     def __init__(self, spec, name, url, defined_by, prefix, commitish):
-        super(GitArchive, self).__init__(spec, name, url, defined_by)
+        super(GitBlob, self).__init__(spec, name, url, defined_by)
         self._prefix = prefix
         self._commitish = commitish
 
@@ -203,7 +208,7 @@ class GitArchive(File):
         return True
 
 
-class Archive(File):
+class Archive(Blob):
     """A tarball archive which will be unpacked into the SRPM"""
 
     def __init__(self, spec, name, url, defined_by, prefix):
@@ -394,11 +399,11 @@ class Spec(object):
 
     def add_source(self, name, url, defined_by):
         """Add a new source file"""
-        self._sources[name] = File(self, name, url, defined_by)
+        self._sources[name] = Blob(self, name, url, defined_by)
 
     def add_patch(self, name, url, defined_by):
         """Add a new patch file"""
-        self._patches[name] = File(self, name, url, defined_by)
+        self._patches[name] = Blob(self, name, url, defined_by)
 
     def add_archive(self, name, url, defined_by, prefix):
         """Add a new tarball archive"""
@@ -406,8 +411,8 @@ class Spec(object):
 
     def add_gitarchive(self, name, url, defined_by, prefix, commitish):
         """Add a new Git archive"""
-        self._sources[name] = GitArchive(self, name, url, defined_by, prefix,
-                                         commitish)
+        self._sources[name] = GitBlob(self, name, url, defined_by, prefix,
+                                      commitish)
 
     def add_patchqueue(self, name, url, defined_by, prefix):
         """Add a new patchqueue"""
