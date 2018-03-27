@@ -101,7 +101,7 @@ $(TOPDIR)/MANIFESTS/%.json:
 $(TOPDIR)/SOURCES/%:
 	@echo [FETCH] $@
 	$(AT) mkdir -p $(@D)
-	$(AT)$(FETCH) $(FETCH_FLAGS) $< $@
+	$(AT)$(FETCH) $(FETCH_FLAGS) $^ $@
 
 # Create a patchqueue tarball for a pinned package.
 # Pinned patchqueues are always regenerated.
