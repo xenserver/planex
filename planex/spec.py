@@ -475,17 +475,6 @@ class Spec(object):
         ret += patches
         return ret
 
-    def source(self, target):
-        """
-        Find the URL from which source should be downloaded
-        """
-        target_basename = os.path.basename(target)
-        for path, url in self.sources():
-            if os.path.basename(path) == target_basename:
-                return path, url
-
-        raise KeyError(target_basename)
-
     def binary_package_paths(self):
         """Return a list of binary packages built by this spec"""
 
