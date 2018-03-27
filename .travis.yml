@@ -14,5 +14,5 @@ install:
 script: 
   - pycodestyle --show-source --show-pep8 setup.py planex tests
   - pylint setup.py planex tests
-  - nosetests --verbose --with-coverage --cover-inclusive
+  - nosetests --verbose --with-coverage --cover-inclusive --cover-package=planex
   - bash ./.travis-build-test.sh
