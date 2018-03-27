@@ -58,7 +58,9 @@ def download_rpm_sources(spec):
     """
     for resource in spec.resources():
         if resource.is_fetchable:
-            print("%s: %s" % (resource.path, resource.defined_by))
+            print('%s: %s' % (resource.path, spec.specpath()))
+            if resource.defined_by != spec.specpath():
+                print("%s: %s" % (resource.path, resource.defined_by))
             if resource.force_rebuild:
                 print("%s: %s" % (resource.path, "FORCE"))
 
