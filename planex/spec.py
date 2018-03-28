@@ -323,6 +323,7 @@ def load(specpath, link=None, check_package_name=True, defines=None):
     return spec
 
 
+# pylint: disable=too-many-instance-attributes
 class Spec(object):
     """Represents an RPM spec file"""
 
