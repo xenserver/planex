@@ -42,26 +42,42 @@ class BasicTests(unittest.TestCase):
         """Patches are inserted into rewritten spec file"""
         spec = Spec("tests/data/manifest/branding-xenserver.spec",
                     check_package_name=False)
-        patches = ["first.patch", "second.patch", "third.patch"]
-        rewritten = planex.patchqueue.expand_patchqueue(spec, patches)
+        spec.add_patch(0, "first.patch", "dummy")
+        spec.add_patch(1, "second.patch", "dummy")
+        spec.add_patch(2, "third.patch", "dummy")
+
+        rewritten = spec.rewrite_spec()
         self.assertIn("Patch0: first.patch\n", rewritten)
         self.assertIn("Patch1: second.patch\n", rewritten)
         self.assertIn("Patch2: third.patch\n", rewritten)
+
+    def test_overridden_patch_in_spec(self):
+        """Patches with the same index override each other"""
+        spec = Spec("tests/data/manifest/branding-xenserver.spec",
+                    check_package_name=False)
+        spec.add_patch(0, "first.patch", "dummy")
+        spec.add_patch(1, "second.patch", "dummy")
+        spec.add_patch(0, "third.patch", "dummy")
+
+        rewritten = spec.rewrite_spec()
+        self.assertNotIn("Patch0: first.patch\n", rewritten)
+        self.assertIn("Patch1: second.patch\n", rewritten)
+        self.assertIn("Patch0: third.patch\n", rewritten)
 
     def test_autosetup_present(self):
         """Patchqueue application succeeds if %autosetup is present"""
         spec = Spec("tests/data/manifest/branding-xenserver.spec",
                     check_package_name=False)
-        patches = ["first.patch"]
-        rewritten = planex.patchqueue.expand_patchqueue(spec, patches)
+        spec.add_patch(0, "first.patch", "dummy")
+        rewritten = spec.rewrite_spec()
         self.assertIn("Patch0: first.patch\n", rewritten)
 
     def test_autosetup_missing(self):
         """Patchqueue application fails if %autosetup is not present"""
         spec = Spec("tests/data/ocaml-uri.spec", check_package_name=False)
-        patches = ["first.patch"]
+        spec.add_patch(0, "first.patch", "dummy")
         with self.assertRaises(planex.patchqueue.SpecMissingAutosetup):
-            planex.patchqueue.expand_patchqueue(spec, patches)
+            spec.rewrite_spec()
 
 
 # Mercurial's guard logic is documented in:
