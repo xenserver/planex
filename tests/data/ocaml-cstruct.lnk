@@ -1,0 +1,7 @@
+{
+    "SchemaVersion": "2",
+    "Source":
+    {
+        "URL": "tests/data/test-git.tar.gz"
+    }
+}

@@ -13,15 +13,17 @@ def get_rpm_machine():
     return 'i386'
 
 
+RPM_DEFINES = [("dist", ".el6"),
+               ("_topdir", "."),
+               ("_sourcedir", "%_topdir/SOURCES/%name")]
+
+
 class RpmTests(unittest.TestCase):
     """Basic Spec class tests"""
 
     def setUp(self):
-        rpm_defines = [("dist", ".el6"),
-                       ("_topdir", "."),
-                       ("_sourcedir", "%_topdir/SOURCES/%name")]
         self.spec = planex.spec.Spec("tests/data/ocaml-cohttp.spec",
-                                     defines=rpm_defines)
+                                     defines=RPM_DEFINES)
 
     def test_bad_filename(self):
         """Exception is raised if filenname does not match package name"""
@@ -182,3 +184,19 @@ class RpmTests(unittest.TestCase):
         """Nonexistent sources are handled correctly"""
         with self.assertRaises(KeyError):
             self.spec.resource("nonexistent")
+
+
+class RpmSourceNameParsingTest(unittest.TestCase):
+    """Further Spec class tests"""
+
+    def test_source_replaces_source0(self):
+        """A link with a Source entry is parsed into Source0"""
+        link = planex.link.Link("tests/data/ocaml-cstruct.lnk")
+        spec = planex.spec.load("tests/data/ocaml-cstruct.spec", link=link,
+                                defines=RPM_DEFINES)
+
+        self.assertEqual(
+            spec.resources(),
+            [Blob(spec, "tests/data/test-git.tar.gz",
+                  "tests/data/ocaml-cstruct.lnk")]
+        )
