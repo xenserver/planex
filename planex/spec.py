@@ -328,11 +328,11 @@ class Spec(object):
                         "spec file name '%s' does not match package name '%s'"
                         % (path, self.name()))
 
-        for source in reversed(self.spec.sources):
-            if source[2] == 1:
-                self.add_source("source%d" % source[1], source[0], path)
-            elif source[2] == 2:
-                self.add_patch("patch%d" % source[1], source[0], path)
+        for filepath, index, sourcetype in reversed(self.spec.sources):
+            if sourcetype == 1:
+                self.add_source(index, filepath, path)
+            elif sourcetype == 2:
+                self.add_patch(index, filepath, path)
 
     def specpath(self):
         """Return the path to the spec file"""
