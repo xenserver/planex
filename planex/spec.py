@@ -269,7 +269,7 @@ def _parse_name(name):
 
     Raises KeyError if [name] cannot be parsed
     """
-    matcher = re.compile(r"\A[a-zA-Z]+(\d*)\Z")
+    matcher = re.compile(r"^[a-zA-Z]+(\d*)$")
     match = matcher.match(name)
 
     if match is None:
