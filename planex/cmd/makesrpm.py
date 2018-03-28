@@ -137,7 +137,7 @@ def populate_working_directory(tmpdir, spec):
     manifests = {}
 
     with open(newspec, "w") as out:
-        out.writelines(spec.expand_patchqueues())
+        out.writelines(spec.rewrite_spec())
 
     if manifests:
         add_manifest_entry(manifests, newspec)
