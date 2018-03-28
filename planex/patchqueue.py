@@ -85,24 +85,7 @@ def parse_patchseries(series, guard=None):
         yield match.group(1)
 
 
-def rewrite_spec(spec, patches, patchnum):
-    """
-    Expand a patchqueue as a sequence of patches in a spec file
-    """
-    done = False
-    for line in spec.spectext:
-        yield line
-        upper_line = line.upper()
-        if not done and (
-                (upper_line.startswith('SOURCE') and patchnum == -1) or
-                (upper_line.startswith('PATCH%s' % patchnum))):
-            for patch in patches:
-                patchnum += 1
-                yield "Patch%d: %s\n" % (patchnum, patch)
-            done = True
-
-
-def expand_patchqueue(spec, series):
+def check_spec_supports_patchqueues(spec):
     """
     Create a list of patches from a patchqueue and update the spec file
     """
@@ -111,7 +94,3 @@ def expand_patchqueue(spec, series):
                line.startswith(r"%autopatch")
                for line in spec.spectext):
         raise SpecMissingAutosetup(spec.path)
-
-    patches = list(series)
-    patchnum = spec.highest_patch()
-    return rewrite_spec(spec, patches, patchnum)
