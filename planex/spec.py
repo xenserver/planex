@@ -101,9 +101,10 @@ class Blob(object):
     """
 
     def __init__(self, spec, url, defined_by):
-        self._spec = spec
-        self._url = url
-        self._defined_by = defined_by
+        with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
+            self._spec = spec
+            self._url = rpm.expandMacro(url)
+            self._defined_by = defined_by
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -184,9 +185,10 @@ class GitBlob(Blob):
 
     # pylint: disable=too-many-arguments
     def __init__(self, spec, url, defined_by, prefix, commitish):
-        super(GitBlob, self).__init__(spec, url, defined_by)
-        self._prefix = prefix
-        self._commitish = commitish
+        with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
+            super(GitBlob, self).__init__(spec, url, defined_by)
+            self._prefix = rpm.expandMacro(prefix)
+            self._commitish = rpm.expandMacro(commitish)
 
     @property
     @expandmacros
@@ -214,8 +216,9 @@ class Archive(Blob):
     """A tarball archive which will be unpacked into the SRPM"""
 
     def __init__(self, spec, url, defined_by, prefix):
-        super(Archive, self).__init__(spec, url, defined_by)
-        self._prefix = prefix
+        with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
+            super(Archive, self).__init__(spec, url, defined_by)
+            self._prefix = rpm.expandMacro(prefix)
 
     @property
     @expandmacros
