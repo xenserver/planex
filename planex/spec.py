@@ -86,6 +86,7 @@ def parse_spec_quietly(path):
 
 def expandmacros(func):
     """Decorator to expand RPM macros in strings"""
+
     def func_wrapper(self):
         """Decorator wrapper"""
         with rpm_macros(self.spec.macros, nevra(self.spec.spec.sourceHeader)):
@@ -99,9 +100,8 @@ class Blob(object):
     as an opaque blob - the tools will not look inside it.
     """
 
-    def __init__(self, spec, name, url, defined_by):
+    def __init__(self, spec, url, defined_by):
         self._spec = spec
-        self._name = name
         self._url = url
         self._defined_by = defined_by
 
@@ -114,9 +114,9 @@ class Blob(object):
         return self._spec
 
     @property
-    def name(self):
-        """Return the name of this resource"""
-        return self._name
+    def basename(self):
+        """Return the basename of this resource"""
+        return os.path.basename(self.url)
 
     @property
     @expandmacros
@@ -181,8 +181,9 @@ class GitBlob(Blob):
     A blob produced from a local repository.   The blob is a tarball
     produced by `git archive` but the tools will not look inside it.
     """
-    def __init__(self, spec, name, url, defined_by, prefix, commitish):
-        super(GitBlob, self).__init__(spec, name, url, defined_by)
+
+    def __init__(self, spec, url, defined_by, prefix, commitish):
+        super(GitBlob, self).__init__(spec, url, defined_by)
         self._prefix = prefix
         self._commitish = commitish
 
@@ -211,8 +212,8 @@ class GitBlob(Blob):
 class Archive(Blob):
     """A tarball archive which will be unpacked into the SRPM"""
 
-    def __init__(self, spec, name, url, defined_by, prefix):
-        super(Archive, self).__init__(spec, name, url, defined_by)
+    def __init__(self, spec, url, defined_by, prefix):
+        super(Archive, self).__init__(spec, url, defined_by)
         self._prefix = prefix
 
     @property
@@ -233,7 +234,7 @@ class Archive(Blob):
         #    http://www.example.com/foo/bar.tar.gz -> bar.tar.gz
         #    http://www.example.com/foo/bar.cgi#/baz.tbz -> baz.tbz
 
-        return os.path.join("%_sourcedir", "{}.tar".format(self.name))
+        return os.path.join("%_sourcedir", "{}".format(self.basename))
 
     def extract_source(self, name, destdir):
         """
@@ -256,6 +257,29 @@ class Patchqueue(Archive):
             return queue.series()
 
 
+def _parse_name(name):
+    """
+    Parse [name] a string composed by a word and an optional number into the
+    name and the number as an integer (0 if not present). E. g.
+
+    - Source -> 0
+    - Patch001 -> 1
+    - Test12 -> 12
+
+    Raises KeyError if [name] cannot be parsed
+    """
+    matcher = re.compile(r"\A[a-zA-Z]+(\d*)\Z")
+    match = matcher.match(name)
+
+    if match is None:
+        raise KeyError(name)
+
+    (idx, ) = match.groups()
+    if idx == '':
+        return 0
+    return int(idx)
+
+
 def load(specpath, link=None, check_package_name=True, defines=None):
     """
     Load the spec file at specpath and apply link if provided.
@@ -266,26 +290,28 @@ def load(specpath, link=None, check_package_name=True, defines=None):
     if link:
         if link.schema_version == 1:
             if link.sources:
-                spec.add_archive("patches", link.url, link.path, link.sources)
+                spec.add_archive(0, link.url, link.path, link.sources)
             if link.patches:
-                spec.add_archive("patches", link.url, link.path, link.patches)
+                spec.add_archive(1, link.url, link.path, link.patches)
             if link.patchqueue:
-                spec.add_patchqueue("patches", link.url, link.path,
+                spec.add_patchqueue(0, link.url, link.path,
                                     link.patchqueue)
         elif link.schema_version >= 2:
-            # hack - this should parse the names store them with just indices
             for name, value in link.sources.items():
+                idx = _parse_name(name)
                 if value["URL"].startswith("ssh://"):
-                    spec.add_gitarchive(name.lower(), value["URL"],
+                    spec.add_gitarchive(idx, value["URL"],
                                         link.path, value.get("prefix"),
                                         value.get("commitish"))
                 else:
-                    spec.add_source(name.lower(), value["URL"], link.path)
+                    spec.add_source(idx, value["URL"], link.path)
             for name, value in link.patch_sources.items():
-                spec.add_archive(name.lower(), value["URL"], link.path,
+                idx = _parse_name(name)
+                spec.add_archive(idx, value["URL"], link.path,
                                  value["patches"])
             for name, value in link.patchqueue_sources.items():
-                spec.add_patchqueue(name.lower(), value["URL"], link.path,
+                idx = _parse_name(name)
+                spec.add_patchqueue(idx, value["URL"], link.path,
                                     value["patchqueue"])
 
     return spec
@@ -397,27 +423,27 @@ class Spec(object):
         srpmname = self.spec.sourceHeader['nvr'] + ".src.rpm"
         return rpm.expandMacro(os.path.join('%_srcrpmdir', srpmname))
 
-    def add_source(self, name, url, defined_by):
+    def add_source(self, index, url, defined_by):
         """Add a new source file"""
-        self._sources[name] = Blob(self, name, url, defined_by)
+        self._sources[index] = Blob(self, url, defined_by)
 
-    def add_patch(self, name, url, defined_by):
+    def add_patch(self, index, url, defined_by):
         """Add a new patch file"""
-        self._patches[name] = Blob(self, name, url, defined_by)
+        self._patches[index] = Blob(self, url, defined_by)
 
-    def add_archive(self, name, url, defined_by, prefix):
+    def add_archive(self, index, url, defined_by, prefix):
         """Add a new tarball archive"""
-        self._archives[name] = Archive(self, name, url, defined_by, prefix)
+        self._archives[index] = Archive(self, url, defined_by, prefix)
 
-    def add_gitarchive(self, name, url, defined_by, prefix, commitish):
+    def add_gitarchive(self, index, url, defined_by, prefix, commitish):
         """Add a new Git archive"""
-        self._sources[name] = GitBlob(self, name, url, defined_by, prefix,
-                                      commitish)
+        self._sources[index] = GitBlob(self, url, defined_by, prefix,
+                                       commitish)
 
-    def add_patchqueue(self, name, url, defined_by, prefix):
+    def add_patchqueue(self, index, url, defined_by, prefix):
         """Add a new patchqueue"""
-        self._patchqueues[name] = Patchqueue(self, name, url, defined_by,
-                                             prefix)
+        self._patchqueues[index] = Patchqueue(self, url, defined_by,
+                                              prefix)
 
     def resources(self):
         """List all resources to be packed into the source package"""
@@ -452,7 +478,7 @@ class Spec(object):
         for resource in resources:
             try:
                 resource.extract_source(source, destdir)
-                print("Extracted %s from %s" % (source, resource.name))
+                print("Extracted %s from %s" % (source, resource.basename))
                 return
             except KeyError:
                 pass
