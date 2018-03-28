@@ -182,6 +182,7 @@ class GitBlob(Blob):
     produced by `git archive` but the tools will not look inside it.
     """
 
+    # pylint: disable=too-many-arguments
     def __init__(self, spec, url, defined_by, prefix, commitish):
         super(GitBlob, self).__init__(spec, url, defined_by)
         self._prefix = prefix
@@ -435,6 +436,7 @@ class Spec(object):
         """Add a new tarball archive"""
         self._archives[index] = Archive(self, url, defined_by, prefix)
 
+    # pylint: disable=too-many-arguments
     def add_gitarchive(self, index, url, defined_by, prefix, commitish):
         """Add a new Git archive"""
         self._sources[index] = GitBlob(self, url, defined_by, prefix,
