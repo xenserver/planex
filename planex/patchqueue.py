@@ -52,14 +52,6 @@ class Patchqueue(object):
         for patch in self.series():
             self.extract(patch, destdir)
 
-    def add_to_spec(self, spec, outfile):
-        """
-        Insert patches into spec, writing output to outfile
-        """
-        with open(outfile, "w") as specfile_out:
-            expanded = expand_patchqueue(spec, self.series())
-            specfile_out.writelines(expanded)
-
 
 def parse_patchseries(series, guard=None):
     """
