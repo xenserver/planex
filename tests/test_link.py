@@ -82,6 +82,7 @@ class TestLink(unittest.TestCase):
         link = planex.link.Link('test_v2.lnk')
         sources = link.patch_sources
         self.assertIn('Patch0', sources)
+        self.assertNotIn('PatchQueue0', sources)
 
     @mock.patch('planex.link.open', mock.mock_open(read_data=v2_link))
     def test_patchqueue_sources_v2(self):
