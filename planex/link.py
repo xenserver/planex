@@ -56,7 +56,7 @@ class Link(object):
         if self.schema_version < 2:
             return self.link.get('sources', None)
 
-        patch_matcher = re.compile(r'source\d+', re.IGNORECASE)
+        patch_matcher = re.compile(r'source\d*', re.IGNORECASE)
         return {k: v for k, v
                 in self.link.iteritems()
                 if patch_matcher.match(k)}
@@ -84,7 +84,7 @@ class Link(object):
             raise UnsupportedProperty('patch_sources requries at least'
                                       'schema version 2')
 
-        patch_matcher = re.compile(r'patch\d+', re.IGNORECASE)
+        patch_matcher = re.compile(r'patch\d*', re.IGNORECASE)
         return {k: v for k, v
                 in self.link.iteritems()
                 if patch_matcher.match(k)}
@@ -96,7 +96,7 @@ class Link(object):
             raise UnsupportedProperty('patchqueue_sources requries at least'
                                       'schema version 2')
 
-        patch_matcher = re.compile(r'patchqueue\d+', re.IGNORECASE)
+        patch_matcher = re.compile(r'patchqueue\d*', re.IGNORECASE)
         return {k: v for k, v
                 in self.link.iteritems()
                 if patch_matcher.match(k)}
