@@ -11,6 +11,8 @@ import shutil
 import sys
 import tempfile
 
+from itertools import chain
+
 import rpm
 
 from planex.tarball import Tarball
@@ -368,18 +370,65 @@ class Spec(object):
         """Return the path to the spec file"""
         return self.path
 
-    def expand_patchqueues(self):
+    def rewrite_spec(self):
         """
-        Insert the names of all patchqueue patches into the spec file
+        Rewrite the sources and patches in the spec file, also inserting the
+        names of all patchqueue patches into it
         """
-        patchqueues = [self._patchqueues[key] for key
-                       in sorted(self._patchqueues.keys())]
-        if not patchqueues:
-            return self.spectext
+        if self._patches or self._patchqueues:
+            planex.patchqueue.check_spec_supports_patchqueues(self)
 
+        def is_source_or_patch_line(line):
+            """True if the line does start with Source or Patch"""
+            source = re.compile("^source", re.IGNORECASE)
+            patch = re.compile("^patch", re.IGNORECASE)
+            return bool(patch.match(line) or source.match(line))
+
+        def first_index(iterable, predicate):
+            """
+            Returns the index of first value in the iterable
+            for which predicate(value) is true.
+            """
+            return next(i for i, v in enumerate(iterable) if predicate(v))
+
+        split_at = first_index(self.spectext, is_source_or_patch_line)
+
+        newspec_header = self.spectext[:split_at]
+        newspec_filtered_body = (
+            line for line
+            in self.spectext[split_at+1:]
+            if not is_source_or_patch_line(line)
+        )
+
+        # we are sorting patches and sources to avoid tripping on weird
+        # centos bug like https://bugzilla.redhat.com/show_bug.cgi?id=1359084
+        def sorted_by_key(dictionary):
+            """Return an iterable of key, value tuples orderedy by key"""
+            return sorted(dictionary, key=lambda kv: kv[0])
+
+        sources = (
+            "Source{}: {}".format(index, blob.url)
+            for index, blob in sorted_by_key(self._sources.items())
+        )
+        patches = (
+            "Patch{}: {}".format(index, blob.url)
+            for index, blob in sorted_by_key(self._patches.items())
+        )
+
+        patchqueues = (self._patchqueues[key] for key
+                       in sorted(self._patchqueues.keys()))
         series = sum([pq.series() for pq in patchqueues], [])
-        spec = planex.patchqueue.expand_patchqueue(self, series)
-        return "".join(list(spec))
+        base_index = 1 + self.highest_patch()
+        further_patches = (
+            "Patch{}: {}".format(base_index + index, patch)
+            for index, patch in enumerate(series)
+        )
+
+        newspec = chain(
+            newspec_header,
+            sources, patches, further_patches,
+            newspec_filtered_body)
+        return "\n".join(newspec)
 
     def provides(self):
         """Return a list of package names provided by this spec"""
@@ -527,7 +576,6 @@ class Spec(object):
 
     def highest_patch(self):
         """Return the number the highest numbered patch or -1"""
-        patches = [num for (_, num, sourcetype) in self.spec.sources
-                   if sourcetype == 2]
-        patches.append(-1)
-        return max(patches)
+        patches_indices = self._patches.keys()
+        fallback = (-1,)
+        return max(chain(patches_indices, fallback))
