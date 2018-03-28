@@ -106,14 +106,12 @@ def expand_patchqueue(spec, series):
     """
     Create a list of patches from a patchqueue and update the spec file
     """
+    # check specfile integrity for patchqueues
+    if not any(line.startswith(r"%autosetup") or
+               line.startswith(r"%autopatch")
+               for line in spec.spectext):
+        raise SpecMissingAutosetup(spec.path)
+
     patches = list(series)
     patchnum = spec.highest_patch()
-    found_autosetup = False
-    for line in spec.spectext:
-        if "-p1 in line" and (line.startswith("%autosetup") or
-                              line.startswith("%autopatch")):
-            found_autosetup = True
-            break
-    if not found_autosetup:
-        raise SpecMissingAutosetup()
     return rewrite_spec(spec, patches, patchnum)
