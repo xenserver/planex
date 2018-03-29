@@ -404,7 +404,7 @@ class Spec(object):
         # we are sorting patches and sources to avoid tripping on weird
         # centos bug like https://bugzilla.redhat.com/show_bug.cgi?id=1359084
         def sorted_by_key(dictionary):
-            """Return an iterable of key, value tuples orderedy by key"""
+            """Return an iterable of key, value tuples ordered by key"""
             return sorted(dictionary, key=lambda kv: kv[0])
 
         sources = (
