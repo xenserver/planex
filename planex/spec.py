@@ -373,6 +373,12 @@ class Spec(object):
         Rewrite the sources and patches in the spec file, also inserting the
         names of all patchqueue patches into it
         """
+
+        # If there is nothing to rewrite, don't rewrite!
+        if not (self._sources or self._patches or self._patchqueues):
+            return self.spectext
+
+        # If there are patches, make sure we use autosetup or autopatch
         if self._patches or self._patchqueues:
             planex.patchqueue.check_spec_supports_patchqueues(self)
 
