@@ -14,8 +14,10 @@ import pkg_resources
 import requests
 from requests.adapters import HTTPAdapter
 from requests.adapters import Retry
-from requests.packages import urlparse
-
+try:
+    import requests.packages.urlparse
+except ImportError:
+    import urlparse
 
 from planex.link import Link
 from planex.cmd.args import common_base_parser, rpm_define_parser
