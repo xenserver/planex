@@ -414,11 +414,11 @@ class Spec(object):
             return sorted(dictionary, key=lambda kv: kv[0])
 
         sources = (
-            "Source{}: {}".format(index, blob.url)
+            "Source{}: {}\n".format(index, blob.url)
             for index, blob in sorted_by_key(self._sources.items())
         )
         patches = (
-            "Patch{}: {}".format(index, blob.url)
+            "Patch{}: {}\n".format(index, blob.url)
             for index, blob in sorted_by_key(self._patches.items())
         )
 
@@ -427,15 +427,15 @@ class Spec(object):
         series = sum([pq.series() for pq in patchqueues], [])
         base_index = 1 + self.highest_patch()
         further_patches = (
-            "Patch{}: {}".format(base_index + index, patch)
+            "Patch{}: {}\n".format(base_index + index, patch)
             for index, patch in enumerate(series)
         )
 
         newspec = chain(
-            newspec_header,
-            sources, patches, further_patches,
+            newspec_header, ("\n",),
+            sources, patches, further_patches, ("\n", ),
             newspec_filtered_body)
-        return "\n".join(newspec)
+        return "".join(newspec)
 
     def provides(self):
         """Return a list of package names provided by this spec"""
