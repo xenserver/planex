@@ -12,7 +12,7 @@ import urlparse
 import argcomplete
 import git
 import pkg_resources
-import pycurl
+import requests
 
 from planex.link import Link
 from planex.cmd.args import common_base_parser, rpm_define_parser
@@ -38,35 +38,25 @@ SUPPORTED_EXT_TO_MIME = {
 SUPPORTED_URL_SCHEMES = ["http", "https", "ftp"]
 
 
-def curl_get(url_string, out_file):
+def get_file(url_string, out_file):
     """
     Fetch the contents of url and store to file represented by out_file
     """
-    curl = pycurl.Curl()
-
-    # General options
     useragent = "planex-fetch/%s" % pkg_resources.require("planex")[0].version
-    curl.setopt(pycurl.USERAGENT, useragent)
-    curl.setopt(pycurl.FOLLOWLOCATION, True)
-    curl.setopt(pycurl.MAXREDIRS, 5)
-    curl.setopt(pycurl.CONNECTTIMEOUT, 30)
-    curl.setopt(pycurl.TIMEOUT, 300)
-    curl.setopt(pycurl.FAILONERROR, True)
 
-    # Cribbed from /usr/lib64/python2.6/site-packages/curl/__init__.py
-    curl.setopt(pycurl.SSL_VERIFYHOST, 2)
-    curl.setopt(pycurl.COOKIEFILE, "/dev/null")
-    curl.setopt(pycurl.NETRC, 1)
-    # If we use threads, we should also set NOSIGNAL and ignore SIGPIPE
+    # We need this because centos ships requests 2.8.0
+    # It can be greatly simplified with requests >= 2.18.0
+    headers = requests.utils.default_headers()
+    headers.update({
+        "user-agent": useragent,
+    })
 
-    # Set URL to fetch and file to which to write the response
-    curl.setopt(pycurl.URL, str(url_string))
-    curl.setopt(pycurl.WRITEDATA, out_file)
-
-    try:
-        curl.perform()
-    finally:
-        curl.close()
+    # Once we use requests >= 2.18.0, we should change this into
+    # with requests.get ... as r:
+    req = requests.get(url_string, headers=headers, timeout=30, stream=True)
+    req.raise_for_status()
+    with open(out_file, 'wb') as out:
+        shutil.copyfileobj(req.raw, out)
 
 
 def best_effort_file_verify(path):
@@ -123,7 +113,7 @@ def fetch_http(url, filename, retries):
 
             tmp_filename = filename + "~"
             with open(tmp_filename, "wb") as tmp_file:
-                curl_get(url_string, tmp_file)
+                get_file(url_string, tmp_file)
                 best_effort_file_verify(tmp_filename)
                 shutil.move(tmp_filename, filename)
                 # Write an origin file for tracking.
@@ -131,7 +121,7 @@ def fetch_http(url, filename, retries):
                     origin_file.write('{0}\n'.format(url_string))
                 return
 
-        except pycurl.error as exn:
+        except requests.RequestException as exn:
             logging.debug(exn.args[1])
             if not retries > 0:
                 raise
@@ -142,8 +132,8 @@ def fetch_url(url, source, retries):
     try:
         fetch_http(url, source, retries)
 
-    except pycurl.error as exn:
-        # Curl download failed
+    except requests.RequestException as exn:
+        # Download failed
         sys.exit("%s: Failed to fetch %s: %s" %
                  (sys.argv[0], urlparse.urlunparse(url), exn.args[1]))
 
