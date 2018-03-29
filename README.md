@@ -45,6 +45,33 @@ $ python setup.py develop
 $ nosetests
 ```
 
+## Design principles
+
+### Small, single purpose tools sequenced by make
+
+Planex is a set of single-purpose tools designed to be run by a generic Makefile.
+We arrived at this structure after previous experience with a monolithic Makefile which described the entire build process in make, and a monolithic Python system which described the entire build process in Python.
+Planex is intended to be a mid-point between these two extremes.
+
+* We use make to figure out which files to rebuild and in what order.   All we need to do is generate the dependency graph, after which we can benefit from features such as incremental, parallel builds with no extra work.
+* Small, single purpose tools are easier to write, understand and maintain than monlithic scripts.  Although the Planex tools are intended to be run by make, they can easily be run by hand for testing and development. 
+* Where make cannot understand part of our build process, we can use small tools to adapt it.   For instance, it is impossible to use a URL as a make prerequisite - make only understands files on disk - so we cannot write a rule which directly downloads a source tarball.   Instead, we have a tool (`planex-fetch`) which downloads a source defined in a spec file.   Make calls `planex-fetch`, passing it the spec and asking it to download the source tarball.   If the spec later changes, the source will be downloaded again.
+
+### Use standard tools in standard ways (the Stackoverflow test)
+
+Using standard tools such as `rpmbuild`, `mock` and `make` means that when we run into trouble we can often find a solution by searching the web.
+This is not possible with a custom monolithic build script.
+Even though our monolithic Makefile was based on a standard tool, it used complex and unusual features of make for which documentation and tutorials were hard to find.
+
+### Look like upstream
+
+Planex is designed to build medium-sized collections of RPM packages which depend on each other and are maintained by a small number of people.
+Distribution builders such as Fedora have a slightly different problem - they have to build huge collections of packages, many of which do not depend on each other and which are maintained by a large number of maintainers.
+This means that upstream tools are not always suitable for our purposes.
+However even when we have to write our own tools we should try to stay as close as possible to the upstream way of doing things so we can benefit from other upstream tools.
+Examples of this include fetching source tarballs instead of checking code out from Git, avoiding patching or re-writing spec files copied from upstream, and following `rpmbuild`'s working directory structure for the spec file repository.
+
+
 ## Defining which packages to build
 
 The main input to Planex is a repository containing RPM spec files, possibly a few source files and a small Makefile.
