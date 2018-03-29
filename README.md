@@ -45,7 +45,7 @@ $ python setup.py develop
 $ nosetests
 ```
 
-## Defining packages to build
+## Defining which packages to build
 
 The main input to Planex is a repository containing RPM spec files, possibly a few source files and a small Makefile.
 ```
@@ -56,7 +56,7 @@ The main input to Planex is a repository containing RPM spec files, possibly a f
 │       └── bar.service
 └── SPECS
     ├── bar.spec
-    ├── foo.lnk
+    ├── bar.lnk
     └── foo.spec
 ```
 
@@ -66,3 +66,19 @@ The source files could be static files on HTTP servers or tarballs produced dyna
 A few sources can be kept in the spec file directory - these could be small temporary patches or resources such as SystemD service files which do not really belong anywhere else.
 This approach is not suitable for large numbers of frequently-changing extra sources, such as patchqueues.
 
+
+## Overriding and augmenting packages
+
+If a package relies on a source file which is not fully defined in its spec file, `planex-fetch` will not know where to get it.
+One way around this problem is to change the spec file to contain a full URL for the source, however if the spec file is for an upstream package which we just re-build we may not want to change it.
+Planex's solution to this is to add a 'link' file which defines additional sources to fetch and build into the package.
+The link file can modify the sources listed in the spec in several ways:
+
+   * provide the URL of a source which does not have one
+   * override a source URL in the spec file - for instance to use a local mirror instead of a public repository
+   * provide the URL of a tarball of source files which are required by the package
+   * provide the URL of a tarball containing a patchqueue which will be added to any patches already defined by the spec file
+
+For development, it is also possible to override a source listed in the spec with the contents of a Git repository.
+To do this, create a link file with a `.pin` extension in the `PINS` directory.
+This will cause `planex-fetch` to make a tarball archive of the repository and use it in place of the tarball specified in the spec file.
