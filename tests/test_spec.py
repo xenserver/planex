@@ -200,3 +200,12 @@ class RpmSourceNameParsingTest(unittest.TestCase):
             [Blob(spec, "tests/data/test-git.tar.gz",
                   "tests/data/ocaml-cstruct.lnk")]
         )
+
+    def test_spec_not_rewritten(self):
+        """Spec files with no patches or sources should not be rewritten"""
+        spec = planex.spec.load("tests/data/empty.spec", link=None,
+                                defines=RPM_DEFINES)
+        self.assertEqual(
+            spec.spectext,
+            spec.rewrite_spec()
+        )
