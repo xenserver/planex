@@ -3,11 +3,11 @@
 Planex is a toolkit for building medium-sized collections of RPM packages which may depend on each other.
 It fills the gap between tools to build individual RPMs, such as `rpmbuild` and `mock`, and tools to build entire distributions, such as [koji](https://fedoraproject.org/wiki/Koji).
 
-## Installation 
+## Installing Planex 
 
-### Pip
+The easiest way to install Planex is to use `pip` in a Python virtualenv.
 
-Planex uses the Python bindings for `librpm`, which must be installed separately.
+Planex uses the Python bindings for `librpm`, which must be installed separately using the system package manager.
 ```
 $ dnf install python2-rpm
 ```
@@ -44,3 +44,25 @@ $ pip install -r test-requirements.txt
 $ python setup.py develop
 $ nosetests
 ```
+
+## Defining packages to build
+
+The main input to Planex is a repository containing RPM spec files, possibly a few source files and a small Makefile.
+```
+.
+├── Makefile
+├── SOURCES
+│   └── bar
+│       └── bar.service
+└── SPECS
+    ├── bar.spec
+    ├── foo.lnk
+    └── foo.spec
+```
+
+Each spec file describes the sources needed to build a package, any other packages which are required to build it, how to build it and how to pack the resulting files into a binary package.
+Most package sources are not kept with the spec files - instead `planex-fetch` downloads them from the URLs given in the spec files.
+The source files could be static files on HTTP servers or tarballs produced dynamically by source control systems such as GitHub or BitBucket.
+A few sources can be kept in the spec file directory - these could be small temporary patches or resources such as SystemD service files which do not really belong anywhere else.
+This approach is not suitable for large numbers of frequently-changing extra sources, such as patchqueues.
+
