@@ -382,7 +382,7 @@ class Spec(object):
             return self.spectext
 
         # If there are patches, make sure we use autosetup or autopatch
-        if self._patches or self._patchqueues:
+        if self._patchqueues:
             planex.patchqueue.check_spec_supports_patchqueues(self)
 
         def is_source_or_patch_line(line):
