@@ -7,12 +7,15 @@ import logging
 import os
 import shutil
 import sys
-import urlparse
 
 import argcomplete
 import git
 import pkg_resources
 import requests
+from requests.adapters import HTTPAdapter
+from requests.adapters import Retry
+from requests.packages import urlparse
+
 
 from planex.link import Link
 from planex.cmd.args import common_base_parser, rpm_define_parser
@@ -35,28 +38,21 @@ SUPPORTED_EXT_TO_MIME = {
     '.patch': 'text/x-diff'
 }
 
-SUPPORTED_URL_SCHEMES = ["http", "https", "ftp"]
+SUPPORTED_URL_SCHEMES = ["http", "https"]
 
 
-def get_file(url_string, out_file):
-    """
-    Fetch the contents of url and store to file represented by out_file
-    """
-    useragent = "planex-fetch/%s" % pkg_resources.require("planex")[0].version
-
-    # We need this because centos ships requests 2.8.0
-    # It can be greatly simplified with requests >= 2.18.0
-    headers = requests.utils.default_headers()
-    headers.update({
-        "user-agent": useragent,
-    })
-
-    # Once we use requests >= 2.18.0, we should change this into
-    # with requests.get ... as r:
-    req = requests.get(url_string, headers=headers, timeout=30, stream=True)
-    req.raise_for_status()
-    with open(out_file, 'wb') as out:
-        shutil.copyfileobj(req.raw, out)
+def requests_retry_session(retries):
+    """Return a requests session that will try the download [retries] times"""
+    session = requests.Session()
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
 
 
 def best_effort_file_verify(path):
@@ -105,26 +101,33 @@ def fetch_http(url, filename, retries):
     Download the file at url and store it as filename
     """
 
-    while True:
-        retries -= 1
-        try:
-            url_string = urlparse.urlunparse(url)
-            logging.debug("Fetching %s to %s", url_string, filename)
+    url_string = urlparse.urlunparse(url)
+    logging.debug("Fetching %s to %s", url_string, filename)
 
-            tmp_filename = filename + "~"
-            with open(tmp_filename, "wb") as tmp_file:
-                get_file(url_string, tmp_file)
-                best_effort_file_verify(tmp_filename)
-                shutil.move(tmp_filename, filename)
-                # Write an origin file for tracking.
-                with open('{0}.origin'.format(filename), 'w') as origin_file:
-                    origin_file.write('{0}\n'.format(url_string))
-                return
+    useragent = "planex-fetch/%s" % pkg_resources.require("planex")[0].version
 
-        except requests.RequestException as exn:
-            logging.debug(exn.args[1])
-            if not retries > 0:
-                raise
+    # We need this because centos ships requests 2.8.0
+    # It can be greatly simplified with requests >= 2.18.0
+    headers = requests.utils.default_headers()
+    headers.update({
+        "user-agent": useragent,
+    })
+
+    # Once we use requests >= 2.18.0, we should change this into
+    # with requests.get ... as r:
+    req = requests_retry_session(retries).get(
+        url_string, headers=headers, timeout=30, stream=True)
+    req.raise_for_status()
+
+    tmp_filename = filename + "~"
+    with open(tmp_filename, 'wb') as out:
+        shutil.copyfileobj(req.raw, out)
+        best_effort_file_verify(tmp_filename)
+        shutil.move(tmp_filename, filename)
+
+    # Write an origin file for tracking.
+    with open('{0}.origin'.format(filename), 'w') as origin_file:
+        origin_file.write('{0}\n'.format(url_string))
 
 
 def fetch_url(url, source, retries):
