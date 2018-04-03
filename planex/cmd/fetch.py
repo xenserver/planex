@@ -124,8 +124,8 @@ def fetch_http(url, filename, retries):
     tmp_filename = filename + "~"
     with open(tmp_filename, 'wb') as out:
         shutil.copyfileobj(req.raw, out)
-        best_effort_file_verify(tmp_filename)
-        shutil.move(tmp_filename, filename)
+    best_effort_file_verify(tmp_filename)
+    shutil.move(tmp_filename, filename)
 
     # Write an origin file for tracking.
     with open('{0}.origin'.format(filename), 'w') as origin_file:
