@@ -7,7 +7,6 @@ import logging
 import os
 import shutil
 import sys
-import tempfile
 
 import argcomplete
 import git
@@ -122,10 +121,9 @@ def fetch_http(url, filename, retries):
         url_string, headers=headers, timeout=30, stream=True)
     req.raise_for_status()
 
-    with tempfile.NamedTemporaryFile(delete=False) as out:
+    with open(filename, 'wb') as out:
         shutil.copyfileobj(req.raw, out)
-    best_effort_file_verify(out.name)
-    shutil.move(out.name, filename)
+    best_effort_file_verify(filename)
 
     # Write an origin file for tracking.
     with open('{0}.origin'.format(filename), 'w') as origin_file:
