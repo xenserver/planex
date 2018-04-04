@@ -57,6 +57,11 @@ def requests_retry_session(retries):
     return session
 
 
+class FetchVerifyError(Exception):
+    """Exception thrown by the best_effort_file_verify function"""
+    pass
+
+
 def best_effort_file_verify(path):
     """
     Given a path, check if the file at that path has a sensible format.
@@ -72,8 +77,9 @@ def best_effort_file_verify(path):
         _, _, mime_type = stdout.partition(': ')
 
         if SUPPORTED_EXT_TO_MIME[ext] != mime_type:
-            sys.exit("%s: Fetched file format looks incorrect: %s: %s" %
-                     (sys.argv[0], path, mime_type))
+            raise FetchVerifyError(
+                "%s: Fetched file format looks incorrect: %s: %s" %
+                (sys.argv[0], path, mime_type))
 
 
 def parse_args_or_exit(argv=None):
@@ -144,6 +150,10 @@ def fetch_url(url, source, retries):
         # IO error saving source file
         sys.exit("%s: %s: %s" %
                  (sys.argv[0], exn.strerror, exn.filename))
+
+    except FetchVerifyError as exn:
+        # MIME type mismatch
+        sys.exit(exn.message)
 
 
 def fetch_source(args):
