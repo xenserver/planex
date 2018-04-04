@@ -286,6 +286,11 @@ def _parse_name(name):
     return int(idx)
 
 
+class InvalidSchemaVersion(KeyError):
+    """Error raised if the schemaVersion field in the pins is not supported"""
+    pass
+
+
 def load(specpath, link=None, check_package_name=True, defines=None):
     """
     Load the spec file at specpath and apply link if provided.
@@ -302,7 +307,16 @@ def load(specpath, link=None, check_package_name=True, defines=None):
             if link.patchqueue:
                 spec.add_patchqueue(0, link.url, link.path,
                                     link.patchqueue)
-        elif link.schema_version >= 2:
+        elif link.schema_version == 2:
+            for name, value in link.patch_sources.items():
+                idx = _parse_name(name)
+                spec.add_archive(name, value["URL"], link.path,
+                                 value["patches"])
+            for name, value in link.patchqueue_sources.items():
+                idx = _parse_name(name)
+                spec.add_patchqueue(idx, value["URL"], link.path,
+                                    value["patchqueue"])
+        elif link.schema_version == 3:
             for name, value in link.sources.items():
                 idx = _parse_name(name)
                 if value["URL"].startswith("ssh://"):
