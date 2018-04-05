@@ -291,6 +291,41 @@ class InvalidSchemaVersion(KeyError):
     pass
 
 
+def update_with_schema_version_2(spec, link):
+    """Update spec with a schemaVersion 2 link"""
+    for name, value in link.patch_sources.items():
+        idx = _parse_name(name)
+        spec.add_archive(name, value["URL"], link.path,
+                         value["patches"])
+
+    for name, value in link.patchqueue_sources.items():
+        idx = _parse_name(name)
+        spec.add_patchqueue(idx, value["URL"], link.path,
+                            value["patchqueue"])
+
+
+def update_with_schema_version_3(spec, link):
+    """Update spec with a schemaVersion 3 link"""
+    for name, value in link.sources.items():
+        idx = _parse_name(name)
+        if value["URL"].startswith("ssh://"):
+            spec.add_gitarchive(idx, value["URL"],
+                                link.path, value.get("prefix"),
+                                value.get("commitish"))
+        else:
+            spec.add_source(idx, value["URL"], link.path)
+
+    for name, value in link.patch_sources.items():
+        idx = _parse_name(name)
+        spec.add_archive(idx, value["URL"], link.path,
+                         value["patches"])
+
+    for name, value in link.patchqueue_sources.items():
+        idx = _parse_name(name)
+        spec.add_patchqueue(idx, value["URL"], link.path,
+                            value["patchqueue"])
+
+
 def load(specpath, link=None, check_package_name=True, defines=None):
     """
     Load the spec file at specpath and apply link if provided.
@@ -298,33 +333,16 @@ def load(specpath, link=None, check_package_name=True, defines=None):
 
     spec = Spec(specpath, check_package_name=check_package_name,
                 defines=defines)
-    if link:
-        if link.schema_version == 2:
-            for name, value in link.patch_sources.items():
-                idx = _parse_name(name)
-                spec.add_archive(name, value["URL"], link.path,
-                                 value["patches"])
-            for name, value in link.patchqueue_sources.items():
-                idx = _parse_name(name)
-                spec.add_patchqueue(idx, value["URL"], link.path,
-                                    value["patchqueue"])
-        elif link.schema_version == 3:
-            for name, value in link.sources.items():
-                idx = _parse_name(name)
-                if value["URL"].startswith("ssh://"):
-                    spec.add_gitarchive(idx, value["URL"],
-                                        link.path, value.get("prefix"),
-                                        value.get("commitish"))
-                else:
-                    spec.add_source(idx, value["URL"], link.path)
-            for name, value in link.patch_sources.items():
-                idx = _parse_name(name)
-                spec.add_archive(idx, value["URL"], link.path,
-                                 value["patches"])
-            for name, value in link.patchqueue_sources.items():
-                idx = _parse_name(name)
-                spec.add_patchqueue(idx, value["URL"], link.path,
-                                    value["patchqueue"])
+
+    if link is None:
+        return spec
+
+    if link.schema_version == 2:
+        update_with_schema_version_2(spec, link)
+    elif link.schema_version == 3:
+        update_with_schema_version_3(spec, link)
+    else:
+        raise InvalidSchemaVersion(link.schema_version)
 
     return spec
 
