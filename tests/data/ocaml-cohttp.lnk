@@ -1,5 +1,5 @@
 {
-    "SchemaVersion": "2",
+    "SchemaVersion": "3",
     "Source1":
     {
         "URL": "tests/data/ocaml-cohttp-init"
