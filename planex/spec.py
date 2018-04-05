@@ -299,15 +299,7 @@ def load(specpath, link=None, check_package_name=True, defines=None):
     spec = Spec(specpath, check_package_name=check_package_name,
                 defines=defines)
     if link:
-        if link.schema_version == 1:
-            if link.sources:
-                spec.add_archive(0, link.url, link.path, link.sources)
-            if link.patches:
-                spec.add_archive(1, link.url, link.path, link.patches)
-            if link.patchqueue:
-                spec.add_patchqueue(0, link.url, link.path,
-                                    link.patchqueue)
-        elif link.schema_version == 2:
+        if link.schema_version == 2:
             for name, value in link.patch_sources.items():
                 idx = _parse_name(name)
                 spec.add_archive(name, value["URL"], link.path,
