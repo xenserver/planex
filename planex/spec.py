@@ -621,10 +621,16 @@ class Spec(object):
             for (idx, sources) in enumerate(collection_batches)
         ]
 
+        nonempty_batches = [
+            (resource, collection)
+            for (resource, collection) in zip(resources, filtered_batches)
+            if collection
+        ]
+
         pending = set(sources)
-        for (resource, collection) in zip(resources, filtered_batches):
-            resource.extract_sources(collection, destdir)
-            pending -= set(collection)
+        for (resource, collection) in nonempty_batches:
+                resource.extract_sources(collection, destdir)
+                pending -= set(collection)
 
         if pending != set():
             raise KeyError(pending)
