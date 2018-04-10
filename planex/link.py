@@ -28,6 +28,11 @@ class Link(object):
         return int(self.link.get('SchemaVersion', 1))
 
     @property
+    def ignore_autosetup(self):
+        """Return the ignore autosetup value"""
+        return bool(self.link.get('IgnoreAutosetup', False))
+
+    @property
     def linkpath(self):
         """Return the path to the link file"""
         return self.path
