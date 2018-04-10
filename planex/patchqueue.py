@@ -42,15 +42,14 @@ class Patchqueue(object):
         """
         Extract source from the patchqueue, saving it to dest
         """
-        self.tarball.extract(source, dest)
+        self.tarball.extract((source,), dest)
 
     def extract_all(self, destdir):
         """
         Extract all patches from the patchqueue, saving to destdir
         """
         # Extract all patches into the tmpdir
-        for patch in self.series():
-            self.extract(patch, destdir)
+        self.tarball.extract(self.series(), destdir)
 
 
 def parse_patchseries(series, guard=None):
