@@ -348,6 +348,9 @@ def update_with_schema_version_2(spec, link):
 
 def update_with_schema_version_3(spec, link):
     """Update spec with a schemaVersion 3 link"""
+    if link.ignore_autosetup:
+        spec.disable_autosetup()
+
     for name, value in link.sources.items():
         idx = _parse_name(name)
         if value["URL"].startswith("ssh://"):
@@ -400,6 +403,7 @@ class Spec(object):
         self._patches = {}
         self._archives = {}
         self._patchqueues = {}
+        self._ignore_autosetup = False
 
         # _topdir defaults to $HOME/rpmbuild
         # If present, it needs to be applied once at the beginning
@@ -448,7 +452,8 @@ class Spec(object):
             return self.spectext
 
         # If there are patches, make sure we use autosetup or autopatch
-        if self._patchqueues:
+        if not self._ignore_autosetup and (
+                self._patchqueues or self._patches):
             planex.patchqueue.check_spec_supports_patchqueues(self)
 
         def is_source_or_patch_line(line):
@@ -502,6 +507,13 @@ class Spec(object):
             sources, patches, further_patches, ("\n", ),
             newspec_filtered_body)
         return "".join(newspec)
+
+    def disable_autosetup(self):
+        """
+        Disable the autosetup/autopatch check otherwise performed when
+        patches or patchqueues are present
+        """
+        self._ignore_autosetup = True
 
     def provides(self):
         """Return a list of package names provided by this spec"""
