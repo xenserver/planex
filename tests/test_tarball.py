@@ -59,7 +59,7 @@ class BasicTests(unittest.TestCase):
 
     def test_extract(self):
         """Members can be extracted to the filesystem"""
-        self.tarball.extract("SOURCES/test1.source", self.tmpdir)
+        self.tarball.extract(("SOURCES/test1.source",), self.tmpdir)
         with open(os.path.join(self.tmpdir, "test1.source")) as output:
             expected = ["test1.source contents\n"]
             actual = output.readlines()
@@ -68,8 +68,20 @@ class BasicTests(unittest.TestCase):
     def test_extract_prefix(self):
         """Members under prefix can be extracted to the filesystem"""
         self.tarball.prefix = "SOURCES"
-        self.tarball.extract("test1.source", self.tmpdir)
+        self.tarball.extract(("test1.source",), self.tmpdir)
         with open(os.path.join(self.tmpdir, "test1.source")) as output:
             expected = ["test1.source contents\n"]
             actual = output.readlines()
         self.assertItemsEqual(expected, actual)
+
+    def test_extract_multiple(self):
+        """Members under prefix can be extracted to the filesystem"""
+        self.tarball.prefix = "SOURCES"
+        sources = ("test1.source", "test2.source")
+        self.tarball.extract(sources, self.tmpdir)
+        for source in sources:
+            self.assertEqual(
+                os.path.isfile(os.path.join(self.tmpdir, source)),
+                True,
+                msg="{} not found in {}".format(source, self.tmpdir)
+            )
