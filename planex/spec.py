@@ -272,7 +272,7 @@ class Archive(Blob):
         # and writes it to the destination.
         with Tarball(self.path) as tarball:
             target_path = os.path.normpath(os.path.join(self.prefix, name))
-            tarball.extract(target_path, destdir)
+            tarball.extract((target_path,), destdir)
 
     def extract_sources(self, names, destdir):
         """
@@ -280,9 +280,11 @@ class Archive(Blob):
         for the first requested source that cannot be found.
         """
         with Tarball(self.path) as tarball:
-            for name in names:
-                target_path = os.path.normpath(os.path.join(self.prefix, name))
-                tarball.extract(target_path, destdir)
+            target_paths = [
+                os.path.normpath(os.path.join(self.prefix, name))
+                for name in names
+            ]
+            tarball.extract(target_paths, destdir)
 
 
 class Patchqueue(Archive):
