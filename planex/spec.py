@@ -600,14 +600,31 @@ class Spec(object):
         Extract source 'name' to destdir.   Raises KeyError if the
         requested source cannot be found.
         """
+        # below we rely in an essential way on the fact that
+        # resources are sorted
+
         resources = [resource for resource in self.resources()
                      if resource.is_fetchable]
 
+        collection_batches = [
+            [source for source in sources if source in resource]
+            for resource in resources
+        ]
+
+        filtered_batches = [
+            [
+                source for source in sources
+                # make sure that nothing later on is fetching the same source
+                if not any(source in collection
+                           for collection in collection_batches[idx+1:])
+            ]
+            for (idx, sources) in enumerate(collection_batches)
+        ]
+
         pending = set(sources)
-        for resource in resources:
-            collectible = [source for source in sources if source in resource]
-            resource.extract_sources(collectible, destdir)
-            pending -= set(collectible)
+        for (resource, collection) in zip(resources, filtered_batches):
+            resource.extract_sources(collection, destdir)
+            pending -= set(collection)
 
         if pending != set():
             raise KeyError(pending)
