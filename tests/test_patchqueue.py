@@ -64,20 +64,28 @@ class BasicTests(unittest.TestCase):
         self.assertIn("Patch1: second.patch\n", rewritten)
         self.assertIn("Patch0: third.patch\n", rewritten)
 
-    # def test_autosetup_present(self):
-    #     """Patchqueue application succeeds if %autosetup is present"""
-    #     spec = Spec("tests/data/manifest/branding-xenserver.spec",
-    #                 check_package_name=False)
-    #     spec.add_patch(0, "first.patch", "dummy")
-    #     rewritten = spec.rewrite_spec()
-    #     self.assertIn("Patch0: first.patch\n", rewritten)
+    def test_autosetup_present(self):
+        """Patchqueue application succeeds if %autosetup is present"""
+        spec = Spec("tests/data/manifest/branding-xenserver.spec",
+                    check_package_name=False)
+        spec.add_patch(0, "first.patch", "dummy")
+        rewritten = spec.rewrite_spec()
+        self.assertIn("Patch0: first.patch\n", rewritten)
 
-    # def test_autosetup_missing(self):
-    #     """Patchqueue application fails if %autosetup is not present"""
-    #     spec = Spec("tests/data/ocaml-uri.spec", check_package_name=False)
-    #     spec.add_patch(0, "first.patch", "dummy")
-    #     with self.assertRaises(planex.patchqueue.SpecMissingAutosetup):
-    #         spec.rewrite_spec()
+    def test_autosetup_missing(self):
+        """Patchqueue application fails if %autosetup is not present"""
+        spec = Spec("tests/data/ocaml-uri.spec", check_package_name=False)
+        spec.add_patch(0, "first.patch", "dummy")
+        with self.assertRaises(planex.patchqueue.SpecMissingAutosetup):
+            spec.rewrite_spec()
+
+    def test_autosetup_disabled(self):
+        """Patchqueue application fails if %autosetup is not present"""
+        spec = Spec("tests/data/ocaml-uri.spec", check_package_name=False)
+        spec.add_patch(0, "first.patch", "dummy")
+        spec.disable_autosetup()
+        rewritten = spec.rewrite_spec()
+        self.assertIn("Patch0: first.patch\n", rewritten)
 
 
 # Mercurial's guard logic is documented in:
