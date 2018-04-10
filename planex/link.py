@@ -30,7 +30,10 @@ class Link(object):
     @property
     def ignore_autosetup(self):
         """Return the ignore autosetup value"""
-        return bool(self.link.get('IgnoreAutosetup', False))
+        ignore_autosetup = self.link.get('IgnoreAutosetup', False)
+        if not isinstance(ignore_autosetup, bool):
+            raise ValueError(ignore_autosetup)
+        return ignore_autosetup
 
     @property
     def linkpath(self):
