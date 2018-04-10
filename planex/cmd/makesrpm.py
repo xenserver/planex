@@ -128,9 +128,12 @@ def populate_working_directory(tmpdir, spec):
 
     sources = [os.path.basename(source[0]) for source in spec.sources()]
     try:
-        spec.extract_sources(sources, tmpdir)
+        skipped = spec.extract_sources(sources, tmpdir)
     except KeyError as err:
         print("Could not find a source for {}".format(err))
+
+    if skipped:
+        print("The following archives have been ignored: {}".format(skipped))
 
     newspec = os.path.join(tmpdir, os.path.basename(spec.specpath()))
     manifests = {}
