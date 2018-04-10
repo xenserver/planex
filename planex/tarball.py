@@ -44,17 +44,23 @@ class Tarball(object):
         source_path = os.path.join(self.archive_root, self.prefix, source)
         return self.tarfile.extractfile(source_path)
 
-    def extract(self, source, destdir):
+    def extract(self, sources, destdir):
         """
-        Extract a file from the tarball, saving it to destdir.
+        Extract the files listed in [sources] from the tarball,
+        saving them to destdir.
         """
         # Get the TarInfo object representing the file and re-set its
         # name.   Otherwise the file will be written to its full path.
-        source_path = os.path.join(self.archive_root, self.prefix, source)
-        mem = self.tarfile.getmember(source_path)
-        mem.name = os.path.basename(mem.name)
-        self.tarfile.extract(mem, destdir)
-        os.utime(os.path.join(destdir, mem.name), None)
+        if not sources:
+            raise ValueError("Empty source list")
+
+        source_paths = [os.path.join(self.archive_root, self.prefix, source) for source in sources]
+        mems = [self.tarfile.getmember(source_path) for source_path in source_paths]
+        for mem in mems:
+            mem.name = os.path.basename(mem.name)
+        self.tarfile.extractall(path=destdir, members=mems)
+        for mem in mems:
+            os.utime(os.path.join(destdir, mem.name), None)
 
 
 def archive_root(tar):
