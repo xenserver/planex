@@ -127,11 +127,10 @@ def populate_working_directory(tmpdir, spec):
     """
 
     sources = [os.path.basename(source[0]) for source in spec.sources()]
-    for source in sources:
-        try:
-            spec.extract_source(source, tmpdir)
-        except KeyError:
-            print("Could not find a source for %s" % source)
+    try:
+        spec.extract_sources(sources, tmpdir)
+    except KeyError as err:
+        print("Could not find a source for {}".format(err))
 
     newspec = os.path.join(tmpdir, os.path.basename(spec.specpath()))
     manifests = {}
