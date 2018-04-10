@@ -1,7 +1,7 @@
 Summary: RPM build tool
 Name: planex
-Version: 3.1.0
-Release: 1%{?dist}
+Version: 4.0.0
+Release: beta1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
 License: LGPLv2.1
@@ -54,6 +54,32 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Tue Apr 10 2018 Marcello Seri <marcello.seri@citrix.com> - 4.0.0-beta1
+- add support for the boolean IgnoreAutosetup in links
+- do not extract the same resource multiple times
+- add bulk extraction for tarball-type sources
+- update links to schemaVersion 3
+- drop support for schemaVersion=1
+- fetch: do not use an intermediate temporary fetch file
+- fetch: mitigate race condition when fetching to a temp file
+- port code from pycurl to requests
+- README: Add a section on design principles
+- README: High level overview of links and pins
+- README: Add a section on spec files and spec repository structure
+- improve look of rewritten spec files
+- spec.py: Expand macros in links when loading
+- do a proper specfile rewrite when creating srpms
+- make links replace source/patch/patchqueue fields in the spec file
+- follow specfile sourcename semantics when parsing links
+- fetch: Take spec file and an optional link as arguments
+- spec: Rename File and GitArchive to Blob and GitBlob
+- fetch: Add support for generating archives from local Git repositories
+- spec: Expand patchqueues
+- spec: Add extract_source() methods to spec and resource classes
+- spec: Add a separate list of resources, with methods to add to it
+- spec: Add decorator to expand RPM macros in strings
+- overall code cleanups and refactorings
+
 * Tue Mar 20 2018 Euan Harris <euan.harris@citrix.com> - 3.1.0-1
 - planex-makesrpm: Search for source files in patch archives
 
