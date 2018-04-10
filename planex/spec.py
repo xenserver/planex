@@ -111,6 +111,9 @@ class Blob(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
+    def __contains__(self, name):
+        return os.path.basename(name) == os.path.basename(self.path)
+
     @property
     def spec(self):
         """Return the spec which contains this resource"""
@@ -164,10 +167,18 @@ class Blob(object):
         """
         # For a file, extract_source copies the whole file to the
         # destination without unpacking it.
-        if os.path.basename(name) != os.path.basename(self.path):
+        if name not in self:
             raise KeyError(name)
         shutil.copyfile(self.path,
                         os.path.join(destdir, os.path.basename(name)))
+
+    def extract_sources(self, names, destdir):
+        """
+        Extract all the source [names] to [destdir].   Raises [KeyError]
+        for the first requested source that cannot be found.
+        """
+        for name in names:
+            self.extract_source(name, destdir)
 
     @property
     def force_rebuild(self):
@@ -221,6 +232,16 @@ class Archive(Blob):
         with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
             super(Archive, self).__init__(spec, url, defined_by)
             self._prefix = rpm.expandMacro(prefix)
+        self._names = None
+
+    def __contains__(self, name):
+        # the extraction of the names is delayed as we may not yet
+        # have downloaded the Archive at the time of creating the
+        # object
+        if self._names is None:
+            with Tarball(self.path) as tarball:
+                self._names = [os.path.basename(n) for n in tarball.getnames()]
+        return name in self._names
 
     @property
     @expandmacros
@@ -253,14 +274,33 @@ class Archive(Blob):
             target_path = os.path.normpath(os.path.join(self.prefix, name))
             tarball.extract(target_path, destdir)
 
+    def extract_sources(self, names, destdir):
+        """
+        Extract all the source [names] to [destdir].   Raises [KeyError]
+        for the first requested source that cannot be found.
+        """
+        with Tarball(self.path) as tarball:
+            for name in names:
+                target_path = os.path.normpath(os.path.join(self.prefix, name))
+                tarball.extract(target_path, destdir)
+
 
 class Patchqueue(Archive):
     """A patchqueue archive which will be unpacked into the SRPM"""
 
+    def __contains__(self, patch):
+        # As for the Archive class, this should never be called
+        # before the archive has been fetched
+        return patch in self.series()
+
     def series(self):
         """Return the contents of the patchqueue's series file"""
-        with planex.patchqueue.Patchqueue(self.path, self.prefix) as queue:
-            return queue.series()
+        # we cache the extraction of the series to speet up the
+        # self.__contains__ method
+        if self._names is None:
+            with planex.patchqueue.Patchqueue(self.path, self.prefix) as queue:
+                self._names = queue.series()
+        return self._names
 
 
 def _parse_name(name):
@@ -553,21 +593,22 @@ class Spec(object):
 
         raise KeyError(target_basename)
 
-    def extract_source(self, source, destdir):
+    def extract_sources(self, sources, destdir):
         """
         Extract source 'name' to destdir.   Raises KeyError if the
         requested source cannot be found.
         """
         resources = [resource for resource in self.resources()
                      if resource.is_fetchable]
+
+        pending = set(sources)
         for resource in resources:
-            try:
-                resource.extract_source(source, destdir)
-                print("Extracted %s from %s" % (source, resource.basename))
-                return
-            except KeyError:
-                pass
-        raise KeyError(source)
+            collectible = [source for source in sources if source in resource]
+            resource.extract_sources(collectible, destdir)
+            pending -= set(collectible)
+
+        if pending != set():
+            raise KeyError(pending)
 
     def sources(self):
         """List all sources defined in the spec file"""
