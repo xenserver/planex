@@ -8,6 +8,7 @@ import tarfile
 
 class Tarball(object):
     """Represents a source archive tarball"""
+
     def __init__(self, filename=None, fileobj=None, prefix=""):
         self.filename = filename
         self.tarfile = tarfile.open(name=filename, fileobj=fileobj)
@@ -54,8 +55,14 @@ class Tarball(object):
         if not sources:
             raise ValueError("Empty source list")
 
-        source_paths = [os.path.join(self.archive_root, self.prefix, source) for source in sources]
-        mems = [self.tarfile.getmember(source_path) for source_path in source_paths]
+        source_paths = [
+            os.path.join(self.archive_root, self.prefix, source)
+            for source in sources
+        ]
+        mems = [
+            self.tarfile.getmember(source_path)
+            for source_path in source_paths
+        ]
         for mem in mems:
             mem.name = os.path.basename(mem.name)
         self.tarfile.extractall(path=destdir, members=mems)
