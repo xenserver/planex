@@ -597,8 +597,8 @@ class Spec(object):
 
     def extract_sources(self, sources, destdir):
         """
-        Extract source 'name' to destdir.   Raises KeyError if the
-        requested source cannot be found.
+        Extract source 'name' to destdir.   Returns a list of skipped
+        archives.   Raises KeyError if the requested source cannot be found.
         """
         # below we rely in an essential way on the fact that
         # resources are sorted
@@ -621,19 +621,19 @@ class Spec(object):
             for (idx, sources) in enumerate(collection_batches)
         ]
 
-        nonempty_batches = [
-            (resource, collection)
-            for (resource, collection) in zip(resources, filtered_batches)
-            if collection
-        ]
-
         pending = set(sources)
-        for (resource, collection) in nonempty_batches:
-                resource.extract_sources(collection, destdir)
-                pending -= set(collection)
+        skipped = []
+        for (resource, collection) in zip(resources, filtered_batches):
+            if not collection:
+                skipped.append(resource.basename)
+                continue
+            resource.extract_sources(collection, destdir)
+            pending -= set(collection)
 
         if pending != set():
             raise KeyError(pending)
+
+        return skipped
 
     def sources(self):
         """List all sources defined in the spec file"""
