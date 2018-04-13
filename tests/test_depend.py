@@ -12,6 +12,7 @@ import planex.cmd.depend
 
 class BasicTests(unittest.TestCase):
     """Basic dependency generation tests"""
+
     def setUp(self):
         rpm_defines = [("dist", ".el6"),
                        ("_topdir", "_build"),
@@ -65,21 +66,24 @@ class BasicTests(unittest.TestCase):
         specs = [planex.spec.Spec(spec_path, defines=[('dist', '.el6')])
                  for spec_path in spec_paths]
 
-        # This should be a library method which doesn't write to stdout
-        planex.cmd.depend.buildrequires_for_rpm(
+        rpmpath, rpmdeps = planex.cmd.depend.buildrequires_for_rpm(
             self.spec, planex.cmd.depend.package_to_rpm_map(specs))
 
         # pylint: disable=E1101
         self.assertEqual(
-            sys.stdout.getvalue(),
-            "_build/RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
-            "_build/RPMS/x86_64/ocaml-uri-devel-1.6.0-1.el6.x86_64.rpm\n"
-            "_build/RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
-            "_build/RPMS/x86_64/ocaml-cstruct-devel-1.4.0-1.el6.x86_64.rpm\n")
+            rpmpath,
+            "_build/RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm")
+        self.assertEqual(
+            rpmdeps,
+            [
+                "_build/RPMS/x86_64/ocaml-cstruct-devel-1.4.0-1.el6.x86_64.rpm",
+                "_build/RPMS/x86_64/ocaml-uri-devel-1.6.0-1.el6.x86_64.rpm"
+            ])
 
 
 class LinkTests(unittest.TestCase):
     """Dependency generation tests with links"""
+
     def setUp(self):
         rpm_defines = [("dist", ".el6"),
                        ("_topdir", "_build"),
@@ -160,14 +164,16 @@ class LinkTests(unittest.TestCase):
         specs = [planex.spec.Spec(spec_path, defines=[('dist', '.el6')])
                  for spec_path in spec_paths]
 
-        # This should be a library method which doesn't write to stdout
-        planex.cmd.depend.buildrequires_for_rpm(
+        rpmpath, rpmdeps = planex.cmd.depend.buildrequires_for_rpm(
             self.spec, planex.cmd.depend.package_to_rpm_map(specs))
 
         # pylint: disable=E1101
         self.assertEqual(
-            sys.stdout.getvalue(),
-            "_build/RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
-            "_build/RPMS/x86_64/ocaml-uri-devel-1.6.0-1.el6.x86_64.rpm\n"
-            "_build/RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm: "
-            "_build/RPMS/x86_64/ocaml-cstruct-devel-1.4.0-1.el6.x86_64.rpm\n")
+            rpmpath,
+            "_build/RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm")
+        self.assertEqual(
+            rpmdeps,
+            [
+                "_build/RPMS/x86_64/ocaml-cstruct-devel-1.4.0-1.el6.x86_64.rpm",
+                "_build/RPMS/x86_64/ocaml-uri-devel-1.6.0-1.el6.x86_64.rpm"
+            ])
