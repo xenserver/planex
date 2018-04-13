@@ -103,24 +103,33 @@ def package_to_rpm_map(specs):
 def buildrequires_for_rpm(spec, provides_to_rpm):
     """
     Generate build dependency rules between binary RPMs.
-    Returns a tuple with the rpm path and the list of
-    its buildrequires.
+    Returns a tuple with the rpm path, the list of
+    its buildrequires and the list of its requires.
     """
     rpmpath = spec.binary_package_paths()[-1]
     # Package's Requires must exist for it to be installed as a
     # BuildRequire of a later package, so we make it depend on
     # Requires as well as BuildRequires to ensure they are built.
-    buildreqs = (spec.buildrequires() | spec.requires()) - spec.provides()
-    buildreqrpms = set()
+    buildreqs = spec.buildrequires() - spec.provides()
+    buildreqsrpm = set()
     for buildreq in buildreqs:
         # Some buildrequires come from the system repository
         if buildreq in provides_to_rpm:
             buildreqrpm = provides_to_rpm[buildreq]
-            buildreqrpms.add(buildreqrpm)
+            buildreqsrpm.add(buildreqrpm)
+
+    reqs = spec.requires() - spec.provides()
+    reqsrpm = set()
+    for req in reqs:
+        # Some buildrequires come from the system repository
+        if req in provides_to_rpm:
+            reqrpm = provides_to_rpm[req]
+            reqsrpm.add(reqrpm)
+
     # remove duplicates from the build requires. They appear as we list
     # only the first binary rpm target, so multiple different requires
     # are appearing multiple times
-    return rpmpath, list(buildreqrpms)
+    return rpmpath, list(buildreqsrpm), list(reqsrpm - buildreqsrpm)
 
 
 def parse_args_or_exit(argv=None):
@@ -139,6 +148,10 @@ def parse_args_or_exit(argv=None):
         "--no-buildrequires", dest="buildrequires",
         action="store_false", default=True,
         help="Don't generate dependency rules for BuildRequires")
+    parser.add_argument(
+        "--no-requires", dest="requires",
+        action="store_false", default=True,
+        help="Don't generate dependency rules for Requires")
     parser.add_argument(
         "--json", action="store_true",
         help="Output the dependency rules as a json object"
@@ -182,10 +195,16 @@ def print_makefile_rules(args, allspecs, specs, provides_to_rpm):
         create_manifest_deps(spec)
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
+
+        if args.requires or args.buildrequires:
+            rpmpath, buildreqs, reqs = buildrequires_for_rpm(
+                spec, provides_to_rpm)
         if args.buildrequires:
-            rpmpath, buildreqs = buildrequires_for_rpm(spec, provides_to_rpm)
             for buildreq in buildreqs:
                 print("%s: %s" % (rpmpath, buildreq))
+        if args.requires:
+            for req in reqs:
+                print("%s: %s" % (rpmpath, req))
         print()
 
     # Generate targets to build all srpms and all rpms
@@ -210,11 +229,13 @@ def print_to_json(specs, provides_to_rpm):
     """
     deps = {}
     for spec in specs.itervalues():
-        rpmpath, buildreqs = buildrequires_for_rpm(spec, provides_to_rpm)
+        rpmpath, buildreqs, reqs = buildrequires_for_rpm(spec, provides_to_rpm)
         brs = {
-            os.path.basename(rpmpath): [
-                os.path.basename(buildreq) for buildreq in buildreqs
-            ]
+            os.path.basename(rpmpath): {
+                "build_requires": [
+                    os.path.basename(buildreq) for buildreq in buildreqs],
+                "requires": [os.path.basename(req) for req in reqs]
+            }
         }
         deps.update(brs)
     print(json.dumps(dict(deps), indent=2))
