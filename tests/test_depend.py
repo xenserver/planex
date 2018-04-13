@@ -66,7 +66,7 @@ class BasicTests(unittest.TestCase):
         specs = [planex.spec.Spec(spec_path, defines=[('dist', '.el6')])
                  for spec_path in spec_paths]
 
-        rpmpath, rpmdeps = planex.cmd.depend.buildrequires_for_rpm(
+        rpmpath, rpmdeps, _ = planex.cmd.depend.buildrequires_for_rpm(
             self.spec, planex.cmd.depend.package_to_rpm_map(specs))
 
         # pylint: disable=E1101
@@ -162,7 +162,7 @@ class LinkTests(unittest.TestCase):
         specs = [planex.spec.Spec(spec_path, defines=[('dist', '.el6')])
                  for spec_path in spec_paths]
 
-        rpmpath, rpmdeps = planex.cmd.depend.buildrequires_for_rpm(
+        rpmpath, rpmdeps, _ = planex.cmd.depend.buildrequires_for_rpm(
             self.spec, planex.cmd.depend.package_to_rpm_map(specs))
 
         # pylint: disable=E1101
