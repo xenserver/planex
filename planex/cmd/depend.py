@@ -238,8 +238,7 @@ def main(argv=None):
                  for path in allspecs
                  if path.endswith(".spec")}
     except SpecNameMismatch as exn:
-        sys.stderr.write("error: %s\n" % exn.message)
-        sys.exit(1)
+        sys.exit("error: %s\n" % exn.message)
 
     provides_to_rpm = package_to_rpm_map(specs.values())
 
