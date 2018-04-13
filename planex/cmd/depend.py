@@ -4,6 +4,7 @@ planex-depend: Generate Makefile-format dependencies from spec files
 from __future__ import print_function
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -138,6 +139,10 @@ def parse_args_or_exit(argv=None):
         "--no-buildrequires", dest="buildrequires",
         action="store_false", default=True,
         help="Don't generate dependency rules for BuildRequires")
+    parser.add_argument(
+        "--json", action="store_true",
+        help="Output the dependency rules as a json object"
+    )
     argcomplete.autocomplete(parser)
     return parser.parse_args(argv)
 
@@ -199,6 +204,22 @@ def print_makefile_rules(args, allspecs, specs, provides_to_rpm):
     print("SRPMS := " + " \\\n\t".join(all_srpms))
 
 
+def print_to_json(specs, provides_to_rpm):
+    """
+    Print the dependency graph as json to stdout.
+    """
+    deps = {}
+    for spec in specs.itervalues():
+        rpmpath, buildreqs = buildrequires_for_rpm(spec, provides_to_rpm)
+        brs = {
+            os.path.basename(rpmpath): [
+                os.path.basename(buildreq) for buildreq in buildreqs
+            ]
+        }
+        deps.update(brs)
+    print(json.dumps(dict(deps), indent=2))
+
+
 def main(argv=None):
     """
     Entry point
@@ -221,4 +242,8 @@ def main(argv=None):
         sys.exit(1)
 
     provides_to_rpm = package_to_rpm_map(specs.values())
-    print_makefile_rules(args, allspecs, specs, provides_to_rpm)
+
+    if not args.json:
+        print_makefile_rules(args, allspecs, specs, provides_to_rpm)
+    else:
+        print_to_json(specs, provides_to_rpm)
