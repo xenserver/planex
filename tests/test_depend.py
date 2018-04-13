@@ -75,10 +75,8 @@ class BasicTests(unittest.TestCase):
             "_build/RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm")
         self.assertEqual(
             rpmdeps,
-            [
-                "_build/RPMS/x86_64/ocaml-cstruct-devel-1.4.0-1.el6.x86_64.rpm",
-                "_build/RPMS/x86_64/ocaml-uri-devel-1.6.0-1.el6.x86_64.rpm"
-            ])
+            ["_build/RPMS/x86_64/ocaml-cstruct-devel-1.4.0-1.el6.x86_64.rpm",
+             "_build/RPMS/x86_64/ocaml-uri-devel-1.6.0-1.el6.x86_64.rpm"])
 
 
 class LinkTests(unittest.TestCase):
@@ -173,7 +171,5 @@ class LinkTests(unittest.TestCase):
             "_build/RPMS/x86_64/ocaml-cohttp-devel-0.9.8-1.el6.x86_64.rpm")
         self.assertEqual(
             rpmdeps,
-            [
-                "_build/RPMS/x86_64/ocaml-cstruct-devel-1.4.0-1.el6.x86_64.rpm",
-                "_build/RPMS/x86_64/ocaml-uri-devel-1.6.0-1.el6.x86_64.rpm"
-            ])
+            ["_build/RPMS/x86_64/ocaml-cstruct-devel-1.4.0-1.el6.x86_64.rpm",
+             "_build/RPMS/x86_64/ocaml-uri-devel-1.6.0-1.el6.x86_64.rpm"])
