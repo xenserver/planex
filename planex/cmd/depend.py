@@ -101,18 +101,25 @@ def package_to_rpm_map(specs):
 
 def buildrequires_for_rpm(spec, provides_to_rpm):
     """
-    Generate build dependency rules between binary RPMs
+    Generate build dependency rules between binary RPMs.
+    Returns a tuple with the rpm path and the list of
+    its buildrequires.
     """
     rpmpath = spec.binary_package_paths()[-1]
     # Package's Requires must exist for it to be installed as a
     # BuildRequire of a later package, so we make it depend on
     # Requires as well as BuildRequires to ensure they are built.
     buildreqs = (spec.buildrequires() | spec.requires()) - spec.provides()
+    buildreqrpms = []
     for buildreq in buildreqs:
         # Some buildrequires come from the system repository
         if buildreq in provides_to_rpm:
             buildreqrpm = provides_to_rpm[buildreq]
-            print("%s: %s" % (rpmpath, buildreqrpm))
+            buildreqrpms.append(buildreqrpm)
+    # remove duplicates from the build requires. They appear as we list
+    # only the first binary rpm target, so multiple different requires
+    # are appearing multiple times
+    return rpmpath, list(set(buildreqrpms))
 
 
 def parse_args_or_exit(argv=None):
@@ -151,6 +158,47 @@ def dedupe_key(path):
     return os.path.basename(re.sub(r"\.pin$", ".lnk", path))
 
 
+def print_makefile_rules(args, allspecs, specs, provides_to_rpm):
+    """
+    Print the complete makefile rules to stdout.
+    """
+    print("# -*- makefile -*-")
+    print("# vim:ft=make:")
+    if args.verbose:
+        print("# inputs: %s" % " ".join(allspecs))
+
+    for spec in specs.itervalues():
+        print('# %s' % (spec.name()))
+
+        build_srpm_from_spec(spec)
+        # Manifest dependencies must come after spec dependencies
+        # otherwise manifest.json will be the SRPM's first dependency
+        # and will be passed to rpmbuild in the spec position.
+        create_manifest_deps(spec)
+        download_rpm_sources(spec)
+        build_rpm_from_srpm(spec)
+        if args.buildrequires:
+            rpmpath, buildreqs = buildrequires_for_rpm(spec, provides_to_rpm)
+            for buildreq in buildreqs:
+                print("%s: %s" % (rpmpath, buildreq))
+        print()
+
+    # Generate targets to build all srpms and all rpms
+    all_rpms = []
+    all_srpms = []
+    for spec in specs.itervalues():
+        rpm_path = spec.binary_package_paths()[-1]
+        all_rpms.append(rpm_path)
+        all_srpms.append(spec.source_package_path())
+        print("%s: %s" % (spec.name(), rpm_path))
+        print("%s.srpm: %s" % (spec.name(), spec.source_package_path()))
+    print()
+
+    print("RPMS := " + " \\\n\t".join(all_rpms))
+    print()
+    print("SRPMS := " + " \\\n\t".join(all_srpms))
+
+
 def main(argv=None):
     """
     Entry point
@@ -173,37 +221,4 @@ def main(argv=None):
         sys.exit(1)
 
     provides_to_rpm = package_to_rpm_map(specs.values())
-
-    print("# -*- makefile -*-")
-    print("# vim:ft=make:")
-    if args.verbose:
-        print("# inputs: %s" % " ".join(allspecs))
-
-    for spec in specs.itervalues():
-        print('# %s' % (spec.name()))
-
-        build_srpm_from_spec(spec)
-        # Manifest dependencies must come after spec dependencies
-        # otherwise manifest.json will be the SRPM's first dependency
-        # and will be passed to rpmbuild in the spec position.
-        create_manifest_deps(spec)
-        download_rpm_sources(spec)
-        build_rpm_from_srpm(spec)
-        if args.buildrequires:
-            buildrequires_for_rpm(spec, provides_to_rpm)
-        print()
-
-    # Generate targets to build all srpms and all rpms
-    all_rpms = []
-    all_srpms = []
-    for spec in specs.itervalues():
-        rpm_path = spec.binary_package_paths()[-1]
-        all_rpms.append(rpm_path)
-        all_srpms.append(spec.source_package_path())
-        print("%s: %s" % (spec.name(), rpm_path))
-        print("%s.srpm: %s" % (spec.name(), spec.source_package_path()))
-    print()
-
-    print("RPMS := " + " \\\n\t".join(all_rpms))
-    print()
-    print("SRPMS := " + " \\\n\t".join(all_srpms))
+    print_makefile_rules(args, allspecs, specs, provides_to_rpm)
