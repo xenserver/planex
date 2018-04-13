@@ -111,16 +111,16 @@ def buildrequires_for_rpm(spec, provides_to_rpm):
     # BuildRequire of a later package, so we make it depend on
     # Requires as well as BuildRequires to ensure they are built.
     buildreqs = (spec.buildrequires() | spec.requires()) - spec.provides()
-    buildreqrpms = []
+    buildreqrpms = set()
     for buildreq in buildreqs:
         # Some buildrequires come from the system repository
         if buildreq in provides_to_rpm:
             buildreqrpm = provides_to_rpm[buildreq]
-            buildreqrpms.append(buildreqrpm)
+            buildreqrpms.add(buildreqrpm)
     # remove duplicates from the build requires. They appear as we list
     # only the first binary rpm target, so multiple different requires
     # are appearing multiple times
-    return rpmpath, list(set(buildreqrpms))
+    return rpmpath, list(buildreqrpms)
 
 
 def parse_args_or_exit(argv=None):
