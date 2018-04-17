@@ -66,6 +66,65 @@ def get_name(spec_path, link_path):
     return name
 
 
+def update_with_schema_version_2(manifest, link):
+    """Update spec with a schemaVersion 2 link"""
+
+    for name, value in link.patch_sources.items():
+        repo_ref = Repository(value["URL"])
+        sha1 = repo_ref.sha1
+
+        manifest["archives"][name] = {
+            "url": value["URL"],
+            "commitish": value.get("commitish"),
+            "prefix": value.get("patches"),
+            "sha1": sha1
+        }
+
+    for name, value in link.patchqueue_sources.items():
+        repo_ref = Repository(value["URL"])
+        sha1 = repo_ref.sha1
+        manifest["patchqueues"][name] = {
+            "url": value["URL"],
+            "commitish": value.get("commitish"),
+            "prefix": value.get("patchqueue"),
+            "sha1": sha1
+        }
+
+
+def update_with_schema_version_3(manifest, link):
+    """Update spec with a schemaVersion 3 link"""
+
+    for name, value in link.sources.items():
+        repo_ref = Repository(value["URL"])
+        sha1 = repo_ref.sha1
+        manifest["sources"][name] = {
+            "url": value["URL"],
+            "commitish": value.get("commitish"),
+            "prefix": value.get("prefix"),
+            "sha1": sha1
+        }
+
+    for name, value in link.archives.items():
+        repo_ref = Repository(value["URL"])
+        sha1 = repo_ref.sha1
+        manifest["archives"][name] = {
+            "url": value["URL"],
+            "commitish": value.get("commitish"),
+            "prefix": value.get("patches"),
+            "sha1": sha1
+        }
+
+    for name, value in link.patchqueue_sources.items():
+        repo_ref = Repository(value["URL"])
+        sha1 = repo_ref.sha1
+        manifest["patchqueues"][name] = {
+            "url": value["URL"],
+            "commitish": value.get("commitish"),
+            "prefix": value.get("patches"),
+            "sha1": sha1
+        }
+
+
 def generate_manifest(spec, link=None, pin=None):
     """Record info of all remote sources in the spec/link files.
 
@@ -78,7 +137,7 @@ def generate_manifest(spec, link=None, pin=None):
                 needed to create the SRPM.
         Format:
         {
-            "spec": {
+            "sources": {
                 "source0": {
                     "url": <source0_url>,
                     "sha1": <source0_sha1>
@@ -87,7 +146,7 @@ def generate_manifest(spec, link=None, pin=None):
                 .
                 .
             },
-            "lnk": {
+            "archives": {
                 "url": <lnk_url>,
                 "sha1": <lnk_sha1>
             },
@@ -98,7 +157,12 @@ def generate_manifest(spec, link=None, pin=None):
         }
     """
 
-    manifest = {'spec': {}}
+    manifest = {
+        'spec': {},
+        'sources': {},
+        'archives': {},
+        'patchqueues': {}
+    }
     source_urls = [url for (_, url) in spec.sources() if '://' in url]
 
     for i, url in enumerate(source_urls):
@@ -111,22 +175,14 @@ def generate_manifest(spec, link=None, pin=None):
 
         manifest['spec']['source' + str(i)] = {'url': url, 'sha1': sha1}
 
-    # if link is not None and link.get("URL"):
-    #     repo_ref = Repository(link.get("URL"))
-    #     sha1 = repo_ref.sha1
-    #     manifest['lnk'] = {'url': link.get("URL"), 'sha1': sha1}
+    if pin is not None:
+        link = Link(pin)
 
-    # if pin is not None:
-    #     with open(pin) as pinfile:
-    #         pin_dict = json.load(pinfile)
-    #         url = pin_dict['URL']
-    #         # pylint: disable=broad-except
-    #         try:
-    #             repo_ref = Repository(url)
-    #             sha1 = repo_ref.sha1
-    #         except Exception:
-    #             sha1 = None
-    #         manifest['pin'] = {'url': url, 'sha1': sha1}
+    if link is not None:
+        if link.schema_version == 2:
+            update_with_schema_version_2(manifest, link)
+        else:
+            update_with_schema_version_3(manifest, link)
 
     return manifest
 
@@ -147,7 +203,7 @@ def main(argv=None):
     pinfile = "{}/{}.pin".format(
         args.pinsdir,
         get_name(args.specfile_path, args.lnkfile_path)
-        )
+    )
     if os.path.exists(pinfile):
         pin = pinfile
 
