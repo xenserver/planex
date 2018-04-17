@@ -10,7 +10,7 @@ from nose.plugins.attrib import attr
 import tests.strategies as tst
 
 import planex.patchqueue
-from planex.spec import Spec
+from planex.spec import Spec, Blob
 
 
 class BasicTests(unittest.TestCase):
@@ -42,9 +42,9 @@ class BasicTests(unittest.TestCase):
         """Patches are inserted into rewritten spec file"""
         spec = Spec("tests/data/manifest/branding-xenserver.spec",
                     check_package_name=False)
-        spec.add_patch(0, "first.patch", "dummy")
-        spec.add_patch(1, "second.patch", "dummy")
-        spec.add_patch(2, "third.patch", "dummy")
+        spec.add_patch(0, Blob(spec, "first.patch", "dummy"))
+        spec.add_patch(1, Blob(spec, "second.patch", "dummy"))
+        spec.add_patch(2, Blob(spec, "third.patch", "dummy"))
 
         rewritten = spec.rewrite_spec()
         self.assertIn("Patch0: first.patch\n", rewritten)
@@ -55,9 +55,9 @@ class BasicTests(unittest.TestCase):
         """Patches with the same index override each other"""
         spec = Spec("tests/data/manifest/branding-xenserver.spec",
                     check_package_name=False)
-        spec.add_patch(0, "first.patch", "dummy")
-        spec.add_patch(1, "second.patch", "dummy")
-        spec.add_patch(0, "third.patch", "dummy")
+        spec.add_patch(0, Blob(spec, "first.patch", "dummy"))
+        spec.add_patch(1, Blob(spec, "second.patch", "dummy"))
+        spec.add_patch(0, Blob(spec, "third.patch", "dummy"))
 
         rewritten = spec.rewrite_spec()
         self.assertNotIn("Patch0: first.patch\n", rewritten)
@@ -68,21 +68,21 @@ class BasicTests(unittest.TestCase):
         """Patchqueue application succeeds if %autosetup is present"""
         spec = Spec("tests/data/manifest/branding-xenserver.spec",
                     check_package_name=False)
-        spec.add_patch(0, "first.patch", "dummy")
+        spec.add_patch(0, Blob(spec, "first.patch", "dummy"))
         rewritten = spec.rewrite_spec()
         self.assertIn("Patch0: first.patch\n", rewritten)
 
     def test_autosetup_missing(self):
         """Patchqueue application fails if %autosetup is not present"""
         spec = Spec("tests/data/ocaml-uri.spec", check_package_name=False)
-        spec.add_patch(0, "first.patch", "dummy")
+        spec.add_patch(0, Blob(spec, "first.patch", "dummy"))
         with self.assertRaises(planex.patchqueue.SpecMissingAutosetup):
             spec.rewrite_spec()
 
     def test_autosetup_disabled(self):
         """Patchqueue application fails if %autosetup is not present"""
         spec = Spec("tests/data/ocaml-uri.spec", check_package_name=False)
-        spec.add_patch(0, "first.patch", "dummy")
+        spec.add_patch(0, Blob(spec, "first.patch", "dummy"))
         spec.disable_autosetup()
         rewritten = spec.rewrite_spec()
         self.assertIn("Patch0: first.patch\n", rewritten)
