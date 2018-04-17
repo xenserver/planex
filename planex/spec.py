@@ -395,13 +395,15 @@ def update_with_schema_version_2(spec, link):
     """Update spec with a schemaVersion 2 link"""
     for name, value in link.patch_sources.items():
         idx = _parse_name(name)
-        spec.add_archive(name, value["URL"], link.path,
-                         value["patches"])
+        spec.add_archive(name,
+                         Archive(spec, value["URL"], link.path,
+                                 value["patches"]))
 
     for name, value in link.patchqueue_sources.items():
         idx = _parse_name(name)
-        spec.add_patchqueue(idx, value["URL"], link.path,
-                            value["patchqueue"])
+        spec.add_patchqueue(idx,
+                            Patchqueue(spec, value["URL"], link.path,
+                                       value["patchqueue"]))
 
 
 def update_with_schema_version_3(spec, link):
