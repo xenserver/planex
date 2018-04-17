@@ -77,6 +77,18 @@ class Link(object):
                 if patch_matcher.match(k)}
 
     @property
+    def archives(self):
+        """Return the ordered set of patch source definitions"""
+        if self.schema_version == 2:
+            raise UnsupportedProperty(
+                "archiveX is not supported in SchemaVersion 2")
+
+        patch_matcher = re.compile(r'^archive\d*$', re.IGNORECASE)
+        return {k: v for k, v
+                in self.link.iteritems()
+                if patch_matcher.match(k)}
+
+    @property
     def patchqueue_sources(self):
         """Return the ordered set of patchqueue definitions"""
         patch_matcher = re.compile(r'^patchqueue\d*$', re.IGNORECASE)
