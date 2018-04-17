@@ -111,22 +111,22 @@ def generate_manifest(spec, link=None, pin=None):
 
         manifest['spec']['source' + str(i)] = {'url': url, 'sha1': sha1}
 
-    if link is not None and link.url:
-        repo_ref = Repository(link.url)
-        sha1 = repo_ref.sha1
-        manifest['lnk'] = {'url': link.url, 'sha1': sha1}
+    # if link is not None and link.get("URL"):
+    #     repo_ref = Repository(link.get("URL"))
+    #     sha1 = repo_ref.sha1
+    #     manifest['lnk'] = {'url': link.get("URL"), 'sha1': sha1}
 
-    if pin is not None:
-        with open(pin) as pinfile:
-            pin_dict = json.load(pinfile)
-            url = pin_dict['URL']
-            # pylint: disable=broad-except
-            try:
-                repo_ref = Repository(url)
-                sha1 = repo_ref.sha1
-            except Exception:
-                sha1 = None
-            manifest['pin'] = {'url': url, 'sha1': sha1}
+    # if pin is not None:
+    #     with open(pin) as pinfile:
+    #         pin_dict = json.load(pinfile)
+    #         url = pin_dict['URL']
+    #         # pylint: disable=broad-except
+    #         try:
+    #             repo_ref = Repository(url)
+    #             sha1 = repo_ref.sha1
+    #         except Exception:
+    #             sha1 = None
+    #         manifest['pin'] = {'url': url, 'sha1': sha1}
 
     return manifest
 
