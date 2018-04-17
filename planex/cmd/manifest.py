@@ -137,7 +137,8 @@ def generate_manifest(spec, link=None, pin=None):
                 needed to create the SRPM.
         Format:
         {
-            "sources": {
+            "schemaVersion": "2"
+            "spec": {
                 "source0": {
                     "url": <source0_url>,
                     "sha1": <source0_sha1>
@@ -146,18 +147,38 @@ def generate_manifest(spec, link=None, pin=None):
                 .
                 .
             },
-            "archives": {
-                "url": <lnk_url>,
-                "sha1": <lnk_sha1>
+            "sources": {
+                "source0": {
+                    "url": <lnk_url>,
+                    "sha1": <lnk_sha1>
+                },
+                "source1": ...
+                .
+                .
             },
-            "pin": {
-                "url": <pin_url>,
-                "sha1": <pin_sha1>
+            "archives": {
+                "archive0": {
+                    "url": <lnk_url>,
+                    "sha1": <lnk_sha1>
+                },
+                "archive1": ...
+                .
+                .
+            },
+            "patchqueues": {
+                "patchqueue0": {
+                    "url": <pin_url>,
+                    "sha1": <pin_sha1>
+                },
+                "patchqueue1": ...
+                .
+                .
             }
         }
     """
 
     manifest = {
+        'schemaVersion': "1",
         'spec': {},
         'sources': {},
         'archives': {},
@@ -175,10 +196,14 @@ def generate_manifest(spec, link=None, pin=None):
 
         manifest['spec']['source' + str(i)] = {'url': url, 'sha1': sha1}
 
+    # a pin overrides a link
     if pin is not None:
         link = Link(pin)
 
+    # everything in links or pins adds sources, archives or patchqueues
+    # that override the content of the spec
     if link is not None:
+        manifest["schemaVersion"] = "2"
         if link.schema_version == 2:
             update_with_schema_version_2(manifest, link)
         else:
