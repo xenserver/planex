@@ -136,7 +136,8 @@ class RpmTests(unittest.TestCase):
         """Package source paths and URLs are correct"""
         self.spec.add_archive(0, Archive(self.spec, "http://foo/patches.tar",
                                          "link1", "SOURCES/"))
-        self.spec.add_patchqueue(0, Patchqueue(self.spec, "http://foo/patchqueue.tar",
+        self.spec.add_patchqueue(0, Patchqueue(self.spec,
+                                               "http://foo/patchqueue.tar",
                                                "link1", "PATCHES/"))
         self.assertEqual(
             self.spec.resources(),
