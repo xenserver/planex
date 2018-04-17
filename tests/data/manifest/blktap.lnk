@@ -1,6 +1,7 @@
 {
-    "URL": "http://hg.uk.xensource.com/git/carbon/trunk/blktap.pg.git/snapshot/refs/heads/master#/blktap.patches.tar",
-    "specfile": "blktap.spec",
-    "patchqueue": "master",
-    "branch": "trunk"
+    "SchemaVersion": "3",
+    "PatchQueue0": {
+        "URL": "http://hg.uk.xensource.com/git/carbon/trunk/blktap.pg.git/snapshot/refs/heads/master#/blktap.patches.tar",
+        "patchqueue": "master"
+    }
 }
