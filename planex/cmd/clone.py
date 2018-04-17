@@ -10,7 +10,7 @@ from os.path import basename, dirname, join, relpath
 import subprocess
 
 import git
-from planex.link import Link
+# from planex.link import Link
 import planex.util as util
 
 
@@ -116,25 +116,29 @@ def main(argv=None):
     """
     Entry point
     """
-    args = parse_args_or_exit(argv)
+    _args = parse_args_or_exit(argv)
 
-    for pinpath in args.pins:
-        pin = Link(pinpath)
+    # for pinpath in args.pins:
+    #     pin = Link(pinpath)
 
-        if args.jenkins:
-            print('echo "Cloning %s"' % pin.url)
-            clone_jenkins(pin.url, args.repos, pin.commitish, args.credentials)
+    #     if args.jenkins:
+    #         print('echo "Cloning %s"' % pin.url)
+    #         clone_jenkins(pin.url, args.repos,
+    #                       pin.commitish, args.credentials)
 
-        else:
-            try:
-                print("Cloning %s" % pin.url)
-                util.makedirs(args.repos)
-                pq_repo = clone(pin.url, args.repos, pin.commitish)
+    #     else:
+    #         try:
+    #             print("Cloning %s" % pin.url)
+    #             util.makedirs(args.repos)
+    #             pq_repo = clone(pin.url, args.repos, pin.commitish)
 
-                if args.clone_base and pin.base:
-                    print("Cloning %s" % pin.base)
-                    base_repo = clone(pin.base, args.repos, pin.base_commitish)
-                    apply_patchqueue(base_repo, pq_repo, pin.patchqueue)
+    #             if args.clone_base and pin.base:
+    #                 print("Cloning %s" % pin.base)
+    #                 base_repo = clone(pin.base, args.repos,
+    #                                   pin.base_commitish)
+    #                 apply_patchqueue(base_repo, pq_repo, pin.patchqueue)
 
-            except git.GitCommandError as gce:
-                print(gce.stderr)
+    #         except git.GitCommandError as gce:
+    #             print(gce.stderr)
+
+    raise NotImplementedError
