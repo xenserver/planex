@@ -115,10 +115,10 @@ class RpmTests(unittest.TestCase):
 
     def test_resources_override(self):
         """Package source paths and URLs are correct"""
-        self.spec.add_source(0, "http://elsewhere", "link1")
-        self.spec.add_source(3, "http://additional", "link2")
-        self.spec.add_patch(1, "http://a.n.other", "link3")
-        self.spec.add_patch(3, "http://extra", "link4")
+        self.spec.add_source(0, Blob(self.spec, "http://elsewhere", "link1"))
+        self.spec.add_source(3, Blob(self.spec, "http://additional", "link2"))
+        self.spec.add_patch(1, Blob(self.spec, "http://a.n.other", "link3"))
+        self.spec.add_patch(3, Blob(self.spec, "http://extra", "link4"))
         self.assertEqual(
             self.spec.resources(),
             [Blob(self.spec, "http://elsewhere", "link1"),
@@ -134,10 +134,10 @@ class RpmTests(unittest.TestCase):
 
     def test_resources_extras(self):
         """Package source paths and URLs are correct"""
-        self.spec.add_archive(0, "http://foo/patches.tar",
-                              "link1", "SOURCES/")
-        self.spec.add_patchqueue(0, "http://foo/patchqueue.tar",
-                                 "link1", "PATCHES/")
+        self.spec.add_archive(0, Archive(self.spec, "http://foo/patches.tar",
+                                         "link1", "SOURCES/"))
+        self.spec.add_patchqueue(0, Patchqueue(self.spec, "http://foo/patchqueue.tar",
+                                               "link1", "PATCHES/"))
         self.assertEqual(
             self.spec.resources(),
             [Blob(self.spec,
@@ -173,8 +173,8 @@ class RpmTests(unittest.TestCase):
             self.spec.resource("somewhere/cohttp0.patch"),
             Blob(self.spec, "cohttp0.patch",
                  "tests/data/ocaml-cohttp.spec"))
-        self.spec.add_archive(0, "http://foo/patches.tar",
-                              "link1", "SOURCES/")
+        self.spec.add_archive(0, Archive(self.spec, "http://foo/patches.tar",
+                                         "link1", "SOURCES/"))
         self.assertEqual(
             self.spec.resource("somewhere/patches.tar"),
             Archive(self.spec, "http://foo/patches.tar", "link1",
