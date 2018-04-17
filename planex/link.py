@@ -20,17 +20,18 @@ class Link(object):
         self.path = path
         with open(path) as fileh:
             self.link = json.load(fileh)
-
-    @property
-    def schema_version(self):
-        """Return the schema version of the link file"""
         schema_version = self.link.get('SchemaVersion', None)
         if schema_version is None:
             raise UnsupportedProperty("SchemaVersion field is not present")
         schema_version = int(schema_version)
         if schema_version == 1:
             raise UnsupportedProperty("SchemaVersion 1 is no longer supported")
-        return schema_version
+        self._schema_version = schema_version
+
+    @property
+    def schema_version(self):
+        """Return the schema version of the link file"""
+        return self._schema_version
 
     @property
     def ignore_autosetup(self):
