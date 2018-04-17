@@ -1,7 +1,7 @@
 {
 	"SchemaVersion": "3",
-	"Patch0": {
+	"Archive0": {
 		"URL": "https://github.com/xenserver/nsource/archive/RP.tar.gz",
-		"patches": "SOURCES"
+		"prefix": "SOURCES"
 	}
 }
