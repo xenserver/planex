@@ -47,17 +47,6 @@ class Link(object):
         return self.path
 
     @property
-    def url(self):
-        """Return the URL from which to fetch the patchqueue tarball"""
-        return self.link.get('URL', None)
-
-    @property
-    def commitish(self):
-        """Return the Git commitish to use when constructing patchqueue.
-           Used mainly for pinning."""
-        return self.link.get('commitish', None)
-
-    @property
     def sources(self):
         """Return the path to extra sources inside the patchqueue tarball"""
         patch_matcher = re.compile(r'^source\d*$', re.IGNORECASE)
