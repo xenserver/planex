@@ -1,5 +1,6 @@
 {
     "sources": {}, 
+    "schemaVersion": "1", 
     "patchqueues": {}, 
     "spec": {
         "source0": {
