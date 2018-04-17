@@ -62,28 +62,32 @@ class BasicTests(unittest.TestCase):
 
         self.assertEqual(manifest, self.expected_manifest[self.name_1])
 
-    @mock.patch('planex.git.ls_remote')
-    def test_generate_manifest_2(self, mock_git_ls_remote):
-        """Manifest for source tarball and patchqueue (specfile and lnkfile)"""
+    # @mock.patch('planex.git.ls_remote')
+    # def test_generate_manifest_2(self, mock_git_ls_remote):
+    #     """
+    #     Manifest for source tarball and patchqueue (specfile and lnkfile)
+    #     """
 
-        mock_git_ls_remote.return_value = self.git_ls_remote_out[self.name_2]
+    #     mock_git_ls_remote.return_value = self.git_ls_remote_out[
+    #         self.name_2]
 
-        manifest = planex.cmd.manifest.generate_manifest(
-            self.spec[self.name_2],
-            self.link[self.name_2]
-        )
+    #     manifest = planex.cmd.manifest.generate_manifest(
+    #         self.spec[self.name_2],
+    #         self.link[self.name_2]
+    #     )
 
-        self.assertEqual(manifest, self.expected_manifest[self.name_2])
+    #     self.assertEqual(manifest, self.expected_manifest[self.name_2])
 
-    @mock.patch('planex.git.ls_remote')
-    def test_generate_manifest_3(self, mock_git_ls_remote):
-        """Manifest for repo and patchqueue (specfile and lnkfile)"""
+    # @mock.patch('planex.git.ls_remote')
+    # def test_generate_manifest_3(self, mock_git_ls_remote):
+    #     """Manifest for repo and patchqueue (specfile and lnkfile)"""
 
-        mock_git_ls_remote.side_effect = self.git_ls_remote_out[self.name_3]
+    #     mock_git_ls_remote.side_effect = self.git_ls_remote_out[
+    #         self.name_3]
 
-        manifest = planex.cmd.manifest.generate_manifest(
-            self.spec[self.name_3],
-            self.link[self.name_3]
-        )
+    #     manifest = planex.cmd.manifest.generate_manifest(
+    #         self.spec[self.name_3],
+    #         self.link[self.name_3]
+    #     )
 
-        self.assertEqual(manifest, self.expected_manifest[self.name_3])
+    #     self.assertEqual(manifest, self.expected_manifest[self.name_3])
