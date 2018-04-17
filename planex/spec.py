@@ -360,15 +360,15 @@ def update_with_schema_version_3(spec, link):
         else:
             spec.add_source(idx, value["URL"], link.path)
 
-    for name, value in link.patch_sources.items():
+    for name, value in link.archives.items():
         idx = _parse_name(name)
         spec.add_archive(idx, value["URL"], link.path,
-                         value["patches"])
+                         value["prefix"])
 
     for name, value in link.patchqueue_sources.items():
         idx = _parse_name(name)
         spec.add_patchqueue(idx, value["URL"], link.path,
-                            value["patchqueue"])
+                            value["prefix"])
 
 
 def load(specpath, link=None, check_package_name=True, defines=None):
