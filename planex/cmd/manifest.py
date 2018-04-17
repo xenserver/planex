@@ -10,6 +10,7 @@ import json
 import os
 
 import argcomplete
+import requests
 
 from planex.cmd.args import common_base_parser
 from planex.util import setup_logging
@@ -66,28 +67,37 @@ def get_name(spec_path, link_path):
     return name
 
 
+def best_effort_sha1(url):
+    """
+    Try to get a repository sha1, knowing that this is sometimes not
+    possible even if we are passing a repository url.
+    """
+    try:
+        repo_ref = Repository(url)
+        sha1 = repo_ref.sha1
+    except requests.exceptions.HTTPError:
+        sha1 = None
+
+    return sha1
+
+
 def update_with_schema_version_2(manifest, link):
     """Update spec with a schemaVersion 2 link"""
 
     for name, value in link.patch_sources.items():
-        repo_ref = Repository(value["URL"])
-        sha1 = repo_ref.sha1
-
         manifest["archives"][name] = {
             "url": value["URL"],
             "commitish": value.get("commitish"),
             "prefix": value.get("patches"),
-            "sha1": sha1
+            "sha1": best_effort_sha1(value["URL"])
         }
 
     for name, value in link.patchqueue_sources.items():
-        repo_ref = Repository(value["URL"])
-        sha1 = repo_ref.sha1
         manifest["patchqueues"][name] = {
             "url": value["URL"],
             "commitish": value.get("commitish"),
             "prefix": value.get("patchqueue"),
-            "sha1": sha1
+            "sha1": best_effort_sha1(value["URL"])
         }
 
 
@@ -95,33 +105,27 @@ def update_with_schema_version_3(manifest, link):
     """Update spec with a schemaVersion 3 link"""
 
     for name, value in link.sources.items():
-        repo_ref = Repository(value["URL"])
-        sha1 = repo_ref.sha1
         manifest["sources"][name] = {
             "url": value["URL"],
             "commitish": value.get("commitish"),
             "prefix": value.get("prefix"),
-            "sha1": sha1
+            "sha1": best_effort_sha1(value["URL"])
         }
 
     for name, value in link.archives.items():
-        repo_ref = Repository(value["URL"])
-        sha1 = repo_ref.sha1
         manifest["archives"][name] = {
             "url": value["URL"],
             "commitish": value.get("commitish"),
             "prefix": value.get("patches"),
-            "sha1": sha1
+            "sha1": best_effort_sha1(value["URL"])
         }
 
     for name, value in link.patchqueue_sources.items():
-        repo_ref = Repository(value["URL"])
-        sha1 = repo_ref.sha1
         manifest["patchqueues"][name] = {
             "url": value["URL"],
             "commitish": value.get("commitish"),
             "prefix": value.get("patches"),
-            "sha1": sha1
+            "sha1": best_effort_sha1(value["URL"])
         }
 
 
