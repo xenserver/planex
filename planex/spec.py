@@ -287,6 +287,35 @@ class Archive(Blob):
             tarball.extract(target_paths, destdir)
 
 
+class GitArchive(Archive):
+    """
+    An archive produced from a local repository.   The blob is a tarball
+    produced by `git archive`.
+    """
+
+    # pylint: disable=too-many-arguments
+    def __init__(self, spec, url, defined_by, prefix, commitish):
+        with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
+            super(GitArchive, self).__init__(spec, url, defined_by, prefix)
+            self._prefix = rpm.expandMacro(prefix)
+            self._commitish = rpm.expandMacro(commitish)
+
+    @property
+    @expandmacros
+    def commitish(self):
+        """Return the commitish to fetch for this resource"""
+        return self._commitish
+
+    @property
+    def force_rebuild(self):
+        """
+        True if this source should always be re-fetched.
+        Pinned sources which should be recreated from their repositories
+        for each build.
+        """
+        return True
+
+
 class Patchqueue(Archive):
     """A patchqueue archive which will be unpacked into the SRPM"""
 
@@ -303,6 +332,35 @@ class Patchqueue(Archive):
             with planex.patchqueue.Patchqueue(self.path, self.prefix) as queue:
                 self._names = queue.series()
         return self._names
+
+
+class GitPatchqueue(Patchqueue):
+    """
+    A patchqueue produced from a local repository.   The blob is a tarball
+    produced by `git archive`.
+    """
+
+    # pylint: disable=too-many-arguments
+    def __init__(self, spec, url, defined_by, prefix, commitish):
+        with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
+            super(GitPatchqueue, self).__init__(spec, url, defined_by, prefix)
+            self._prefix = rpm.expandMacro(prefix)
+            self._commitish = rpm.expandMacro(commitish)
+
+    @property
+    @expandmacros
+    def commitish(self):
+        """Return the commitish to fetch for this resource"""
+        return self._commitish
+
+    @property
+    def force_rebuild(self):
+        """
+        True if this source should always be re-fetched.
+        Pinned sources which should be recreated from their repositories
+        for each build.
+        """
+        return True
 
 
 def _parse_name(name):
@@ -353,22 +411,34 @@ def update_with_schema_version_3(spec, link):
 
     for name, value in link.sources.items():
         idx = _parse_name(name)
-        if value["URL"].startswith("ssh://"):
-            spec.add_gitarchive(idx, value["URL"],
-                                link.path, value.get("prefix"),
-                                value.get("commitish"))
+        url = value["URL"]
+        if url.startswith("ssh://"):
+            source = GitBlob(spec, url, link.path,
+                             value.get("prefix"), value.get("commitish"))
         else:
-            spec.add_source(idx, value["URL"], link.path)
+            source = Blob(spec, url, link.path)
+        spec.add_source(idx, source)
 
     for name, value in link.archives.items():
         idx = _parse_name(name)
-        spec.add_archive(idx, value["URL"], link.path,
-                         value["prefix"])
+        url = value["URL"]
+        if url.startswith("ssh://"):
+            archive = GitArchive(spec, url, link.path,
+                                 value.get("prefix"), value.get("commitish"))
+        else:
+            archive = Archive(spec, url, link.path, value.get("prefix"))
+        spec.add_archive(idx, archive)
 
     for name, value in link.patchqueue_sources.items():
         idx = _parse_name(name)
-        spec.add_patchqueue(idx, value["URL"], link.path,
-                            value["prefix"])
+        url = value["URL"]
+        if url.startswith("ssh://"):
+            patchqueue = GitPatchqueue(spec, url, link.path,
+                                       value.get("prefix"),
+                                       value.get("commitish"))
+        else:
+            patchqueue = Patchqueue(spec, url, link.path, value.get("prefix"))
+        spec.add_patchqueue(idx, patchqueue)
 
 
 def load(specpath, link=None, check_package_name=True, defines=None):
@@ -432,10 +502,11 @@ class Spec(object):
                         % (path, self.name()))
 
         for filepath, index, sourcetype in reversed(self.spec.sources):
+            blob = Blob(self, filepath, path)
             if sourcetype == 1:
-                self.add_source(index, filepath, path)
+                self.add_source(index, blob)
             elif sourcetype == 2:
-                self.add_patch(index, filepath, path)
+                self.add_patch(index, blob)
 
     def specpath(self):
         """Return the path to the spec file"""
@@ -561,28 +632,25 @@ class Spec(object):
         srpmname = self.spec.sourceHeader['nvr'] + ".src.rpm"
         return rpm.expandMacro(os.path.join('%_srcrpmdir', srpmname))
 
-    def add_source(self, index, url, defined_by):
+    def add_source(self, index, source):
         """Add a new source file"""
-        self._sources[index] = Blob(self, url, defined_by)
+        assert isinstance(source, Blob)
+        self._sources[index] = source
 
-    def add_patch(self, index, url, defined_by):
+    def add_patch(self, index, patch):
         """Add a new patch file"""
-        self._patches[index] = Blob(self, url, defined_by)
+        assert isinstance(patch, Blob)
+        self._patches[index] = patch
 
-    def add_archive(self, index, url, defined_by, prefix):
+    def add_archive(self, index, archive):
         """Add a new tarball archive"""
-        self._archives[index] = Archive(self, url, defined_by, prefix)
+        assert isinstance(archive, Archive)
+        self._archives[index] = archive
 
-    # pylint: disable=too-many-arguments
-    def add_gitarchive(self, index, url, defined_by, prefix, commitish):
-        """Add a new Git archive"""
-        self._sources[index] = GitBlob(self, url, defined_by, prefix,
-                                       commitish)
-
-    def add_patchqueue(self, index, url, defined_by, prefix):
+    def add_patchqueue(self, index, patchqueue):
         """Add a new patchqueue"""
-        self._patchqueues[index] = Patchqueue(self, url, defined_by,
-                                              prefix)
+        assert isinstance(patchqueue, Patchqueue)
+        self._patchqueues[index] = patchqueue
 
     def resources(self):
         """List all resources to be packed into the source package"""
