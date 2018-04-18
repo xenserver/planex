@@ -1,7 +1,7 @@
 Summary: RPM build tool
 Name: planex
 Version: 4.0.0
-Release: beta2%{?dist}
+Release: beta3%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
 License: LGPLv2.1
@@ -54,6 +54,20 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Wed Apr 18 2018 Marcello Seri <marcello.seri@citrix.com> - 4.0.0-beta3
+- manifest.py: add schemaVersion for the manifest output for easier parsing
+- manifest.py: produce some less rubbishy output
+- spec.py: add support for git urls in Archives and Patchqueues
+- link.py: parse SchemaVersion on load
+- spec.py: update v3 parser to use the Archive object and the prefix field
+- link.py: add support for the Archive field
+- link.py: cleanup after dropping support for SchemaVersion 1
+
+
+* Fri Apr 13 2018 Marcello Seri <marcello.seri@citrix.com> - 4.0.0-beta2
+- depend: do not produce multiple coinciding requirements
+- depend: introduce --no-requires flag
+
 * Tue Apr 10 2018 Marcello Seri <marcello.seri@citrix.com> - 4.0.0-beta1
 - add support for the boolean IgnoreAutosetup in links
 - do not extract the same resource multiple times
