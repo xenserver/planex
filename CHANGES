@@ -1,3 +1,12 @@
+4.0.0-beta3
+* manifest.py: add schemaVersion for the manifest output for easier parsing
+* manifest.py: produce some less rubbishy output
+* spec.py: add support for git urls in Archives and Patchqueues
+* link.py: parse SchemaVersion on load
+* spec.py: update v3 parser to use the Archive object and the prefix field
+* link.py: add support for the Archive field
+* link.py: cleanup after dropping support for SchemaVersion 1
+
 4.0.0-beta2
 * depend: do not produce multiple coinciding requirements
 * depend: introduce --no-requires flag
