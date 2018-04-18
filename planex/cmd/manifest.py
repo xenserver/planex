@@ -11,11 +11,12 @@ import os
 
 import argcomplete
 import requests
+import rpm
 
 from planex.cmd.args import common_base_parser
 from planex.util import setup_logging
 from planex.link import Link
-from planex.spec import Spec
+from planex.spec import Spec, nevra, rpm_macros
 from planex.repository import Repository
 
 
@@ -81,51 +82,65 @@ def best_effort_sha1(url):
     return sha1
 
 
-def update_with_schema_version_2(manifest, link):
+def update_with_schema_version_2(manifest, spec, link):
     """Update spec with a schemaVersion 2 link"""
 
     for name, value in link.patch_sources.items():
+        with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
+            url = rpm.expandMacro(value["URL"])
         manifest["archives"][name] = {
-            "url": value["URL"],
+            "url": url,
             "commitish": value.get("commitish"),
             "prefix": value.get("patches"),
-            "sha1": best_effort_sha1(value["URL"])
+            "sha1": best_effort_sha1(url)
         }
 
     for name, value in link.patchqueue_sources.items():
+        with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
+            url = rpm.expandMacro(value["URL"])
+
         manifest["patchqueues"][name] = {
-            "url": value["URL"],
+            "url": url,
             "commitish": value.get("commitish"),
             "prefix": value.get("patchqueue"),
-            "sha1": best_effort_sha1(value["URL"])
+            "sha1": best_effort_sha1(url)
         }
 
 
-def update_with_schema_version_3(manifest, link):
+def update_with_schema_version_3(manifest, spec, link):
     """Update spec with a schemaVersion 3 link"""
 
     for name, value in link.sources.items():
+        with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
+            url = rpm.expandMacro(value["URL"])
+
         manifest["sources"][name] = {
-            "url": value["URL"],
+            "url": url,
             "commitish": value.get("commitish"),
             "prefix": value.get("prefix"),
-            "sha1": best_effort_sha1(value["URL"])
+            "sha1": best_effort_sha1(url)
         }
 
     for name, value in link.archives.items():
+        with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
+            url = rpm.expandMacro(value["URL"])
+
         manifest["archives"][name] = {
-            "url": value["URL"],
+            "url": url,
             "commitish": value.get("commitish"),
             "prefix": value.get("patches"),
-            "sha1": best_effort_sha1(value["URL"])
+            "sha1": best_effort_sha1(url)
         }
 
     for name, value in link.patchqueue_sources.items():
+        with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
+            url = rpm.expandMacro(value["URL"])
+
         manifest["patchqueues"][name] = {
-            "url": value["URL"],
+            "url": url,
             "commitish": value.get("commitish"),
             "prefix": value.get("patches"),
-            "sha1": best_effort_sha1(value["URL"])
+            "sha1": best_effort_sha1(url)
         }
 
 
@@ -209,9 +224,9 @@ def generate_manifest(spec, link=None, pin=None):
     if link is not None:
         manifest["schemaVersion"] = "2"
         if link.schema_version == 2:
-            update_with_schema_version_2(manifest, link)
+            update_with_schema_version_2(manifest, spec, link)
         else:
-            update_with_schema_version_3(manifest, link)
+            update_with_schema_version_3(manifest, spec, link)
 
     return manifest
 
