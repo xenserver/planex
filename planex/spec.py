@@ -654,6 +654,20 @@ class Spec(object):
         assert isinstance(patchqueue, Patchqueue)
         self._patchqueues[index] = patchqueue
 
+    def resources_dict(self):
+        """Return all resources from the spec in a dict"""
+        iterator = [
+            (self._sources, "Source"),
+            (self._patches, "Patch"),
+            (self._archives, "Archive"),
+            (self._patchqueues, "PatchQueue")
+        ]
+        resources = {}
+        for resource, string in iterator:
+            for key, value in resource.items():
+                resources["{}{}".format(string, key)] = value
+        return resources
+
     def resources(self):
         """List all resources to be packed into the source package"""
 
