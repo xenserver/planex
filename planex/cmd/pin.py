@@ -11,16 +11,15 @@ import sys
 
 from planex.cmd.args import common_base_parser
 from planex.link import Link
-from planex.repository import Repository
-from planex.spec import Spec
+from planex.spec import GitBlob, GitArchive, GitPatchqueue, Archive
+import planex.spec
 
 
-def spec_and_lnk(repo_path, package_name):
+def load_spec_and_lnk(repo_path, package_name):
     """
-    Return the Spec and Link object for
-    repo_path/SPECS/package_name.
-    Link can be None if not present.
-    Exception("package not present") otherwise
+    Return the Spec object for
+    repo_path/SPECS/package_name updated by the current link.
+    Exception("package not present") otherwise.
     """
     partial_file_path = "%s/SPECS/%s" % (repo_path, package_name)
 
@@ -30,91 +29,65 @@ def spec_and_lnk(repo_path, package_name):
             "Spec file for {} not present in {}/SPECS".format(
                 package_name, repo_path))
 
-    spec = Spec(specname)
-
     linkname = "%s.lnk" % partial_file_path
     link = Link(linkname) if os.path.isfile(linkname) else None
+    spec = planex.spec.load(specname, link=link)
 
-    return spec, link
+    return spec
 
 
-def repository_of(spec_or_link):
-    """Return the Repository of the provided Spec source url or Link url.
-       None if spec_or_link is None"""
-    if isinstance(spec_or_link, Spec):
-        return Repository(spec_or_link.sources()[0][1])
-    if isinstance(spec_or_link, Link):
-        return Repository(spec_or_link.url)
-    if spec_or_link is None:
-        return None
+def repo_or_path(arg):
+    """
+    Heuristic. Parse URL:commitish into (URL, commitish) and anything else into
+    (URL, None)
+    """
+    split = arg.strip().split(":")
+    if len(split) > 2 or not split:
+        raise ValueError(
+            "Expected URL or URL:commitish but got {}".format(arg))
+    elif len(split) == 2:
+        return tuple(split)
     else:
-        sys.exit(
-            "repository_of: got unexpected object {}".format(
-                spec_or_link))
-
+        return (split[0], None)
 
 # pylint: disable=too-many-branches
-def get_pin_content(args, pq_name, spec, link):
+
+
+def get_pin_content(args, spec):
     """
     Generate the pinfile content for a Spec.
     """
-    base_repo = repository_of(spec)
-    pq_repo = repository_of(link)
+    pinfile = {"SchemaVersion": "3"}
 
-    url = args.url
-    if url is None:
-        if link is not None:
-            url = pq_repo.repository_url()
-        else:
-            url = base_repo.repository_url()
+    if args.source is not None:
+        url, commitish = repo_or_path(args.source)
+        pinfile["Source0"] = {"URL": url}
+        if commitish is not None:
+            pinfile["Source0"]["commitish"] = commitish
+        return pinfile
 
-    commitish = args.commitish
-    if commitish is None:
-        if link is not None:
-            commitish = pq_repo.commitish_tag_or_branch()
-        else:
-            commitish = base_repo.commitish_tag_or_branch()
+    for name, source in spec.resources_dict().items():
 
-    pinfile = {
-        'URL': url,
-        'commitish': commitish,
-        'patchqueue': pq_name
-    }
+        if args.patchqueue is not None and "PatchQueue" in name:
+            continue
+        if "Patch" in name and "PatchQueue" not in name:
+            continue
 
-    if link is not None:
-        if args.base_commitish is not None:
-            base = args.base  # This can be None
-            base_commitish = args.base_commitish
-        else:
-            base = base_repo.repository_url()
-            base_commitish = base_repo.commitish_tag_or_branch()
+        pinfile[name] = {"URL": source.url}
+        if isinstance(source, GitBlob) \
+                or isinstance(source, GitArchive) \
+                or isinstance(source, GitPatchqueue):
+            pinfile[name]["commititsh"] = source.commitish
+        if isinstance(source, Archive):
+            pinfile[name]["prefix"] = source.prefix
 
-        # base_commitish can be None, it happens for repatched components
-        if base_commitish is not None:
-            if base is not None:
-                pinfile['base'] = base
-            pinfile['base_commitish'] = base_commitish
-
-        if link.sources is not None:
-            pinfile["sources"] = link.sources
-
-        if link.patches is not None:
-            pinfile["patches"] = link.patches
+    if args.patchqueue is not None:
+        url, commitish = repo_or_path(args.patchqueue)
+        pinfile["PatchQueue0"] = {"URL": url}
+        if commitish is not None:
+            pinfile["PatchQueue0"]["commitish"] = commitish
 
     return pinfile
-
-
-def make_pin(args, xs_path, package_name):
-    """
-    Return the pinfile path and a dict containing the content of the pinfile
-    """
-
-    spec, link = spec_and_lnk(xs_path, package_name)
-
-    if link is None and args.base is not None:
-        sys.exit("Argument --base is allowed only for lnk packages")
-
-    return get_pin_content(args, args.patchqueue, spec, link)
 
 
 def parse_args_or_exit(argv=None):
@@ -127,30 +100,31 @@ def parse_args_or_exit(argv=None):
                     "in $CWD/repos. You must run "
                     "this tool from the root of a spec repository.",
         parents=[common_base_parser()])
-    parser.add_argument("package", help="package name")
-    parser.add_argument("--url", metavar="URL", default=None,
-                        help="Source repository URL."
-                             "It can be local e.g. repos/package.")
-    parser.add_argument("--commitish", default=None,
-                        help="Source repository commitish, tag or branch)."
-                             "Defaults to the one inferred from the SPEC "
-                             "or link file.")
-    parser.add_argument("--base", metavar="URL", default=None,
-                        help="Base repository URL. "
-                             "It can be local e.g. repos/package. "
-                             "This is used only for lnk packages.")
-    parser.add_argument("--base_commitish", metavar="COMMITISH",
+    parser.add_argument("package", metavar="PACKAGE", help="package name")
+
+    write = parser.add_mutually_exclusive_group()
+    write.add_argument("-w", "--write", action="store_true",
+                       help="Write pin file in PINS/PACKAGE.pin. "
+                            "It overwrites the file if present.")
+    write.add_argument("-o", "--output", default=None,
+                       help="Path of the pinfile to write. "
+                            "It overwrites the file if present.")
+
+    overrs = parser.add_mutually_exclusive_group()
+    overrs.add_argument("--source-override", dest="source", default=None,
+                        help="Path to a tarball or url of a git "
+                             "repository in the form URL:commitish."
+                             "When used the pin will get rid of any "
+                             "pre-existing source, archive or patchqueue "
+                             "and use the provided path as Source0.")
+    overrs.add_argument("--patchqueue-override", dest="patchqueue",
                         default=None,
-                        help="Base repository commitish, tag or branch. "
-                             "This is required when using --base. "
-                             "This is used only for lnk packages.")
-    parser.add_argument("--patchqueue", default="master",
-                        help="Value for the patchqueue field of the pin file. "
-                             "Defaults to master. ")
-    parser.add_argument("-o", "--output", default=None,
-                        help="Path of the pinfile to write. "
-                             "When used, it overwrites the file "
-                             "if present.")
+                        help="Path to a tarball or url of a git "
+                             "repository in the form URL:commitish."
+                             "When used the pin will get rid of any "
+                             "pre-existing patchqueue and use the provided "
+                             "path as PatchQueue0.")
+
     return parser.parse_args(argv)
 
 
@@ -161,19 +135,21 @@ def main(argv=None):
 
     args = parse_args_or_exit(argv)
 
-    if args.base is not None and args.base_commitish is None:
-        sys.exit("Error: --base_commitish is required if --base is used.")
-
     package_name = args.package
     xs_path = os.getcwd()
-    pin = make_pin(args, xs_path, package_name)
+    spec = load_spec_and_lnk(xs_path, package_name)
+    pin = get_pin_content(args, spec)
 
     print(json.dumps(pin, indent=2))
 
-    if args.output:
-        path = os.path.dirname(args.output)
+    output = args.output
+    if args.write:
+        output = "PINS/{}.pin".format(package_name)
+
+    if output is not None:
+        path = os.path.dirname(output)
         if os.path.exists(path):
-            with open(args.output, "w") as out:
+            with open(output, "w") as out:
                 json.dump(pin, out, indent=2)
         else:
             sys.exit("Error: path {} does not exist.".format(path))
