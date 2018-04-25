@@ -99,9 +99,11 @@ def parse_args_or_exit(argv=None):
     """
 
     parser = argparse.ArgumentParser(
-        description="Create a .pin file pointing to a repository "
-                    "in $CWD/repos. You must run "
-                    "this tool from the root of a spec repository.",
+        description="Create a .pin file for PACKAGE. "
+                    "Needs to run from the root of a spec repository. "
+                    "Note that when URL is an ssh url to a git repository, "
+                    "planex will first look for a repository with the "
+                    "same name cloned in the $CWD/repos folder.",
         parents=[common_base_parser()])
     parser.add_argument("package", metavar="PACKAGE", help="package name")
 
@@ -116,14 +118,14 @@ def parse_args_or_exit(argv=None):
     overrs = parser.add_mutually_exclusive_group()
     overrs.add_argument("--source-override", dest="source", default=None,
                         help="Path to a tarball or url of a git "
-                             "repository in the form URL:commitish."
+                             "repository in the form URL:commitish. "
                              "When used the pin will get rid of any "
                              "pre-existing source, archive or patchqueue "
                              "and use the provided path as Source0.")
     overrs.add_argument("--patchqueue-override", dest="patchqueue",
                         default=None,
                         help="Path to a tarball or url of a git "
-                             "repository in the form URL:commitish."
+                             "repository in the form URL:commitish. "
                              "When used the pin will get rid of any "
                              "pre-existing patchqueue and use the provided "
                              "path as PatchQueue0.")
