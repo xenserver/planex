@@ -89,6 +89,12 @@ def get_pin_content(args, spec):
         if commitish is not None:
             pinfile["PatchQueue0"]["commitish"] = commitish
 
+        # Note that in all our current link files, when both a PQ
+        # and an Archive are present, these point to the same tarball.
+        # This, by default, planex-pin will overwrite the Archive0 with
+        # the same content as PatchQueue0
+        pinfile["Archive0"] = pinfile["PatchQueue0"]
+
     return pinfile
 
 
