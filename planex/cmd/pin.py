@@ -18,6 +18,7 @@ RPM_DEFINES = [("dist", "pinned"),
                ("_topdir", "."),
                ("_sourcedir", "%_topdir/SOURCES/%name")]
 
+
 def load_spec_and_lnk(repo_path, package_name):
     """
     Return the Spec object for
@@ -77,9 +78,7 @@ def get_pin_content(args, spec):
             continue
 
         pinfile[name] = {"URL": source.url}
-        if isinstance(source, GitBlob) \
-                or isinstance(source, GitArchive) \
-                or isinstance(source, GitPatchqueue):
+        if isinstance(source, (GitBlob, GitArchive, GitPatchqueue)):
             pinfile[name]["commititsh"] = source.commitish
         if isinstance(source, Archive):
             pinfile[name]["prefix"] = source.prefix
