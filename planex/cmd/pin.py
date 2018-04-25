@@ -140,7 +140,7 @@ def main(argv=None):
     spec = load_spec_and_lnk(xs_path, package_name)
     pin = get_pin_content(args, spec)
 
-    print(json.dumps(pin, indent=2))
+    print(json.dumps(pin, indent=2, sort_keys=True))
 
     output = args.output
     if args.write:
@@ -150,6 +150,6 @@ def main(argv=None):
         path = os.path.dirname(output)
         if os.path.exists(path):
             with open(output, "w") as out:
-                json.dump(pin, out, indent=2)
+                json.dump(pin, out, indent=2, sort_keys=True)
         else:
             sys.exit("Error: path {} does not exist.".format(path))
