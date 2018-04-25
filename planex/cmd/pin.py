@@ -14,6 +14,9 @@ from planex.link import Link
 from planex.spec import GitBlob, GitArchive, GitPatchqueue, Archive
 import planex.spec
 
+RPM_DEFINES = [("dist", "pinned"),
+               ("_topdir", "."),
+               ("_sourcedir", "%_topdir/SOURCES/%name")]
 
 def load_spec_and_lnk(repo_path, package_name):
     """
@@ -31,7 +34,7 @@ def load_spec_and_lnk(repo_path, package_name):
 
     linkname = "%s.lnk" % partial_file_path
     link = Link(linkname) if os.path.isfile(linkname) else None
-    spec = planex.spec.load(specname, link=link)
+    spec = planex.spec.load(specname, link=link, defines=RPM_DEFINES)
 
     return spec
 
