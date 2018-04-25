@@ -8,9 +8,10 @@ import argparse
 from os import symlink
 from os.path import basename, dirname, join, relpath
 import subprocess
+import sys
 
 import git
-# from planex.link import Link
+from planex.link import Link
 import planex.util as util
 
 
@@ -116,17 +117,45 @@ def main(argv=None):
     """
     Entry point
     """
-    _args = parse_args_or_exit(argv)
+    args = parse_args_or_exit(argv)
 
-    # for pinpath in args.pins:
-    #     pin = Link(pinpath)
+    for pinpath in args.pins:
+        pin = Link(pinpath)
 
-    #     if args.jenkins:
-    #         print('echo "Cloning %s"' % pin.url)
-    #         clone_jenkins(pin.url, args.repos,
-    #                       pin.commitish, args.credentials)
+        if args.jenkins:
+            # The following assumes that the pin file does not use any
+            # rpm macro in its fields. We can enable them by using
+            # planex.spec.load and the right RPM_DEFINES but it is more
+            # error prone and should probably be done only if we see
+            # that it is an essential feature.
+            gathered = ([source for _, source in pin.sources.items()
+                         if source.get('commitish', False)] +
+                        [archive for _, archive in pin.archives.items()
+                         if archive.get('commitish', False)] +
+                        [pq for _, pq in pin.patchqueue_sources.items()
+                         if pq.get('commitish', False)])
 
-    #     else:
+            # Prevent double-cloning of a repository
+            gathered = set((g['URL'], g['commitish']) for g in gathered)
+
+            if gathered:
+                print('echo "Clones for %s"' % pinpath)
+
+            # this is suboptimal but the sets are very small
+            if any(commitish1 != commitish2
+                   for (url1, commitish1) in gathered
+                   for (url2, commitish2) in gathered
+                   if url1 == url2):
+                sys.exit("Cloning two git repositories with the same name "
+                         "but different commitish is not supported")
+
+            for url, commitish in gathered:
+                print('echo "Cloning %s"' % url)
+                clone_jenkins(url, args.repos,
+                              commitish, args.credentials)
+
+        else:
+            raise NotImplementedError
     #         try:
     #             print("Cloning %s" % pin.url)
     #             util.makedirs(args.repos)
@@ -140,5 +169,3 @@ def main(argv=None):
 
     #         except git.GitCommandError as gce:
     #             print(gce.stderr)
-
-    raise NotImplementedError
