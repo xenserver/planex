@@ -45,14 +45,16 @@ def repo_or_path(arg):
     Heuristic. Parse URL:commitish into (URL, commitish) and anything else into
     (URL, None)
     """
-    split = arg.strip().split(":")
-    if len(split) > 2 or not split:
-        raise ValueError(
-            "Expected URL or URL:commitish but got {}".format(arg))
-    elif len(split) == 2:
+    if arg.startswith("ssh://"):
+        split = arg.split("#")
+        if len(split) > 2 or not split:
+            raise ValueError(
+                "Expected URL or ssh://URL#commitish but got {}".format(arg))
+        if len(split) == 1:
+            return (arg, None)
         return tuple(split)
-    else:
-        return (split[0], None)
+
+    return (arg, None)
 
 # pylint: disable=too-many-branches
 
@@ -123,14 +125,14 @@ def parse_args_or_exit(argv=None):
     overrs = parser.add_mutually_exclusive_group()
     overrs.add_argument("--source-override", dest="source", default=None,
                         help="Path to a tarball or url of a git "
-                             "repository in the form URL:commitish. "
+                             "repository in the form ssh://GitURL#commitish. "
                              "When used the pin will get rid of any "
                              "pre-existing source, archive or patchqueue "
                              "and use the provided path as Source0.")
     overrs.add_argument("--patchqueue-override", dest="patchqueue",
                         default=None,
                         help="Path to a tarball or url of a git "
-                             "repository in the form URL:commitish. "
+                             "repository in the form ssh://GitURL#commitish. "
                              "When used the pin will get rid of any "
                              "pre-existing patchqueue and use the provided "
                              "path as PatchQueue0.")
