@@ -156,17 +156,30 @@ def main(argv=None):
                               commitish, args.credentials)
 
         else:
-            raise NotImplementedError
-    #         try:
-    #             print("Cloning %s" % pin.url)
-    #             util.makedirs(args.repos)
-    #             pq_repo = clone(pin.url, args.repos, pin.commitish)
+            sources = [(src['URL'], src['commitish'])
+                       for _, src in pin.sources.items()
+                       if src.get('commitish', False)]
+            patchqueues = [(pq['URL'], pq['commitish'], dirname(pq['prefix']))
+                           for _, pq in pin.patchqueue_sources.items()
+                           if pq.get('commitish', False)]
 
-    #             if args.clone_base and pin.base:
-    #                 print("Cloning %s" % pin.base)
-    #                 base_repo = clone(pin.base, args.repos,
-    #                                   pin.base_commitish)
-    #                 apply_patchqueue(base_repo, pq_repo, pin.patchqueue)
+            if len(sources) != 1 and len(patchqueues) > 1:
+                raise NotImplementedError(
+                    "planex-clone does not support the cloning and assembly "
+                    "of multiple sources and patchqueues, currently this "
+                    "case needs to be handled by hands.")
+            try:
+                src_url, src_commitish = sources.pop()
+                print("Cloning %s" % src_url)
+                util.makedirs(args.repos)
+                src_repo = clone(src_url, args.repos, src_commitish)
 
-    #         except git.GitCommandError as gce:
-    #             print(gce.stderr)
+                if patchqueues:
+                    pq_url, pq_commitish, pq_prefix = patchqueues.pop()
+                    print("Cloning %s" % pq_url)
+                    pq_repo = clone(pq_url, args.repos,
+                                    pq_commitish)
+                    apply_patchqueue(src_repo, pq_repo, pq_prefix)
+
+            except git.GitCommandError as gce:
+                print(gce.stderr)
