@@ -10,6 +10,11 @@ import json
 import os
 import sys
 
+try:
+    import requests.packages.urlparse as urlparse
+except ImportError:
+    import urlparse
+
 from planex.cmd.args import common_base_parser
 from planex.link import Link
 from planex.repository import Repository
@@ -123,13 +128,23 @@ def get_pin_content(args, spec):
             pinfile["PatchQueue0"]["commitish"] = commitish
             pinfile["PatchQueue0"]["prefix"] = resources["PatchQueue0"].prefix
 
-        # Note that in all our current link files, when both a PQ
-        # and an Archive are present, these point to the same tarball.
+        # When both a PQ0 and an Archive0 are present, and point to the same
+        # repository, we assume that they are pointint to the same tarball.
         # This, by default, planex-pin will overwrite the Archive0 with
-        # the same content as PatchQueue0
-        if "Archive0" in resources:
+        # the same content as PatchQueue0. This could fail when multiple
+        # archives are present and the one matching the PQ is not the first
+        # one, but for now I value the simplicity of the code over covering
+        # any possible corner case.
+        if "Archive0" not in resources:
+            return pinfile
+
+        pq_url = urlparse(url)
+        archive = resources["Archive0"]
+        archive_url = urlparse(archive.url)
+        if pq_url.netloc == archive_url.netloc \
+                and pq_url.path == archive_url.path:
             pinfile["Archive0"] = copy.deepcopy(pinfile["PatchQueue0"])
-            pinfile["Archive0"]["prefix"] = resources["Archive0"].prefix
+            pinfile["Archive0"]["prefix"] = archive.prefix
 
     return pinfile
 
