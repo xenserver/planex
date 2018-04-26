@@ -3,6 +3,7 @@ planex-clone: Checkout sources referred to by a pin file
 """
 from __future__ import print_function
 
+import errno
 from string import Template
 import argparse
 from os import symlink
@@ -96,7 +97,13 @@ def apply_patchqueue(base_repo, pq_repo, pq_dir):
                            base_repo.active_branch.name)
     branch_path = dirname(base_repo.active_branch.name)
     util.makedirs(dirname(patchqueue_path))
-    symlink(relpath(pq_dir, branch_path), patchqueue_path)
+    try:
+        symlink(relpath(pq_dir, branch_path), patchqueue_path)
+    except OSError as err:
+        if err.errno == errno.EEXIST:
+            pass
+        else:
+            raise
 
     # Create empty guilt status for the branch
     status = join(patchqueue_path, 'status')
