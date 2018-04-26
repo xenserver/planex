@@ -5,6 +5,7 @@ in xenserver-specs/repos/ to override the spec/lnk
 from __future__ import print_function
 
 import argparse
+import copy
 import json
 import os
 import sys
@@ -90,12 +91,15 @@ def get_pin_content(args, spec):
         pinfile["PatchQueue0"] = {"URL": url}
         if commitish is not None:
             pinfile["PatchQueue0"]["commitish"] = commitish
+            pinfile["PatchQueue0"]["prefix"] = resources["PatchQueue0"].prefix
 
         # Note that in all our current link files, when both a PQ
         # and an Archive are present, these point to the same tarball.
         # This, by default, planex-pin will overwrite the Archive0 with
         # the same content as PatchQueue0
-        pinfile["Archive0"] = pinfile["PatchQueue0"]
+        if "Archive0" in resources:
+            pinfile["Archive0"] = copy.deepcopy(pinfile["PatchQueue0"])
+            pinfile["Archive0"]["prefix"] = resources["Archive0"].prefix
 
     return pinfile
 
