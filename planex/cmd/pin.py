@@ -57,23 +57,12 @@ def repo_or_path(arg):
 
     return (arg, None)
 
-# pylint: disable=too-many-branches
 
-
-def get_pin_content(args, spec):
+def populate_pinfile(pinfile, args, resources):
     """
-    Generate the pinfile content for a Spec.
+    Update [pinfile] in place with content of resources.
     """
-    pinfile = {"SchemaVersion": "3"}
-
-    if args.source is not None:
-        url, commitish = repo_or_path(args.source)
-        pinfile["Source0"] = {"URL": url}
-        if commitish is not None:
-            pinfile["Source0"]["commitish"] = commitish
-        return pinfile
-
-    for name, source in spec.resources_dict().items():
+    for name, source in resources.items():
 
         if args.patchqueue is not None and "PatchQueue" in name:
             continue
@@ -85,6 +74,22 @@ def get_pin_content(args, spec):
             pinfile[name]["commititsh"] = source.commitish
         if isinstance(source, Archive):
             pinfile[name]["prefix"] = source.prefix
+
+
+def get_pin_content(args, spec):
+    """
+    Generate the pinfile content for a Spec.
+    """
+    resources = spec.resources_dict()
+
+    pinfile = {"SchemaVersion": "3"}
+    if args.source is not None:
+        url, commitish = repo_or_path(args.source)
+        pinfile["Source0"] = {"URL": url}
+        if commitish is not None:
+            pinfile["Source0"]["commitish"] = commitish
+    else:
+        populate_pinfile(pinfile, args, resources)
 
     if args.patchqueue is not None:
         url, commitish = repo_or_path(args.patchqueue)
