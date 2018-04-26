@@ -62,8 +62,8 @@ def download_rpm_sources(spec):
             print('%s: %s' % (resource.path, spec.specpath()))
             if resource.defined_by != spec.specpath():
                 print("%s: %s" % (resource.path, resource.defined_by))
-            if resource.force_rebuild:
-                print("%s: %s" % (resource.path, "FORCE"))
+            # if resource.force_rebuild:
+            #     print("%s: %s" % (resource.path, "FORCE"))
 
 
 def build_rpm_from_srpm(spec):
