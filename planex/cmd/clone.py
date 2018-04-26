@@ -136,7 +136,8 @@ def main(argv=None):
                          if pq.get('commitish', False)])
 
             # Prevent double-cloning of a repository
-            gathered = set((g['URL'], g['commitish']) for g in gathered)
+            gathered = set((gath['URL'], gath['commitish'])
+                           for gath in gathered)
 
             if gathered:
                 print('echo "Clones for %s"' % pinpath)
