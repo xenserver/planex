@@ -119,7 +119,7 @@ def apply_patchqueue(base_repo, pq_repo, pq_dir):
         subprocess.check_call(['guilt', 'push', '--all'],
                               cwd=base_repo.working_dir)
 
-
+# pylint: disable=too-many-locals
 def main(argv=None):
     """
     Entry point
@@ -174,8 +174,8 @@ def main(argv=None):
                 sys.exit("error: planex-clone requires Source0 to point to "
                          "a git repository.")
             if pin.patchqueue_sources and not patchqueues:
-                sys.exit("error: planex-clone requires PatchQueue0 to point to "
-                         "a git repository.")
+                sys.exit("error: planex-clone requires PatchQueue0 to point "
+                         "to a git repository.")
 
             if len(sources) != 1 and len(patchqueues) > 1:
                 sys.exit(
