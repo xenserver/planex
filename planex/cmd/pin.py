@@ -122,14 +122,13 @@ def parse_args_or_exit(argv=None):
                        help="Path of the pinfile to write. "
                             "It overwrites the file if present.")
 
-    overrs = parser.add_mutually_exclusive_group()
-    overrs.add_argument("--source-override", dest="source", default=None,
+    parser.add_argument("--override-source", dest="source", default=None,
                         help="Path to a tarball or url of a git "
                              "repository in the form ssh://GitURL#commitish. "
                              "When used the pin will get rid of any "
                              "pre-existing source, archive or patchqueue "
                              "and use the provided path as Source0.")
-    overrs.add_argument("--patchqueue-override", dest="patchqueue",
+    parser.add_argument("--override-patchqueue", dest="patchqueue",
                         default=None,
                         help="Path to a tarball or url of a git "
                              "repository in the form ssh://GitURL#commitish. "
