@@ -86,7 +86,7 @@ def populate_pinfile(pinfile, args, resources):
 
         pinfile[name] = {}
         if isinstance(source, (GitBlob, GitArchive, GitPatchqueue)):
-            url = source.url,
+            url = source.url
             commitish = source.commitish
         else:
             # heuristically try to get a repo
