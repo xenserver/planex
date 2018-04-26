@@ -220,6 +220,20 @@ class GitBlob(Blob):
         return self._commitish
 
     @property
+    @expandmacros
+    def path(self):
+        """ Return the local path to this resource"""
+
+        # RPM only looks at the basename part of the Source URL - the
+        # part after the rightmost /.   We must match this behaviour.
+        #
+        # Examples:
+        #    ssh://git@www.example.com/foo/bar.git -> bar.tar.gz
+
+        (name, _) = os.path.splitext(os.path.basename(self.url))
+        return os.path.join("%_sourcedir", "{}.tar.gz".format(name))
+
+    @property
     def force_rebuild(self):
         """
         True if this source should always be re-fetched.
@@ -311,6 +325,20 @@ class GitArchive(Archive):
         return self._commitish
 
     @property
+    @expandmacros
+    def path(self):
+        """ Return the local path to this resource"""
+
+        # RPM only looks at the basename part of the Source URL - the
+        # part after the rightmost /.   We must match this behaviour.
+        #
+        # Examples:
+        #    ssh://git@www.example.com/foo/bar.git -> bar.tar.gz
+
+        (name, _) = os.path.splitext(os.path.basename(self.url))
+        return os.path.join("%_sourcedir", "{}.tar.gz".format(name))
+
+    @property
     def force_rebuild(self):
         """
         True if this source should always be re-fetched.
@@ -356,6 +384,20 @@ class GitPatchqueue(Patchqueue):
     def commitish(self):
         """Return the commitish to fetch for this resource"""
         return self._commitish
+
+    @property
+    @expandmacros
+    def path(self):
+        """ Return the local path to this resource"""
+
+        # RPM only looks at the basename part of the Source URL - the
+        # part after the rightmost /.   We must match this behaviour.
+        #
+        # Examples:
+        #    ssh://git@www.example.com/foo/bar.pg.git -> bar.pg.tar.gz
+
+        (name, _) = os.path.splitext(os.path.basename(self.url))
+        return os.path.join("%_sourcedir", "{}.tar.gz".format(name))
 
     @property
     def force_rebuild(self):
@@ -562,7 +604,8 @@ class Spec(object):
             return sorted(dictionary, key=lambda kv: kv[0])
 
         sources = (
-            "Source{}: {}\n".format(index, blob.url)
+            "Source{}: {}\n".format(index, os.path.basename(blob.path)
+                                    if isinstance(blob, GitBlob) else blob.url)
             for index, blob in sorted_by_key(self._sources.items())
         )
         patches = (
@@ -745,11 +788,10 @@ class Spec(object):
         #    http://www.example.com/foo/bar.tar.gz -> bar.tar.gz
         #    http://www.example.com/foo/bar.cgi#/baz.tbz -> baz.tbz
 
-        with rpm_macros(self.macros, nevra(self.spec.sourceHeader)):
-            ret = [(os.path.join(rpm.expandMacro("%_sourcedir"),
-                                 os.path.basename(url)), url)
-                   for (url, _, _) in reversed(self.spec.sources)]
-
+        ret = [(source.path, source.url)
+               for _, source in sorted(self._sources.items())]
+        ret += [(patch.path, patch.url)
+                for _, patch in sorted(self._patches.items())]
         patchqueues = [self._patchqueues[key] for key
                        in sorted(self._patchqueues.keys())]
         patches = sum([pq.series() for pq in patchqueues], [])
