@@ -182,8 +182,12 @@ def fetch_source(args):
         reponame = os.path.basename(url.path).rsplit(".git")[0]
         repo = git.Repo(os.path.join("repos", reponame))
         with open(resource.path, "wb") as output:
+            if resource.prefix is not None:
+                prefix = str(resource.prefix)
+            else:
+                prefix = None
             repo.archive(output, treeish=str(resource.commitish),
-                         prefix=str(resource.prefix))
+                         prefix=prefix)
 
     elif url.scheme in ['', 'file'] and url.netloc == '':
         shutil.copyfile(url.path, resource.path)
