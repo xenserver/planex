@@ -147,8 +147,8 @@ def main(argv=None):
                    for (url1, commitish1) in gathered
                    for (url2, commitish2) in gathered
                    if url1 == url2):
-                sys.exit("Cloning two git repositories with the same name "
-                         "but different commitish is not supported")
+                sys.exit("error: cloning two git repositories with the same "
+                         "name but different commitish is not supported")
 
             for url, commitish in gathered:
                 print('echo "Cloning %s"' % url)
@@ -163,11 +163,18 @@ def main(argv=None):
                            for _, pq in pin.patchqueue_sources.items()
                            if pq.get('commitish', False)]
 
+            if not sources:
+                sys.exit("error: planex-clone requires Source0 to point to "
+                         "a git repository.")
+            if pin.patchqueue_sources and not patchqueues:
+                sys.exit("error: planex-clone requires PatchQueue0 to point to "
+                         "a git repository.")
+
             if len(sources) != 1 and len(patchqueues) > 1:
-                raise NotImplementedError(
-                    "planex-clone does not support the cloning and assembly "
-                    "of multiple sources and patchqueues, currently this "
-                    "case needs to be handled by hands.")
+                sys.exit(
+                    "error: planex-clone does not support the cloning and "
+                    "assembly of multiple sources and patchqueues, currently "
+                    "this case needs to be handled by hands.")
             try:
                 src_url, src_commitish = sources.pop()
                 print("Cloning %s" % src_url)
