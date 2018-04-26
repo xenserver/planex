@@ -103,11 +103,6 @@ $(TOPDIR)/SOURCES/%:
 	$(AT) mkdir -p $(@D)
 	$(AT)$(FETCH) $(FETCH_FLAGS) $^ $@
 
-# Create a patchqueue tarball for a pinned package.
-# Pinned patchqueues are always regenerated.
-.PHONY: FORCE
-FORCE:
-
 
 ############################################################################
 # RPM build rules
