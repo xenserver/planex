@@ -120,6 +120,8 @@ def apply_patchqueue(base_repo, pq_repo, pq_dir):
                               cwd=base_repo.working_dir)
 
 # pylint: disable=too-many-locals
+
+
 def main(argv=None):
     """
     Entry point
