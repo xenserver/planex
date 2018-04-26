@@ -92,7 +92,9 @@ def expandmacros(func):
     def func_wrapper(self):
         """Decorator wrapper"""
         with rpm_macros(self.spec.macros, nevra(self.spec.spec.sourceHeader)):
-            return rpm.expandMacro(func(self))
+            value = func(self)
+            return rpm.expandMacro(value) if value is not None \
+                else None
     return func_wrapper
 
 
@@ -197,10 +199,19 @@ class GitBlob(Blob):
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, spec, url, defined_by, commitish):
+    def __init__(self, spec, url, defined_by, prefix, commitish):
         with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
             super(GitBlob, self).__init__(spec, url, defined_by)
+            self._prefix = rpm.expandMacro(prefix) if prefix is not None \
+                else None
             self._commitish = rpm.expandMacro(commitish)
+
+    @property
+    @expandmacros
+    def prefix(self):
+        """Return the directory prefix of files in this resource"""
+        return os.path.normpath(self._prefix) + "/" \
+            if self._prefix is not None else None
 
     @property
     @expandmacros
@@ -408,7 +419,8 @@ def update_with_schema_version_3(spec, link):
         idx = _parse_name(name)
         url = value["URL"]
         if url.startswith("ssh://"):
-            source = GitBlob(spec, url, link.path, value.get("commitish"))
+            source = GitBlob(spec, url, link.path,
+                             value.get("prefix"), value.get("commitish"))
         else:
             source = Blob(spec, url, link.path)
         spec.add_source(idx, source)
