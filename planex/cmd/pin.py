@@ -12,6 +12,7 @@ import sys
 
 from planex.cmd.args import common_base_parser
 from planex.link import Link
+from planex.repository import Repository
 from planex.spec import GitBlob, GitArchive, GitPatchqueue, Archive
 import planex.spec
 
@@ -69,9 +70,24 @@ def populate_pinfile(pinfile, args, resources):
         if "Patch" in name and "PatchQueue" not in name:
             continue
 
-        pinfile[name] = {"URL": source.url}
+        pinfile[name] = {}
         if isinstance(source, (GitBlob, GitArchive, GitPatchqueue)):
-            pinfile[name]["commititsh"] = source.commitish
+            url = source.url,
+            commitish = source.commitish
+        else:
+            # heuristically try to get a repo
+            repo = Repository(source.url)
+            url = repo.repository_url()
+            commitish = repo.commitish_tag_or_branch()
+
+        if commitish is None:
+            pinfile[name] = {"URL": source.url}
+        else:
+            pinfile[name] = {
+                "URL": url,
+                "commitish": commitish
+            }
+
         if isinstance(source, Archive):
             pinfile[name]["prefix"] = source.prefix
 
