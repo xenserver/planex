@@ -65,8 +65,17 @@ def populate_pinfile(pinfile, args, resources):
     """
     for name, source in resources.items():
 
+        # If we are overriding Source0, we still need to keep other
+        # eventual sources
+        if args.source is not None \
+                and (name == "Source0" or "Source" not in name):
+            continue
+        # When we override PatchQueue0, we get rid of all the other
+        # patchqueues
         if args.patchqueue is not None and "PatchQueue" in name:
             continue
+        # Patches are defined in the spec and could be overridden with
+        # Archives, but we do not put them in the link and pin files
         if "Patch" in name and "PatchQueue" not in name:
             continue
 
@@ -104,8 +113,8 @@ def get_pin_content(args, spec):
         pinfile["Source0"] = {"URL": url}
         if commitish is not None:
             pinfile["Source0"]["commitish"] = commitish
-    else:
-        populate_pinfile(pinfile, args, resources)
+
+    populate_pinfile(pinfile, args, resources)
 
     if args.patchqueue is not None:
         url, commitish = repo_or_path(args.patchqueue)
