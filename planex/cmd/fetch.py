@@ -15,7 +15,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.adapters import Retry
 try:
-    import requests.packages.urlparse
+    import requests.packages.urlparse as urlparse
 except ImportError:
     import urlparse
 
