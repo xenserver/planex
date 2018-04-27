@@ -64,6 +64,7 @@ def repo_or_path(arg):
     return (arg, None)
 
 
+# pylint: disable=too-many-branches
 def populate_pinfile(pinfile, args, resources):
     """
     Update [pinfile] in place with content of resources.
@@ -88,11 +89,20 @@ def populate_pinfile(pinfile, args, resources):
         if isinstance(source, (GitBlob, GitArchive, GitPatchqueue)):
             url = source.url
             commitish = source.commitish
+            prefix = source.prefix
         else:
             # heuristically try to get a repo
             repo = Repository(source.url)
             url = repo.repository_url()
             commitish = repo.commitish_tag_or_branch()
+            if name == "Source0":
+                prefix = urlparse.parse_qs(
+                    urlparse.urlparse(source.url).query
+                ).get("prefix", None)
+                if prefix and isinstance(prefix, list):
+                    prefix = prefix.pop()
+            else:
+                prefix = None
 
         if commitish is None:
             pinfile[name] = {"URL": source.url}
@@ -102,6 +112,8 @@ def populate_pinfile(pinfile, args, resources):
                 "commitish": commitish
             }
 
+        if prefix is not None:
+            pinfile[name]["prefix"] = prefix
         if isinstance(source, Archive):
             pinfile[name]["prefix"] = source.prefix
 
