@@ -49,7 +49,7 @@ def load_spec_and_lnk(repo_path, package_name):
 
 def repo_or_path(arg):
     """
-    Heuristic. Parse URL:commitish into (URL, commitish) and anything else into
+    Heuristic. Parse URL#commitish into (URL, commitish) and anything else into
     (URL, None)
     """
     if arg.startswith("ssh://"):
