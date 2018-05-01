@@ -568,7 +568,7 @@ class Spec(object):
 
         If [srpm_sources] is a list of sources, it will add comments in the
         spec file describing the origin of the source.
-        If [manifests] is true it will add `Provides: gitsha(sha) = url` using
+        If [manifests] is true it will add `Provides: gitsha(url) = sha` using
         the Git* objects or the .gitarchive-info files.
         """
 
@@ -664,8 +664,8 @@ class Spec(object):
             manifests = {}
 
         manifest_metadata = (
-            "Provides: gitsha({}) = {}\n".format(sha, url)
-            for (sha, url) in manifests.items()
+            "Provides: gitsha({}) = {}\n".format(url, sha)
+            for url, sha in manifests.items()
         )
 
         newspec = chain(
