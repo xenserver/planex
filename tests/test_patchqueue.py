@@ -40,7 +40,7 @@ class BasicTests(unittest.TestCase):
 
     def test_rewrite_spec(self):
         """Patches are inserted into rewritten spec file"""
-        spec = Spec("tests/data/manifest/branding-xenserver.spec",
+        spec = Spec("tests/data/branding-xenserver.spec",
                     check_package_name=False)
         spec.add_patch(0, Blob(spec, "first.patch", "dummy"))
         spec.add_patch(1, Blob(spec, "second.patch", "dummy"))
@@ -53,7 +53,7 @@ class BasicTests(unittest.TestCase):
 
     def test_overridden_patch_in_spec(self):
         """Patches with the same index override each other"""
-        spec = Spec("tests/data/manifest/branding-xenserver.spec",
+        spec = Spec("tests/data/branding-xenserver.spec",
                     check_package_name=False)
         spec.add_patch(0, Blob(spec, "first.patch", "dummy"))
         spec.add_patch(1, Blob(spec, "second.patch", "dummy"))
@@ -66,7 +66,7 @@ class BasicTests(unittest.TestCase):
 
     def test_autosetup_present(self):
         """Patchqueue application succeeds if %autosetup is present"""
-        spec = Spec("tests/data/manifest/branding-xenserver.spec",
+        spec = Spec("tests/data/branding-xenserver.spec",
                     check_package_name=False)
         spec.add_patch(0, Blob(spec, "first.patch", "dummy"))
         rewritten = spec.rewrite_spec()
