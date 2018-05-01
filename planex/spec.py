@@ -560,10 +560,16 @@ class Spec(object):
         """Return the path to the spec file"""
         return self.path
 
-    def rewrite_spec(self):
+    # pylint: disable=too-many-locals
+    def rewrite_spec(self, srpm_sources=None, manifests=None):
         """
         Rewrite the sources and patches in the spec file, also inserting the
-        names of all patchqueue patches into it
+        names of all patchqueue patches into it.
+
+        If [srpm_sources] is a list of sources, it will add comments in the
+        spec file describing the origin of the source.
+        If [manifests] is true it will add `Provides: gitsha(sha) = url` using
+        the Git* objects or the .gitarchive-info files.
         """
 
         # If there is nothing to rewrite, don't rewrite!
@@ -603,28 +609,70 @@ class Spec(object):
             """Return an iterable of key, value tuples ordered by key"""
             return sorted(dictionary, key=lambda kv: kv[0])
 
+        if srpm_sources is not None:
+            file_sources = self._contents_from_resources(srpm_sources)
+        else:
+            file_sources = []
+
+        def source_content(kind, index, blob):
+            """Content of [kind]X line with or without metadata."""
+            path = os.path.basename(blob.path) \
+                if isinstance(blob, GitBlob) else blob.url
+            source_line = "{}{}: {}\n".format(kind, index, path)
+
+            # find an eventual archive that provides the data
+            resource = [
+                resource for (resource, collection) in file_sources
+                if blob.basename in collection
+            ]
+            if not resource:
+                return source_line
+
+            resource = resource.pop()
+            if isinstance(resource, (GitBlob, GitArchive)):
+                meta = "# {}{}: {}#{}".format(
+                    kind, index, resource.url, resource.commitish)
+            else:
+                meta = "# {}{}: {}".format(kind, index, resource.url)
+            return "{}\n{}".format(meta, source_line)
+
         sources = (
-            "Source{}: {}\n".format(index, os.path.basename(blob.path)
-                                    if isinstance(blob, GitBlob) else blob.url)
+            source_content("Source", index, blob)
             for index, blob in sorted_by_key(self._sources.items())
         )
         patches = (
-            "Patch{}: {}\n".format(index, blob.url)
+            source_content("Patch", index, blob)
             for index, blob in sorted_by_key(self._patches.items())
         )
 
-        patchqueues = (self._patchqueues[key] for key
-                       in sorted(self._patchqueues.keys()))
+        patchqueues = [self._patchqueues[key] for key
+                       in sorted(self._patchqueues.keys())]
         series = sum([pq.series() for pq in patchqueues], [])
         base_index = 1 + self.highest_patch()
         further_patches = (
             "Patch{}: {}\n".format(base_index + index, patch)
             for index, patch in enumerate(series)
         )
+        further_patches_metadata = (
+            "# Patchqueue: {}#{}\n".format(pq.url, pq.commitish)
+            if isinstance(pq, GitPatchqueue)
+            else "# Patchqueue: {}\n".format(pq.url)
+            for pq in patchqueues if srpm_sources is not None
+        )
+
+        if manifests is None:
+            manifests = {}
+
+        manifest_metadata = (
+            "Provides: gitsha({}) = {}\n".format(sha, url)
+            for (sha, url) in manifests.items()
+        )
 
         newspec = chain(
             newspec_header, ("\n",),
-            sources, patches, further_patches, ("\n", ),
+            sources, patches, ("\n",),
+            further_patches_metadata, further_patches, ("\n",),
+            manifest_metadata, ("\n",),
             newspec_filtered_body)
         return "".join(newspec)
 
@@ -729,7 +777,7 @@ class Spec(object):
 
     def resource(self, target):
         """
-        Find the URL from which source should be downloaded
+        Find the URL from which source should be downloaded.
         """
         target_basename = os.path.basename(target)
         for resource in self.resources():
@@ -738,14 +786,12 @@ class Spec(object):
 
         raise KeyError(target_basename)
 
-    def extract_sources(self, sources, destdir):
+    def _contents_from_resources(self, sources):
         """
-        Extract source 'name' to destdir.   Returns a list of skipped
-        archives.   Raises KeyError if the requested source cannot be found.
+        Return a zip of (resource, collection) where resource is a source,
+        archive or patchqueue, and collection is the list of sources that
+        we will copy or extract from it.
         """
-        # below we rely in an essential way on the fact that
-        # resources are sorted
-
         resources = [resource for resource in self.resources()
                      if resource.is_fetchable]
 
@@ -764,9 +810,19 @@ class Spec(object):
             for (idx, sources) in enumerate(collection_batches)
         ]
 
+        return zip(resources, filtered_batches)
+
+    def extract_sources(self, sources, destdir):
+        """
+        Extract source 'name' to destdir.   Returns a list of skipped
+        archives.   Raises KeyError if the requested source cannot be found.
+        """
+        # below we rely in an essential way on the fact that
+        # resources are sorted
+
         pending = set(sources)
         skipped = []
-        for (resource, collection) in zip(resources, filtered_batches):
+        for (resource, collection) in self._contents_from_resources(sources):
             if not collection:
                 skipped.append(resource.basename)
                 continue
