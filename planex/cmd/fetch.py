@@ -104,6 +104,14 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
+def write_originfile(name, content):
+    """
+    Write [content] in [name].origin for tracking
+    """
+    with open('{0}.origin'.format(name), 'w') as origin_file:
+        origin_file.write('{0}\n'.format(content))
+
+
 def fetch_http(url, filename, retries):
     """
     Download the file at url and store it as filename
@@ -131,9 +139,7 @@ def fetch_http(url, filename, retries):
         shutil.copyfileobj(req.raw, out)
     best_effort_file_verify(filename)
 
-    # Write an origin file for tracking.
-    with open('{0}.origin'.format(filename), 'w') as origin_file:
-        origin_file.write('{0}\n'.format(url_string))
+    write_originfile(filename, url_string)
 
 
 def fetch_url(url, source, retries):
@@ -154,6 +160,21 @@ def fetch_url(url, source, retries):
     except FetchVerifyError as exn:
         # MIME type mismatch
         sys.exit(exn.message)
+
+
+def fetch_repo(url, resource):
+    """Git archive from local git repo"""
+    reponame = os.path.basename(url.path).rsplit(".git")[0]
+    repo = git.Repo(os.path.join("repos", reponame))
+    with open(resource.path, "wb") as output:
+        if resource.prefix is not None:
+            prefix = str(resource.prefix)
+        else:
+            prefix = None
+        repo.archive(output, treeish=str(resource.commitish),
+                     prefix=prefix)
+
+    write_originfile(resource.path, repo.remotes.origin.url)
 
 
 def fetch_source(args):
@@ -179,18 +200,11 @@ def fetch_source(args):
         fetch_url(url, resource.path, args.retries + 1)
 
     elif url.scheme == 'ssh':
-        reponame = os.path.basename(url.path).rsplit(".git")[0]
-        repo = git.Repo(os.path.join("repos", reponame))
-        with open(resource.path, "wb") as output:
-            if resource.prefix is not None:
-                prefix = str(resource.prefix)
-            else:
-                prefix = None
-            repo.archive(output, treeish=str(resource.commitish),
-                         prefix=prefix)
+        fetch_repo(url, resource)
 
     elif url.scheme in ['', 'file'] and url.netloc == '':
         shutil.copyfile(url.path, resource.path)
+        write_originfile(resource.path, url.path)
 
     else:
         sys.exit("%s: Unsupported url scheme %s" %
