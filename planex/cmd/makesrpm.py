@@ -88,13 +88,12 @@ def extract_commit(source):
     """
     Try to extract git archive information from a source entry
     """
-    name = os.path.basename(source)
     origin_name = '{0}.origin'.format(source)
     if not os.path.exists(origin_name):
         return (None, None)
 
     with open(origin_name, 'r') as origin_file:
-        name = origin_file.readline().strip()
+        url = origin_file.readline().strip()
         # Note: sha is the empty string if EOF
         sha = origin_file.readline().strip()
 
@@ -105,11 +104,11 @@ def extract_commit(source):
                 archive_info = tarball.extractfile('.gitarchive-info')
                 if archive_info:
                     commitish = get_commit_id(archive_info)
-                    return (name, commitish)
+                    return (url, commitish)
             except KeyError:
                 pass
     elif sha:
-        return (name, sha)
+        return (url, sha)
 
     return (None, None)
 
@@ -130,11 +129,11 @@ def populate_working_directory(metadata, tmpdir, spec):
 
     newspec = os.path.join(tmpdir, os.path.basename(spec.specpath()))
     manifests = {
-        name: sha
-        for name, sha in [
+        url: sha
+        for url, sha in [
             extract_commit(source[0]) for source in spec.sources()
         ]
-        if name is not None
+        if url is not None
     }
     srpm_sources = sources if metadata else None
 
