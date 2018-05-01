@@ -1,8 +1,0 @@
-{
-    "branding-xenserver": "39ae2ff11cfc5bde4724c67aae0aca77d2636664\trefs/heads/master\n",
-    "vhostmd": "8c25514011ff2081ccb6b988f2395d2be83570e7\trefs/heads/xenserver_patches\n",
-    "blktap": [
-        "db8d9edd203460adba4b9175971c2cfc14ac0f64\trefs/tags/v3.3.0\nddb48b561342d7742ec1dbd6c4987c1f4add9387\trefs/tags/v3.3.0^{}\n",
-        "ac9032660c02be11afdb7cc8ad23be2f1aa9b7ce\trefs/heads/master\n"
-    ]
-}
