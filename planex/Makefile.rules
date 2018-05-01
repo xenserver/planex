@@ -48,9 +48,6 @@ MOCK_FLAGS ?= ${QUIET+--quiet} \
 DEPEND ?= planex-depend
 DEPEND_FLAGS ?= $(RPM_DEFINES) $(DEPEND_EXTRA_FLAGS)
 
-MANIFEST ?= planex-manifest
-MANIFEST_FLAGS ?=
-
 ifdef QUIET
 AT = @
 endif
@@ -81,16 +78,6 @@ srpms: $(SRPMS)
 .PHONY: clean
 clean:
 	rm -rf $(TOPDIR)
-
-
-############################################################################
-# Manifest creation rules
-############################################################################
-
-$(TOPDIR)/MANIFESTS/%.json:
-	@echo [MANIFEST] $@
-	$(AT) mkdir -p $(@D)
-	$(AT)$(MANIFEST) $(MANIFEST_FLAGS) $^ > $@
 
 
 ############################################################################
