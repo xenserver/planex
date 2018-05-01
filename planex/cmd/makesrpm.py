@@ -5,7 +5,6 @@ from __future__ import print_function
 
 import sys
 import subprocess
-import fileinput
 import os
 import re
 import shutil
@@ -32,6 +31,11 @@ def parse_args_or_exit(argv=None):
     parser.add_argument("spec", metavar="SPEC", help="Spec file")
     parser.add_argument("sources", metavar="SOURCE/PATCHQUEUE", nargs='*',
                         help="Source and patchqueue files")
+    parser.add_argument("--metadata", dest="metadata",
+                        action="store_true",
+                        help="Add inline comments in the spec file "
+                        "to specify what provided sources, patches "
+                        "and patchqueues")
     argcomplete.autocomplete(parser)
 
     parsed_args = parser.parse_args(argv)
@@ -80,48 +84,37 @@ def get_commit_id(info_file):
     return None
 
 
-def add_gitsha_provides(manifests):
-    """
-    Add the source line and additional provides to the current location
-    """
-    for key in manifests:
-        print('Provides: gitsha({0}) = {1}'.format(key, manifests[key]))
-
-
-def add_manifest_entry(manifests, specfile):
-    """
-    Add provides entries to the specfile that show the manifest data
-    """
-    # Have to do this in two passes, find the highest source and then
-    # add one higher
-    source = re.compile(r'^Source0: .*$')
-    for line in fileinput.input(specfile, inplace=True):
-        print(line, end="")
-        match = source.match(line)
-        if match:
-            add_gitsha_provides(manifests)
-
-
-def extract_commit(source, manifests):
+def extract_commit(source):
     """
     Try to extract git archive information from a source entry
     """
+    name = os.path.basename(source)
+    origin_name = '{0}.origin'.format(source)
+    if not os.path.exists(origin_name):
+        return (None, None)
+
+    with open(origin_name, 'r') as origin_file:
+        name = origin_file.readline().strip()
+        # Note: sha is the empty string if EOF
+        sha = origin_file.readline().strip()
+
+    # .gitarchive-info wins over everything else
     if tarfile.is_tarfile(source):
         with Tarball(source) as tarball:
             try:
                 archive_info = tarball.extractfile('.gitarchive-info')
                 if archive_info:
-                    name = os.path.basename(source)
-                    origin_name = '{0}.origin'.format(source)
-                    if os.path.exists(origin_name):
-                        with open(origin_name, 'r') as origin_file:
-                            name = origin_file.readline()
-                    manifests[name.strip()] = get_commit_id(archive_info)
+                    commitish = get_commit_id(archive_info)
+                    return (name, commitish)
             except KeyError:
                 pass
+    elif sha:
+        return (name, sha)
+
+    return (None, None)
 
 
-def populate_working_directory(tmpdir, spec):
+def populate_working_directory(metadata, tmpdir, spec):
     """
     Build a working directory containing everything needed to build the SRPM.
     """
@@ -136,14 +129,20 @@ def populate_working_directory(tmpdir, spec):
         print("The following archives have been ignored: {}".format(skipped))
 
     newspec = os.path.join(tmpdir, os.path.basename(spec.specpath()))
-    manifests = {}
+    manifests = {
+        name: sha
+        for name, sha in [
+            extract_commit(source[0]) for source in spec.sources()
+        ]
+        if name is not None
+    }
+    srpm_sources = sources if metadata else None
 
     with open(newspec, "w") as out:
-        out.writelines(spec.rewrite_spec())
+        out.writelines(
+            spec.rewrite_spec(srpm_sources=srpm_sources, manifests=manifests))
 
-    if manifests:
-        add_manifest_entry(manifests, newspec)
-    else:
+    if not manifests:
         print("No .gitarchive-info found for {0}".format(spec.name()))
 
     return newspec
@@ -161,7 +160,7 @@ def main(argv=None):
 
     try:
         spec = load(args.spec, args.link, defines=args.define)
-        specfile = populate_working_directory(tmpdir, spec)
+        specfile = populate_working_directory(args.metadata, tmpdir, spec)
         sys.exit(rpmbuild(args, tmpdir, specfile))
 
     except (tarfile.TarError, tarfile.ReadError) as exc:
