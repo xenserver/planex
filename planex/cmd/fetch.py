@@ -104,12 +104,15 @@ def parse_args_or_exit(argv=None):
     return parser.parse_args(argv)
 
 
-def write_originfile(name, content):
+def write_originfile(name, url, sha=None):
     """
-    Write [content] in [name].origin for tracking
+    Write "[url]\n[sha]\n" in [name].origin for tracking
     """
+    if sha is None:
+        sha = ""
+    content = "{}\n{}\n".format(url, sha)
     with open('{0}.origin'.format(name), 'w') as origin_file:
-        origin_file.write('{0}\n'.format(content))
+        origin_file.write(content)
 
 
 def fetch_http(url, filename, retries):
@@ -174,7 +177,11 @@ def fetch_repo(url, resource):
         repo.archive(output, treeish=str(resource.commitish),
                      prefix=prefix)
 
-    write_originfile(resource.path, repo.remotes.origin.url)
+    try:
+        sha = repo.refs[str(resource.commitish)].object.rev_parse
+    except (IndexError, AttributeError):
+        sha = None
+    write_originfile(resource.path, repo.remotes.origin.url, sha)
 
 
 def fetch_source(args):
