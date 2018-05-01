@@ -45,7 +45,6 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %{_bindir}/planex-fetch
 %{_bindir}/planex-init
 %{_bindir}/planex-make-srpm
-%{_bindir}/planex-manifest
 %{_bindir}/planex-patchqueue
 %{_bindir}/planex-pin
 %{python_sitelib}/planex
