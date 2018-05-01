@@ -12,25 +12,8 @@ import sys
 import argcomplete
 from planex.cmd.args import common_base_parser, rpm_define_parser
 from planex.util import setup_sigint_handler, dedupe
-from planex.cmd import manifest
 from planex.spec import load, SpecNameMismatch
 from planex.link import Link
-
-
-def create_manifest_deps(spec):
-    """
-    Create depependencies for package manifest
-    """
-    prereqs = spec.specpath()
-    spec_name = spec.name()
-    lnk_path = 'SPECS/{}.lnk'.format(spec_name)
-
-    if os.path.isfile(lnk_path):
-        prereqs += ' ' + lnk_path
-
-    print('{}: {}'.format(manifest.get_path(spec_name), prereqs))
-    print('{}: {}'.format(spec.source_package_path(),
-                          manifest.get_path(spec.name())))
 
 
 def build_srpm_from_spec(spec):
@@ -189,10 +172,6 @@ def print_makefile_rules(args, allspecs, specs, provides_to_rpm):
         print('# %s' % (spec.name()))
 
         build_srpm_from_spec(spec)
-        # Manifest dependencies must come after spec dependencies
-        # otherwise manifest.json will be the SRPM's first dependency
-        # and will be passed to rpmbuild in the spec position.
-        create_manifest_deps(spec)
         download_rpm_sources(spec)
         build_rpm_from_srpm(spec)
 
