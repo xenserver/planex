@@ -10,7 +10,8 @@ from nose.plugins.attrib import attr
 import tests.strategies as tst
 
 import planex.patchqueue
-from planex.spec import Spec, Blob
+from planex.blobs import Blob
+from planex.spec import Spec
 
 
 class BasicTests(unittest.TestCase):

@@ -15,10 +15,10 @@ try:
 except ImportError:
     import urlparse
 
+from planex.blobs import Archive
 from planex.cmd.args import common_base_parser
 from planex.link import Link
 from planex.repository import Repository
-from planex.spec import GitBlob, GitArchive, GitPatchqueue, Archive
 import planex.spec
 
 RPM_DEFINES = [("dist", "pinned"),
@@ -86,7 +86,7 @@ def populate_pinfile(pinfile, args, resources):
             continue
 
         pinfile[name] = {}
-        if isinstance(source, (GitBlob, GitArchive, GitPatchqueue)):
+        if source.is_repo():
             url = source.url
             commitish = source.commitish
             prefix = source.prefix
