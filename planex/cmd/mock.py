@@ -14,8 +14,7 @@ from uuid import uuid4
 import argparse
 import argcomplete
 import planex.cmd.args
-from planex.spec import rpm_macros
-import rpm
+from planex.macros import rpm, rpm_macros
 
 
 def parse_args_or_exit(argv=None):
