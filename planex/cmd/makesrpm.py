@@ -131,7 +131,7 @@ def populate_working_directory(metadata, tmpdir, spec):
     manifests = {
         url: sha
         for url, sha in [
-            extract_commit(source[0]) for source in spec.sources()
+            extract_commit(resource.path) for resource in spec.resources()
         ]
         if url is not None
     }
