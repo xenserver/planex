@@ -187,9 +187,11 @@ def fetch_repo(url, resource):
                      prefix=prefix)
 
     try:
-        sha = repo.refs[str(resource.commitish)].object.rev_parse
+        ref = repo.refs[str(resource.commitish)]
+        sha = ref.object.hexsha
     except (IndexError, AttributeError):
         sha = None
+
     write_originfile(resource.path, repo.remotes.origin.url, sha)
 
 
