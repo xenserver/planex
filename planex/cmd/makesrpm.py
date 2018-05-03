@@ -107,7 +107,8 @@ def extract_commit(source):
                     return (url, commitish)
             except KeyError:
                 print("No .gitarchive-info info found for {0}".format(source))
-    elif sha:
+
+    if sha:
         return (url, sha)
 
     return (None, None)
