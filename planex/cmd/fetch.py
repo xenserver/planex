@@ -21,6 +21,7 @@ except ImportError:
 
 from planex.link import Link
 from planex.cmd.args import common_base_parser, rpm_define_parser
+from planex.repository import Repository
 from planex.util import run
 from planex.util import setup_logging
 from planex.util import setup_sigint_handler
@@ -142,7 +143,15 @@ def fetch_http(url, filename, retries):
         shutil.copyfileobj(req.raw, out)
     best_effort_file_verify(filename)
 
-    write_originfile(filename, url_string)
+    # pylint: disable=W0703
+    # best-effort get git commitish
+    try:
+        repo = Repository(url_string)
+        sha = repo.sha1
+    except Exception:
+        sha = None
+
+    write_originfile(filename, url_string, sha)
 
 
 def fetch_url(url, source, retries):
