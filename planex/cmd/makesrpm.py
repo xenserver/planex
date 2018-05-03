@@ -106,7 +106,7 @@ def extract_commit(source):
                     commitish = get_commit_id(archive_info)
                     return (url, commitish)
             except KeyError:
-                pass
+                print("No .gitarchive-info info found for {0}".format(source))
     elif sha:
         return (url, sha)
 
@@ -142,7 +142,7 @@ def populate_working_directory(metadata, tmpdir, spec):
             spec.rewrite_spec(srpm_sources=srpm_sources, manifests=manifests))
 
     if not manifests:
-        print("No .gitarchive-info found for {0}".format(spec.name()))
+        print("No manifest info found for {0}".format(spec.name()))
 
     return newspec
 
