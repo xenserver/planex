@@ -308,17 +308,26 @@ class Spec(object):
         if manifests is None:
             manifests = {}
 
-        manifest_metadata = (
+        manifest_metadata = [
             "Provides: gitsha({}) = {}\n".format(url, sha)
             for url, sha in manifests.items()
-        )
+        ]
+
+        def append_manifest(acc, newline):
+            "Appends the manifest after each binary subpackage declaration"
+            acc.append(newline)
+            # Leave the space as this should append only to subpackages
+            if newline.startswith("%package "):
+                acc.extend(manifest_metadata)
+            return acc
 
         newspec = chain(
             newspec_header, ("\n",),
             sources, patches, ("\n",),
             further_patches_metadata, further_patches, ("\n",),
             manifest_metadata, ("\n",),
-            newspec_filtered_body)
+            reduce(append_manifest, newspec_filtered_body, [])
+        )
         return "".join(newspec)
 
     def disable_autosetup(self):
