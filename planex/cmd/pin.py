@@ -86,7 +86,7 @@ def populate_pinfile(pinfile, args, resources):
             continue
 
         pinfile[name] = {}
-        if source.is_repo():
+        if source.is_repo:
             url = source.url
             commitish = source.commitish
             prefix = source.prefix
