@@ -124,6 +124,7 @@ def populate_working_directory(metadata, tmpdir, spec):
         skipped = spec.extract_sources(sources, tmpdir)
     except KeyError as err:
         print("Could not find a source for {}".format(err))
+        skipped = set()
 
     if skipped:
         print("The following archives have been ignored: {}".format(skipped))
