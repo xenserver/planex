@@ -1,7 +1,7 @@
 Summary: RPM build tool
 Name: planex
 Version: 4.0.0
-Release: beta3%{?dist}
+Release: beta4%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
 License: LGPLv2.1
@@ -53,6 +53,29 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Fri May 11 2018 Marcello Seri <marcello.seri@citrix.com> - 4.0.0-beta4
+- blobs.py: GitBlob prefix default to %{name}-%{version} if not present
+- spec.py: add the manifest to all binary subpackages
+- fetch.py: make more robust against tags
+- Introduce planex.blobs and planex.macros to simplify maintainance
+- fetch.py: re-introduce best-effort get git commitish
+- makesrpm.py: use resources for computing the manifests
+- makesrpm.py: further cleanup and use of semantically correct names
+- planex.spec: remove planex manifest
+- tests: refactor after deleting planex-manifest
+- makesrpm: add manifest metadata to srpms using the new .origin files and .gitarchive-info files when present
+- spec.py: add optional parameters to include metadata and manifest information in the rewritten spec file
+- Makefile.rules, depend.py: disable the force rule as the semantics of fetch have changed
+- spec.py: rely on the Spec class metadata instead of the rpmlib spec
+- pin.py: rewrite archive0 only if the url matches the patchqueue one
+- pin.py: add additional sources to the link in any case
+- pin.py: infer git repository url and commitish when possible
+- pin.py: update code to support non mutually exclusive source and patchqueue overrides
+- clone.py: enable a limited workflow that supports current source and patchqueue links
+- clone.py: enable planex-clone for the Jenkins scm workflows
+- planex-pin: implement the new planex-pin
+- spec.py: add resources dict to simplify planex-pin and planex-clone
+
 * Wed Apr 18 2018 Marcello Seri <marcello.seri@citrix.com> - 4.0.0-beta3
 - manifest.py: add schemaVersion for the manifest output for easier parsing
 - manifest.py: produce some less rubbishy output
