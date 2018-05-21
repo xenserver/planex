@@ -21,11 +21,22 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(description='Clone sources')
-    parser.add_argument("--jenkins", action="store_true",
-                        help="Print Jenkinsfile fragment")
-    parser.add_argument("--skip-base", dest="clone_base",
-                        default=True, action="store_false",
-                        help="Do not clone the base repository")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--jenkins", action="store_true",
+                      help="Print Jenkinsfile fragment")
+    mode.add_argument("--clone", action="store_true",
+                      help="Clone all the clonable repositories (default)")
+    mode.add_argument("--assemble-patchqueue", action="store_true",
+                      dest="patchqueue",
+                      help="Clone all the clonable repositories, link the "
+                           "patchqueue in the sources and use guilt to apply "
+                           "all the patches")
+    mode.add_argument("--assemble-repatched", action="store_true",
+                      dest="repatched",
+                      help="Clone all the clonable repositories, apply "
+                           "the patches to the sources and tag that, "
+                           "link the sources and the patchqueue and use "
+                           "guilt to apply all the additional patches")
     parser.add_argument("--credentials", metavar="CREDS", default="",
                         help="Credentials")
     parser.add_argument(
@@ -122,6 +133,89 @@ def apply_patchqueue(base_repo, pq_repo, pq_dir):
 # pylint: disable=too-many-locals
 
 
+def clone_all(args, pin):
+    """
+    If [args.jenkins] prints the clone string for jenkins else
+    it clones all the clonable sources into [args.repos].
+    """
+    # The following assumes that the pin file does not use any
+    # rpm macro in its fields. We can enable them by using
+    # planex.spec.load and the right RPM_DEFINES but it is more
+    # error prone and should probably be done only if we see
+    # that it is an essential feature.
+    gathered = ([source for _, source in pin.sources.items()
+                 if source.get('commitish', False)] +
+                [archive for _, archive in pin.archives.items()
+                 if archive.get('commitish', False)] +
+                [pq for _, pq in pin.patchqueue_sources.items()
+                 if pq.get('commitish', False)])
+
+    # Prevent double-cloning of a repository
+    gathered = set((gath['URL'], gath['commitish'])
+                   for gath in gathered)
+
+    if gathered:
+        print('echo "Clones for %s"' % pin.name)
+
+    # this is suboptimal but the sets are very small
+    if any(commitish1 != commitish2
+           for (url1, commitish1) in gathered
+           for (url2, commitish2) in gathered
+           if url1 == url2):
+        sys.exit("error: cloning two git repositories with the same "
+                 "name but different commitish is not supported.")
+
+    for url, commitish in gathered:
+        print('echo "Cloning %s"' % url)
+        if args.jenkins:
+            clone_jenkins(url, args.repos, commitish, args.credentials)
+        # clone is assumed for all other flags
+        else:
+            util.makedirs(args.repos)
+            try:
+                clone(url, args.repos, commitish)
+            except git.GitCommandError as gce:
+                print(gce.stderr)
+
+
+def assemble_patchqueue(args, pin):
+    """
+    Assemble patchqueues using Source0 and PatchQueue0 using
+    the active branches in the cloned sources.
+    """
+    sources = {
+        key: src['URL']
+        for key, src in pin.sources.items()
+        if src.get('commitish', False)
+    }
+    patchqueues = {
+        key: (pq['URL'], dirname(pq['prefix']))
+        for key, pq in pin.patchqueue_sources.items()
+        if pq.get('commitish', False)
+    }
+
+    if 0 not in sources:
+        sys.exit("error: planex-clone requires Source0 to point to "
+                 "a git repository.")
+    if 0 not in patchqueues:
+        sys.exit("error: planex-clone requires PatchQueue0 to point "
+                 "to a git repository.")
+
+    if len(patchqueues.keys()) > 1:
+        sys.exit(
+            "error: planex-clone does not support the cloning and "
+            "assembly of multiple sources and patchqueues, currently "
+            "this case needs to be handled manually.")
+    try:
+        src_url = sources[0]
+        pq_url, pq_prefix = patchqueues[0]
+        src_repo = git.Repo(join(args.repos, repo_name(src_url)))
+        pq_repo = git.Repo(join(args.repos, repo_name(pq_url)))
+        apply_patchqueue(src_repo, pq_repo, pq_prefix)
+    except git.GitCommandError as gce:
+        print(gce.stderr)
+
+
 def main(argv=None):
     """
     Entry point
@@ -131,71 +225,10 @@ def main(argv=None):
     for pinpath in args.pins:
         pin = Link(pinpath)
 
-        if args.jenkins:
-            # The following assumes that the pin file does not use any
-            # rpm macro in its fields. We can enable them by using
-            # planex.spec.load and the right RPM_DEFINES but it is more
-            # error prone and should probably be done only if we see
-            # that it is an essential feature.
-            gathered = ([source for _, source in pin.sources.items()
-                         if source.get('commitish', False)] +
-                        [archive for _, archive in pin.archives.items()
-                         if archive.get('commitish', False)] +
-                        [pq for _, pq in pin.patchqueue_sources.items()
-                         if pq.get('commitish', False)])
+        clone_all(args, pin)
 
-            # Prevent double-cloning of a repository
-            gathered = set((gath['URL'], gath['commitish'])
-                           for gath in gathered)
+        if args.patchqueue:
+            assemble_patchqueue(args, pin)
 
-            if gathered:
-                print('echo "Clones for %s"' % pinpath)
-
-            # this is suboptimal but the sets are very small
-            if any(commitish1 != commitish2
-                   for (url1, commitish1) in gathered
-                   for (url2, commitish2) in gathered
-                   if url1 == url2):
-                sys.exit("error: cloning two git repositories with the same "
-                         "name but different commitish is not supported")
-
-            for url, commitish in gathered:
-                print('echo "Cloning %s"' % url)
-                clone_jenkins(url, args.repos,
-                              commitish, args.credentials)
-
-        else:
-            sources = [(src['URL'], src['commitish'])
-                       for _, src in pin.sources.items()
-                       if src.get('commitish', False)]
-            patchqueues = [(pq['URL'], pq['commitish'], dirname(pq['prefix']))
-                           for _, pq in pin.patchqueue_sources.items()
-                           if pq.get('commitish', False)]
-
-            if not sources:
-                sys.exit("error: planex-clone requires Source0 to point to "
-                         "a git repository.")
-            if pin.patchqueue_sources and not patchqueues:
-                sys.exit("error: planex-clone requires PatchQueue0 to point "
-                         "to a git repository.")
-
-            if len(sources) != 1 and len(patchqueues) > 1:
-                sys.exit(
-                    "error: planex-clone does not support the cloning and "
-                    "assembly of multiple sources and patchqueues, currently "
-                    "this case needs to be handled by hands.")
-            try:
-                src_url, src_commitish = sources.pop()
-                print("Cloning %s" % src_url)
-                util.makedirs(args.repos)
-                src_repo = clone(src_url, args.repos, src_commitish)
-
-                if patchqueues:
-                    pq_url, pq_commitish, pq_prefix = patchqueues.pop()
-                    print("Cloning %s" % pq_url)
-                    pq_repo = clone(pq_url, args.repos,
-                                    pq_commitish)
-                    apply_patchqueue(src_repo, pq_repo, pq_prefix)
-
-            except git.GitCommandError as gce:
-                print(gce.stderr)
+        if args.repatched:
+            raise Exception("Unimplemented")
