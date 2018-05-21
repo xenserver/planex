@@ -73,7 +73,7 @@ def clone_jenkins(url, destination, commitish, credentials):
                                        credentials=credentials))
 
 
-def clone(url, destination, commitish):
+def clone(url, destination, commitish, nodetached=True):
     """Clone repository"""
     destination = join(destination, repo_name(url))
     repo = git.Repo.clone_from(url, destination)
@@ -89,8 +89,16 @@ def clone(url, destination, commitish):
         branch_name = "planex/%s" % commitish[:8]
         commit = repo.rev_parse(commitish)
 
-    local_branch = repo.create_head(branch_name, commit)
-    local_branch.checkout()
+    # if we are assemblying a patchqueue or a
+    # repatched component we care not being in
+    # detached state, so we commit to a
+    # planex/commitish branch as done previously
+    if nodetached:
+        local_branch = repo.create_head(branch_name, commit)
+        local_branch.checkout()
+    else:
+        repo.git.checkout(commitish)
+
     return repo
 
 
@@ -173,7 +181,8 @@ def clone_all(args, pin):
         else:
             util.makedirs(args.repos)
             try:
-                clone(url, args.repos, commitish)
+                nodetached = args.patchqueue or args.repatched
+                clone(url, args.repos, commitish, nodetached)
             except git.GitCommandError as gce:
                 print(gce.stderr)
 
