@@ -221,6 +221,16 @@ def assemble_patchqueue(args, pin):
         src_repo = git.Repo(join(args.repos, repo_name(src_url)))
         pq_repo = git.Repo(join(args.repos, repo_name(pq_url)))
         apply_patchqueue(src_repo, pq_repo, pq_prefix)
+        print("By default the PIN file will instruct `planex` to "
+              "`git archive` the source repository and the patchqueue "
+              "repository at the commitish specified in the pin file, "
+              "then assemble the patchqueue when building the RPM.\n"
+              "If you want to build using the HEAD of the source repository, "
+              "where you have all your ongoing modifications applied, you "
+              "can edit the pin file as follows: \n"
+              "\t- delete the `PatchQueue0` section, and\n"
+              "\t- set the correct commitish for `Source0` (usually the name "
+              "of the active branch).")
     except git.GitCommandError as gce:
         print(gce.stderr)
 
