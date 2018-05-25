@@ -163,7 +163,7 @@ def clone_all(args, pin):
                    for gath in gathered)
 
     if gathered:
-        print('echo "Clones for %s"' % pin.name)
+        print('echo "Clones for %s"' % basename(pin.linkpath))
 
     # this is suboptimal but the sets are very small
     if any(commitish1 != commitish2
