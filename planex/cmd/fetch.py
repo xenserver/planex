@@ -194,6 +194,30 @@ def fetch_repo(url, resource):
     write_originfile(resource.path, repo.remotes.origin.url, sha)
 
 
+class UnsupportedScheme(Exception):
+    """UnsupportdScheme exception"""
+    pass
+
+
+def fetch_source_dispatch(resource, retries):
+    """
+    Dispatch to the appropriate fetch metod for the provided resource.
+    """
+    url = urlparse(resource.url)
+    if url.scheme in SUPPORTED_URL_SCHEMES:
+        fetch_url(url, resource.path, retries + 1)
+
+    elif url.scheme == 'ssh':
+        fetch_repo(url, resource)
+
+    elif url.scheme in ['', 'file'] and url.netloc == '':
+        shutil.copyfile(url.path, resource.path)
+        write_originfile(resource.path, url.path)
+
+    else:
+        raise UnsupportedScheme(url.scheme)
+
+
 def fetch_source(args):
     """
     Download requested source using URL from spec file.
@@ -212,20 +236,11 @@ def fetch_source(args):
     except KeyError as exn:
         sys.exit("%s: No source corresponding to %s" % (sys.argv[0], exn))
 
-    url = urlparse(resource.url)
-    if url.scheme in SUPPORTED_URL_SCHEMES:
-        fetch_url(url, resource.path, args.retries + 1)
-
-    elif url.scheme == 'ssh':
-        fetch_repo(url, resource)
-
-    elif url.scheme in ['', 'file'] and url.netloc == '':
-        shutil.copyfile(url.path, resource.path)
-        write_originfile(resource.path, url.path)
-
-    else:
+    try:
+        fetch_source_dispatch(resource, args.retries)
+    except UnsupportedScheme as exn:
         sys.exit("%s: Unsupported url scheme %s" %
-                 (sys.argv[0], url.scheme))
+                 (sys.argv[0], exn.message))
 
 
 def main(argv=None):
