@@ -235,6 +235,15 @@ def assemble_patchqueue(args, pin):
         print(gce.stderr)
 
 
+def assemble_repatched(args, pin):
+    """
+    Assemble an upstream centos package and apply the upstream patchqueue,
+    then apply the local patchqueue.
+    """
+    print(args, pin)
+    raise NotImplementedError
+
+
 def main(argv=None):
     """
     Entry point
@@ -250,4 +259,4 @@ def main(argv=None):
             assemble_patchqueue(args, pin)
 
         if args.repatched:
-            raise Exception("Unimplemented")
+            assemble_repatched(args, pin)
