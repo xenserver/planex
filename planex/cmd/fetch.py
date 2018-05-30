@@ -201,7 +201,7 @@ class UnsupportedScheme(Exception):
 
 def fetch_source_dispatch(resource, retries):
     """
-    Dispatch to the appropriate fetch metod for the provided resource.
+    Dispatch to the appropriate fetch method for the provided resource.
     """
     url = urlparse(resource.url)
     if url.scheme in SUPPORTED_URL_SCHEMES:
