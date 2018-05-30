@@ -240,7 +240,7 @@ def fetch_source(args):
         fetch_source_dispatch(resource, args.retries)
     except UnsupportedScheme as exn:
         sys.exit("%s: Unsupported url scheme %s" %
-                 (sys.argv[0], exn.message))
+                 (sys.argv[0], exn))
 
 
 def main(argv=None):
