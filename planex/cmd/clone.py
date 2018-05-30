@@ -7,13 +7,17 @@ import errno
 from string import Template
 import argparse
 from os import symlink
-from os.path import basename, dirname, join, relpath
+from os.path import basename, dirname, join, relpath, splitext
 import subprocess
 import sys
+import tarfile
 
 import git
+
+from planex.cmd.fetch import fetch_source_dispatch
 from planex.link import Link
 import planex.util as util
+import planex.spec
 
 
 def parse_args_or_exit(argv=None):
@@ -235,13 +239,78 @@ def assemble_patchqueue(args, pin):
         print(gce.stderr)
 
 
-def assemble_repatched(args, pin):
+def assemble_repatched(args, specpath, defines, pin):
     """
     Assemble an upstream centos package and apply the upstream patchqueue,
     then apply the local patchqueue.
     """
-    print(args, pin)
-    raise NotImplementedError
+    sources = {
+        key: (src['URL'], bool(src.get("commitish", False)))
+        for key, src in pin.sources.items()
+    }
+    archives = {
+        key: (arc['URL'], dirname(arc['prefix']),
+              bool(arc.get("commitish", False)))
+        for key, arc in pin.archives.items()
+    }
+    patchqueues = {
+        key: (pq['URL'], dirname(pq['prefix']))
+        for key, pq in pin.patchqueue_sources.items()
+        if pq.get('commitish', False)
+    }
+
+    if 0 not in sources:
+        sys.exit("error: planex-clone requires Source0 to be specified.")
+    if 0 not in archives:
+        sys.exit("error: planex-clone requires Archive0 to be specified.")
+    if 0 not in patchqueues:
+        sys.exit("error: planex-clone requires PatchQueue0 to point "
+                 "to a git repository.")
+
+    spec = planex.spec.load(specpath, link=pin,
+                            check_package_name=True,
+                            defines=defines)
+
+    for source in (sources[0], archives[0]):
+        if not source[3]:
+            try:
+                resource = spec.resource(source[1])
+            except KeyError as exn:
+                sys.exit("%s: No source corresponding to %s" %
+                         (sys.argv[0], exn))
+            fetch_source_dispatch(resource, retries=1)
+
+    # If the source is a tarball, we need to unpack it and
+    # init it as a git repository
+    if not sources[0][3]:
+        resource = spec.resource(sources[0][1])
+        reponame, _ = splitext(basename(specpath))
+        repopath = join(args.repos, reponame)
+        if not tarfile.is_tarfile(resource.path):
+            sys.exit("error: invalid source at {}".format(resource.path))
+        with tarfile.open(resource.path) as tar:
+            tar.extractall(path=repopath)
+        src_repo = git.Repo.init(repopath)
+        src_repo.index.add([['*']])
+        src_repo.index.commit("base")
+    else:
+        repopath = join(args.repos, repo_name(sources[0][0]))
+        src_repo = git.Repo(repopath)
+
+    patches = (
+        resource for kind, resource in spec.resources_dict()
+        if kind.startswith("Patch") and "Queue" not in kind
+    )
+
+    for patch in patches:
+        with open(patch.path) as patchf:
+            content = patchf.read()
+        src_repo.git.apply('-p1', '--index', content)
+        src_repo.index.commit(patch.basename)
+
+    pq_name, pq_prefix = patchqueues[0]
+    pq_repo = git.Repo(join(args.repos, repo_name(pq_name)))
+    apply_patchqueue(src_repo, pq_repo, pq_prefix)
 
 
 def main(argv=None):
@@ -259,4 +328,10 @@ def main(argv=None):
             assemble_patchqueue(args, pin)
 
         if args.repatched:
-            assemble_repatched(args, pin)
+            specname, _ = splitext(basename("pinpath"))
+            specpath = "SPECS/{}.spec".format(specname)
+            defines = [
+                ("_topdir", "_build"),
+                ("_sourcedir", "%_topdir/SOURCES/%name")
+            ]
+            assemble_repatched(args, specpath, defines, pin)
