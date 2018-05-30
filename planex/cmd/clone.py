@@ -207,10 +207,10 @@ def assemble_patchqueue(args, pin):
         if pq.get('commitish', False)
     }
 
-    if 0 not in sources:
+    if 'Source0' not in sources:
         sys.exit("error: planex-clone requires Source0 to point to "
                  "a git repository.")
-    if 0 not in patchqueues:
+    if 'PatchQueue0' not in patchqueues:
         sys.exit("error: planex-clone requires PatchQueue0 to point "
                  "to a git repository.")
 
@@ -220,8 +220,8 @@ def assemble_patchqueue(args, pin):
             "assembly of multiple sources and patchqueues, currently "
             "this case needs to be handled manually.")
     try:
-        src_url = sources[0]
-        pq_url, pq_prefix = patchqueues[0]
+        src_url = sources['Source0']
+        pq_url, pq_prefix = patchqueues['PatchQueue0']
         src_repo = git.Repo(join(args.repos, repo_name(src_url)))
         pq_repo = git.Repo(join(args.repos, repo_name(pq_url)))
         apply_patchqueue(src_repo, pq_repo, pq_prefix)
