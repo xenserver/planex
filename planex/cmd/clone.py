@@ -259,11 +259,11 @@ def assemble_repatched(args, specpath, defines, pin):
         if pq.get('commitish', False)
     }
 
-    if 0 not in sources:
+    if 'Source0' not in sources:
         sys.exit("error: planex-clone requires Source0 to be specified.")
-    if 0 not in archives:
+    if 'Archive0' not in archives:
         sys.exit("error: planex-clone requires Archive0 to be specified.")
-    if 0 not in patchqueues:
+    if 'PatchQueue0' not in patchqueues:
         sys.exit("error: planex-clone requires PatchQueue0 to point "
                  "to a git repository.")
 
@@ -271,19 +271,18 @@ def assemble_repatched(args, specpath, defines, pin):
                             check_package_name=True,
                             defines=defines)
 
-    for source in (sources[0], archives[0]):
-        if not source[3]:
+    for source in (sources['Source0'], archives['Archive0']):
+        if not source[1]:
             try:
-                resource = spec.resource(source[1])
+                resource = spec.resource(source[0])
             except KeyError as exn:
-                sys.exit("%s: No source corresponding to %s" %
-                         (sys.argv[0], exn))
+                sys.exit("error: No source corresponding to %s" % exn)
             fetch_source_dispatch(resource, retries=1)
 
     # If the source is a tarball, we need to unpack it and
     # init it as a git repository
-    if not sources[0][3]:
-        resource = spec.resource(sources[0][1])
+    if not sources['Source0'][1]:
+        resource = spec.resource(sources['Source0'][0])
         reponame, _ = splitext(basename(specpath))
         repopath = join(args.repos, reponame)
         if not tarfile.is_tarfile(resource.path):
@@ -294,21 +293,26 @@ def assemble_repatched(args, specpath, defines, pin):
         src_repo.index.add([['*']])
         src_repo.index.commit("base")
     else:
-        repopath = join(args.repos, repo_name(sources[0][0]))
+        repopath = join(args.repos, repo_name(sources['Source0'][0]))
         src_repo = git.Repo(repopath)
 
-    patches = (
-        resource for kind, resource in spec.resources_dict()
+    fetch_source_dispatch(spec.resource(archives['Archive0'][0]), 1)
+    patches = [
+        resource.path for kind, resource in spec.resources_dict().items()
         if kind.startswith("Patch") and "Queue" not in kind
+    ]
+    spec.extract_sources(
+        patches,
+        dirname(patches[0])
     )
 
     for patch in patches:
-        with open(patch.path) as patchf:
+        with open(patch) as patchf:
             content = patchf.read()
         src_repo.git.apply('-p1', '--index', content)
-        src_repo.index.commit(patch.basename)
+        src_repo.index.commit(basename(patch))
 
-    pq_name, pq_prefix = patchqueues[0]
+    pq_name, pq_prefix = patchqueues['PatchQueue0']
     pq_repo = git.Repo(join(args.repos, repo_name(pq_name)))
     apply_patchqueue(src_repo, pq_repo, pq_prefix)
 
@@ -328,7 +332,7 @@ def main(argv=None):
             assemble_patchqueue(args, pin)
 
         if args.repatched:
-            specname, _ = splitext(basename("pinpath"))
+            specname, _ = splitext(basename(pinpath))
             specpath = "SPECS/{}.spec".format(specname)
             defines = [
                 ("_topdir", "_build"),
