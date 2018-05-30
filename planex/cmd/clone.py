@@ -178,7 +178,7 @@ def clone_all(args, pin):
                  "name but different commitish is not supported.")
 
     for url, commitish in gathered:
-        print('echo "Cloning %s"' % url)
+        print('echo "Cloning %s#%s"' % (url, commitish))
         if args.jenkins:
             clone_jenkins(url, args.repos, commitish, args.credentials)
         # clone is assumed for all other flags
