@@ -91,8 +91,13 @@ def populate_pinfile(pinfile, args, resources):
         else:
             # heuristically try to get a repo
             repo = Repository(source.url)
-            url = repo.repository_url()
             commitish = repo.commitish_tag_or_branch()
+            url = repo.repository_url()
+            # for some archives the commitish_tag_or_branch does not work properly
+            parsed_url = urlparse(source.url)
+            at_val = parse_qs(parsed_url.query).get('at', [None]).pop()
+            if at_val is not None and at_val != commitish:
+                commitish = at_val
             if name == "Source0":
                 prefix = parse_qs(
                     urlparse(source.url).query
