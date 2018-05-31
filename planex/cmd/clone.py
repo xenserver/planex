@@ -300,18 +300,23 @@ def assemble_repatched(args, specpath, defines, pin):
         repopath = join(args.repos, repo_name(sources['Source0'][0]))
         src_repo = git.Repo(repopath)
 
-    patches = [
-        basename(resource.path) for kind, resource in spec.resources_dict().items()
-        if kind.startswith("Patch") and "Queue" not in kind
-    ]
+    patches = sorted(
+        ((kind, resource)
+         for kind, resource in spec.resources_dict().items()
+         if kind.startswith("Patch") and "Queue" not in kind
+        ), key=lambda kv: int(kv[0][5:])
+    )
+    patches = [basename(resource.path) for kind, resource in patches]
 
     for patch in patches:
+        print("Applying archive patch..{}".format(patch))
         patchpath = join("..",
                          repo_name(archives['Archive0'][0]),
                          archives['Archive0'][1],
                          patch)
         src_repo.git.apply('-p1', '--index', patchpath)
         src_repo.index.commit(basename(patch))
+        print("Patch applied.")
 
     pq_name, pq_prefix = patchqueues['PatchQueue0']
     pq_repo = git.Repo(join(args.repos, repo_name(pq_name)))
