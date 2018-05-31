@@ -93,7 +93,8 @@ def populate_pinfile(pinfile, args, resources):
             repo = Repository(source.url)
             commitish = repo.commitish_tag_or_branch()
             url = repo.repository_url()
-            # for some archives the commitish_tag_or_branch does not work properly
+            # for some archives the commitish_tag_or_branch function
+            # does not work properly
             parsed_url = urlparse(source.url)
             at_val = parse_qs(parsed_url.query).get('at', [None]).pop()
             if at_val is not None and at_val != commitish:
