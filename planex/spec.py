@@ -189,7 +189,10 @@ class Spec(object):
 
             if check_package_name:
                 file_basename = os.path.basename(path).split(".")[0]
-                if file_basename != self.name():
+                spec_name = self.name()
+                if isinstance(spec_name, bytes):
+                    spec_name = spec_name.decode()
+                if file_basename != spec_name:
                     raise SpecNameMismatch(
                         "spec file name '%s' does not match package name '%s'"
                         % (path, self.name()))
