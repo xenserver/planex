@@ -195,7 +195,7 @@ def fetch_repo(url, resource):
 
 
 class UnsupportedScheme(Exception):
-    """UnsupportdScheme exception"""
+    """UnsupportedScheme exception"""
     pass
 
 
