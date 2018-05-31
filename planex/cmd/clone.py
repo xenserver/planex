@@ -41,7 +41,8 @@ def parse_args_or_exit(argv=None):
                       help="Clone all the clonable repositories, apply "
                            "the patches to the sources and tag that, "
                            "link the sources and the patchqueue and use "
-                           "guilt to apply all the additional patches")
+                           "guilt to apply all the additional patches "
+                           "[experimental]")
     parser.add_argument("--credentials", metavar="CREDS", default="",
                         help="Credentials")
     parser.add_argument(
