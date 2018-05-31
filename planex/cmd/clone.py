@@ -306,7 +306,7 @@ def assemble_repatched(args, specpath, defines, pin):
          if kind.startswith("Patch") and "Queue" not in kind
         ), key=lambda kv: int(kv[0][5:])
     )
-    patches = [basename(resource.path) for kind, resource in patches]
+    patches = [basename(resource.path) for _, resource in patches]
 
     for patch in patches:
         print("Applying archive patch..{}".format(patch))
