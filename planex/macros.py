@@ -15,6 +15,8 @@ def rpm_macros(*macros):
     """
     for macro in macros:
         for key, value in macro.items():
+            if isinstance(value, bytes):
+                value = value.decode()
             rpm.addMacro(key, value)
     yield
     for macro in reversed(macros):
