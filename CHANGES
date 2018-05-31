@@ -1,3 +1,18 @@
+4.0.0-beta6
+* Handle str vs bytes mismatches in python3
+* clone: implement apply-repatched as experimental feature
+* pin: add workaround for complex branch names failing certain regexes
+* clone: improve output of assemble patchqueue
+* clone: fix regression introduced in assemble-patchqueue
+* fetch: refactor to allow clone to use it
+* Import urlparse using six
+
+v4.0.0-beta5
+* clone: fix for missing attribute
+* clone.py: prepare structure for assemble_repatched workflow
+* Add message explaining how to modify the pin file to build the assembled patchqueue from sources only
+* clone: refactor code to separate clone and assemble phases
+
 4.0.0-beta4
 * blobs.py: GitBlob prefix default to %{name}-%{version} if not present
 * spec.py: add the manifest to all binary subpackages
