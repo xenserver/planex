@@ -4,10 +4,8 @@ from __future__ import print_function
 import os
 import shutil
 
-try:
-    import requests.packages.urlparse as urlparse
-except ImportError:
-    import urlparse
+# pylint: disable=relative-import
+from six.moves.urllib.parse import urlparse
 
 import planex.patchqueue
 from planex.macros import nevra, rpm, rpm_macros, expandmacros
@@ -80,7 +78,7 @@ class Blob(object):
         server or the URL is a plain path to a file which exists
         on the local machine.
         """
-        return (urlparse.urlparse(self.url).netloc not in ['', 'file'] or
+        return (urlparse(self.url).netloc not in ['', 'file'] or
                 os.path.isfile(self.url))
 
     def extract_source(self, name, destdir):

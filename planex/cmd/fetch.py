@@ -14,10 +14,9 @@ import pkg_resources
 import requests
 from requests.adapters import HTTPAdapter
 from requests.adapters import Retry
-try:
-    import requests.packages.urlparse as urlparse
-except ImportError:
-    import urlparse
+
+# pylint: disable=relative-import
+from six.moves.urllib.parse import urlparse, urlunparse
 
 from planex.link import Link
 from planex.cmd.args import common_base_parser, rpm_define_parser
@@ -121,7 +120,7 @@ def fetch_http(url, filename, retries):
     Download the file at url and store it as filename
     """
 
-    url_string = urlparse.urlunparse(url)
+    url_string = urlunparse(url)
     logging.debug("Fetching %s to %s", url_string, filename)
 
     useragent = "planex-fetch/%s" % pkg_resources.require("planex")[0].version
@@ -162,7 +161,7 @@ def fetch_url(url, source, retries):
     except requests.RequestException as exn:
         # Download failed
         sys.exit("%s: Failed to fetch %s: %s" %
-                 (sys.argv[0], urlparse.urlunparse(url), exn.args[1]))
+                 (sys.argv[0], urlunparse(url), exn.args[1]))
 
     except IOError as exn:
         # IO error saving source file
@@ -213,7 +212,7 @@ def fetch_source(args):
     except KeyError as exn:
         sys.exit("%s: No source corresponding to %s" % (sys.argv[0], exn))
 
-    url = urlparse.urlparse(resource.url)
+    url = urlparse(resource.url)
     if url.scheme in SUPPORTED_URL_SCHEMES:
         fetch_url(url, resource.path, args.retries + 1)
 
