@@ -4,11 +4,13 @@
 import logging
 import os.path
 import subprocess
-import urlparse
 import re
 import requests
 
 import planex.git as git
+
+# pylint: disable=relative-import
+from six.moves.urllib.parse import parse_qs, urlparse, urlunparse
 
 
 class Repository(object):
@@ -17,7 +19,7 @@ class Repository(object):
     # pylint: disable=R0902
 
     def __init__(self, url):
-        self.url = urlparse.urlparse(url)
+        self.url = urlparse(url)
         self.clone_url = None
         self._query_url = None
         self.dir_name = ''
@@ -50,7 +52,7 @@ class Repository(object):
     def __repr__(self):
         """Textual representation of an object"""
         if self.clone_url is None:
-            return urlparse.urlunparse(self.url)
+            return urlunparse(self.url)
         ret = "url=" + self.clone_url
         if self.branch:
             ret += "&branch=" + self.branch
@@ -151,7 +153,7 @@ class Repository(object):
         )
 
         self.dir_name = path[7]
-        query_dict = urlparse.parse_qs(self.url.query)
+        query_dict = parse_qs(self.url.query)
         if 'at' in query_dict:
             query = query_dict['at'][0]
             if '/' in query:
@@ -209,7 +211,7 @@ class Repository(object):
         if self.clone_url is not None:
             return self.clone_url
         if self.url is not None:
-            return urlparse.urlunparse(self.url)
+            return urlunparse(self.url)
 
     def commitish_tag_or_branch(self):
         """

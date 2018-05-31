@@ -10,10 +10,8 @@ import json
 import os
 import sys
 
-try:
-    import requests.packages.urlparse as urlparse
-except ImportError:
-    import urlparse
+# pylint: disable=relative-import
+from six.moves.urllib.parse import parse_qs, urlparse
 
 from planex.blobs import Archive
 from planex.cmd.args import common_base_parser
@@ -96,8 +94,8 @@ def populate_pinfile(pinfile, args, resources):
             url = repo.repository_url()
             commitish = repo.commitish_tag_or_branch()
             if name == "Source0":
-                prefix = urlparse.parse_qs(
-                    urlparse.urlparse(source.url).query
+                prefix = parse_qs(
+                    urlparse(source.url).query
                 ).get("prefix", None)
                 if prefix and isinstance(prefix, list):
                     prefix = prefix.pop()
