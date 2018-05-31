@@ -51,7 +51,7 @@ class Link(object):
         """Return the path to extra sources inside the patchqueue tarball"""
         patch_matcher = re.compile(r'^source\d*$', re.IGNORECASE)
         return {k: v for k, v
-                in self.link.iteritems()
+                in self.link.items()
                 if patch_matcher.match(k)}
 
     @property
@@ -63,7 +63,7 @@ class Link(object):
 
         patch_matcher = re.compile(r'^patch\d*$', re.IGNORECASE)
         return {k: v for k, v
-                in self.link.iteritems()
+                in self.link.items()
                 if patch_matcher.match(k)}
 
     @property
@@ -75,7 +75,7 @@ class Link(object):
 
         patch_matcher = re.compile(r'^archive\d*$', re.IGNORECASE)
         return {k: v for k, v
-                in self.link.iteritems()
+                in self.link.items()
                 if patch_matcher.match(k)}
 
     @property
@@ -83,7 +83,7 @@ class Link(object):
         """Return the ordered set of patchqueue definitions"""
         patch_matcher = re.compile(r'^patchqueue\d*$', re.IGNORECASE)
         return {k: v for k, v
-                in self.link.iteritems()
+                in self.link.items()
                 if patch_matcher.match(k)}
 
     @property
