@@ -51,13 +51,11 @@ def repo_or_path(arg):
     (URL, None)
     """
     if arg.startswith("ssh://"):
-        split = arg.split("#")
-        if len(split) > 2 or not split:
+        if arg.count('#') > 1:
             raise ValueError(
                 "Expected URL or ssh://URL#commitish but got {}".format(arg))
-        if len(split) == 1:
-            return (arg, None)
-        return tuple(split)
+        if '#' in arg:
+            return tuple(arg.split("#"))
 
     return (arg, None)
 
@@ -145,8 +143,8 @@ def get_pin_content(args, spec):
             pinfile["PatchQueue0"]["prefix"] = resources["PatchQueue0"].prefix
 
         # When both a PQ0 and an Archive0 are present, and point to the same
-        # repository, we assume that they are pointint to the same tarball.
-        # This, by default, planex-pin will overwrite the Archive0 with
+        # repository, we assume that they are pointing to the same tarball.
+        # Thus, by default, planex-pin will overwrite the Archive0 with
         # the same content as PatchQueue0. This could fail when multiple
         # archives are present and the one matching the PQ is not the first
         # one, but for now I value the simplicity of the code over covering
