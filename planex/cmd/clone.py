@@ -303,8 +303,8 @@ def assemble_repatched(args, specpath, defines, pin):
     patches = sorted(
         ((kind, resource)
          for kind, resource in spec.resources_dict().items()
-         if kind.startswith("Patch") and "Queue" not in kind
-        ), key=lambda kv: int(kv[0][5:])
+         if kind.startswith("Patch") and "Queue" not in kind),
+        key=lambda kv: int(kv[0][5:])
     )
     patches = [basename(resource.path) for _, resource in patches]
 
