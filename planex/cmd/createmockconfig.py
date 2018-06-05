@@ -119,8 +119,13 @@ def update_mock_repos(config, yum_repos, yum_config_opt):
         config.set(repo.id, 'name', repo.name)
         if repo.baseurl:
             config.set(repo.id, 'baseurl', ' '.join(repo.baseurl))
-        else:
+        elif repo.mirrorlist:
             config.set(repo.id, 'mirrorlist', repo.mirrorlist)
+        elif repo.metalink:
+            config.set(repo.id, 'metalink', repo.metalink)
+        else:
+            raise KeyError("One of 'baseurl', 'mirrorlist' or 'metalink' "
+                           "required")
         if repo.gpgcheck:
             config.set(repo.id, 'gpgcheck', '1')
             config.set(repo.id, 'gpgkey', ' '.join(repo.gpgkey))
