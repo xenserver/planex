@@ -1,3 +1,9 @@
+4.0.0
+* pin: simplify repo_or_path()
+* clone: Fix indent disagreement between pylint and pycodestyle
+* planex-create-mock-config: support metalink
+* link: fix dictionary iteration
+
 4.0.0-beta6
 * Handle str vs bytes mismatches in python3
 * clone: implement apply-repatched as experimental feature
