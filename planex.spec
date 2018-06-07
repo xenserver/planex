@@ -1,7 +1,7 @@
 Summary: RPM build tool
 Name: planex
 Version: 4.0.0
-Release: beta6%{?dist}
+Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
 License: LGPLv2.1
@@ -53,6 +53,37 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Thu Jun 07 2018 Simon Rowe <simon.rowe@citrix.com> - 4.0.0-1
+- pin: simplify repo_or_path()
+- clone: Fix indent disagreement between pylint and pycodestyle
+- planex-create-mock-config: support metalink
+- link: fix dictionary iteration
+
+* Thu May 31 2018 Marcello Seri <marcello.seri@citrix.com> 4.0.0-beta6
+- Handle str vs bytes mismatches in python3
+- fetch: fix typo
+- pin: fix linting issue
+- clone: fix linting issue
+- clone: order patches correctly when assemblying patches from Archive0 -- repatched compon
+- clone: mark apply-repatched as experimental
+- clone: fix patch application for repatched components
+- pin: add workaround for complex branch names failing certain regexes
+- fetch: fix typo
+- clone: improve output of assemble patchqueue
+- clone: add various fixes for assemble_repatched
+- clone: fix regression introduced in assemble-patchqueue
+- clone: better cloning message
+- fetch: do not use deprecated exn.message
+- clone.py: implement preliminary repatched assembly
+- fetch: refactor to allow clone to use it
+- Import urlparse using six
+- clone: fix for missing attribute
+- clone.py: prepare structure for assemble_repatched workflow
+- Add message explaining how to modify the pin file to build the assembled patchqueue from 
+- clone.py: extend clone behaviour
+- clone: refactor code to separate clone and assemble phases
+- makesrpm.py: fix UnboundLocalError
+
 * Fri May 11 2018 Marcello Seri <marcello.seri@citrix.com> - 4.0.0-beta4
 - blobs.py: GitBlob prefix default to %{name}-%{version} if not present
 - spec.py: add the manifest to all binary subpackages
