@@ -17,6 +17,7 @@ from planex.blobs import Archive
 from planex.cmd.args import common_base_parser
 from planex.link import Link
 from planex.repository import Repository
+from planex.util import makedirs
 import planex.spec
 
 RPM_DEFINES = [("dist", "pinned"),
@@ -222,8 +223,6 @@ def main(argv=None):
 
     if output is not None:
         path = os.path.dirname(output)
-        if os.path.exists(path):
-            with open(output, "w") as out:
-                json.dump(pin, out, indent=2, sort_keys=True)
-        else:
-            sys.exit("Error: path {} does not exist.".format(path))
+        makedirs(path)
+        with open(output, "w") as out:
+            json.dump(pin, out, indent=2, sort_keys=True)
