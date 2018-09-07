@@ -13,6 +13,7 @@ from itertools import chain
 
 from planex.blobs import Blob, GitBlob, Archive, GitArchive, \
     Patchqueue, GitPatchqueue
+from planex.config import Configuration
 from planex.macros import nevra, rpm, rpm_macros
 
 import planex.patchqueue
@@ -198,6 +199,10 @@ class Spec(object):
                         % (path, self.name()))
 
         for filepath, index, sourcetype in reversed(self.spec.sources):
+            if filepath == os.path.basename(filepath):
+                source_prefix = Configuration.get('spec', 'source-prefix',
+                                                  default='SOURCES')
+                filepath = os.path.join(source_prefix, filepath)
             blob = Blob(self, filepath, path)
             if sourcetype == 1:
                 self.add_source(index, blob)

@@ -56,11 +56,13 @@ class RpmTests(unittest.TestCase):
               "https://github.com/mirage/ocaml-cohttp/archive/"
               "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz"),
              ("./SOURCES/ocaml-cohttp/ocaml-cohttp-init",
-              "ocaml-cohttp-init"),
+              "SOURCES/ocaml-cohttp-init"),
              ("./SOURCES/ocaml-cohttp/ocaml-cohttp-service",
-              "ocaml-cohttp-service"),
-             ("./SOURCES/ocaml-cohttp/cohttp0.patch", "cohttp0.patch"),
-             ("./SOURCES/ocaml-cohttp/cohttp1.patch", "cohttp1.patch")])
+              "SOURCES/ocaml-cohttp-service"),
+             ("./SOURCES/ocaml-cohttp/cohttp0.patch",
+              "SOURCES/cohttp0.patch"),
+             ("./SOURCES/ocaml-cohttp/cohttp1.patch",
+              "SOURCES/cohttp1.patch")])
 
     def test_requires(self):
         """Package runtime requirements are correct"""
@@ -104,13 +106,13 @@ class RpmTests(unittest.TestCase):
                   "https://github.com/mirage/ocaml-cohttp/archive/"
                   "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
                   "tests/data/ocaml-cohttp.spec"),
-             Blob(self.spec, "ocaml-cohttp-init",
+             Blob(self.spec, "SOURCES/ocaml-cohttp-init",
                   "tests/data/ocaml-cohttp.spec"),
-             Blob(self.spec, "ocaml-cohttp-service",
+             Blob(self.spec, "SOURCES/ocaml-cohttp-service",
                   "tests/data/ocaml-cohttp.spec"),
-             Blob(self.spec, "cohttp0.patch",
+             Blob(self.spec, "SOURCES/cohttp0.patch",
                   "tests/data/ocaml-cohttp.spec"),
-             Blob(self.spec, "cohttp1.patch",
+             Blob(self.spec, "SOURCES/cohttp1.patch",
                   "tests/data/ocaml-cohttp.spec")])
 
     def test_resources_override(self):
@@ -122,12 +124,12 @@ class RpmTests(unittest.TestCase):
         self.assertEqual(
             self.spec.resources(),
             [Blob(self.spec, "http://elsewhere", "link1"),
-             Blob(self.spec, "ocaml-cohttp-init",
+             Blob(self.spec, "SOURCES/ocaml-cohttp-init",
                   "tests/data/ocaml-cohttp.spec"),
-             Blob(self.spec, "ocaml-cohttp-service",
+             Blob(self.spec, "SOURCES/ocaml-cohttp-service",
                   "tests/data/ocaml-cohttp.spec"),
              Blob(self.spec, "http://additional", "link2"),
-             Blob(self.spec, "cohttp0.patch",
+             Blob(self.spec, "SOURCES/cohttp0.patch",
                   "tests/data/ocaml-cohttp.spec"),
              Blob(self.spec, "http://a.n.other", "link3"),
              Blob(self.spec, "http://extra", "link4")])
@@ -145,13 +147,13 @@ class RpmTests(unittest.TestCase):
                   "https://github.com/mirage/ocaml-cohttp/archive/"
                   "ocaml-cohttp-0.9.8/ocaml-cohttp-0.9.8.tar.gz",
                   "tests/data/ocaml-cohttp.spec"),
-             Blob(self.spec, "ocaml-cohttp-init",
+             Blob(self.spec, "SOURCES/ocaml-cohttp-init",
                   "tests/data/ocaml-cohttp.spec"),
-             Blob(self.spec, "ocaml-cohttp-service",
+             Blob(self.spec, "SOURCES/ocaml-cohttp-service",
                   "tests/data/ocaml-cohttp.spec"),
-             Blob(self.spec, "cohttp0.patch",
+             Blob(self.spec, "SOURCES/cohttp0.patch",
                   "tests/data/ocaml-cohttp.spec"),
-             Blob(self.spec, "cohttp1.patch",
+             Blob(self.spec, "SOURCES/cohttp1.patch",
                   "tests/data/ocaml-cohttp.spec"),
              Archive(self.spec, "http://foo/patches.tar", "link1",
                      "SOURCES/"),
@@ -168,11 +170,11 @@ class RpmTests(unittest.TestCase):
                  "tests/data/ocaml-cohttp.spec"))
         self.assertEqual(
             self.spec.resource("ocaml-cohttp-init"),
-            Blob(self.spec, "ocaml-cohttp-init",
+            Blob(self.spec, "SOURCES/ocaml-cohttp-init",
                  "tests/data/ocaml-cohttp.spec"))
         self.assertEqual(
             self.spec.resource("somewhere/cohttp0.patch"),
-            Blob(self.spec, "cohttp0.patch",
+            Blob(self.spec, "SOURCES/cohttp0.patch",
                  "tests/data/ocaml-cohttp.spec"))
         self.spec.add_archive(0, Archive(self.spec, "http://foo/patches.tar",
                                          "link1", "SOURCES/"))
