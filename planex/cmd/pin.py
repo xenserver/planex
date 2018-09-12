@@ -5,13 +5,9 @@ in xenserver-specs/repos/ to override the spec/lnk
 from __future__ import print_function
 
 import argparse
-import copy
 import json
 import os
 import sys
-
-# pylint: disable=relative-import
-from six.moves.urllib.parse import parse_qs, urlparse
 
 from planex.blobs import Archive
 from planex.cmd.args import common_base_parser
@@ -46,40 +42,13 @@ def load_spec_and_lnk(repo_path, package_name):
     return spec
 
 
-def repo_or_path(arg):
-    """
-    Heuristic. Parse URL#commitish into (URL, commitish) and anything else into
-    (URL, None)
-    """
-    if arg.startswith("ssh://"):
-        if arg.count('#') > 1:
-            raise ValueError(
-                "Expected URL or ssh://URL#commitish but got {}".format(arg))
-        if '#' in arg:
-            return tuple(arg.split("#"))
-
-    return (arg, None)
-
-
-# pylint: disable=too-many-branches
-def populate_pinfile(pinfile, args, resources):
+def populate_pinfile(pinfile, resources):
     """
     Update [pinfile] in place with content of resources.
     """
     for name, source in resources.items():
-
-        # If we are overriding Source0, we still need to keep other
-        # eventual sources
-        if args.source is not None \
-                and (name == "Source0" or "Source" not in name):
-            continue
-        # When we override PatchQueue0, we get rid of all the other
-        # patchqueues
-        if args.patchqueue is not None and "PatchQueue" in name:
-            continue
-        # Patches are defined in the spec and could be overridden with
-        # Archives, but we do not put them in the link and pin files
-        if "Patch" in name and "PatchQueue" not in name:
+        # Exclude secondary resources
+        if name not in ("Archive0", "PatchQueue0", "Source0"):
             continue
 
         pinfile[name] = {}
@@ -88,16 +57,9 @@ def populate_pinfile(pinfile, args, resources):
             commitish = source.commitish
             prefix = source.prefix
         else:
-            # heuristically try to get a repo
             repo = Repository(source.url)
             commitish = repo.commitish_tag_or_branch()
             url = repo.repository_url()
-            # for some archives the commitish_tag_or_branch function
-            # does not work properly
-            parsed_url = urlparse(source.url)
-            at_val = parse_qs(parsed_url.query).get('at', [None]).pop()
-            if at_val is not None and at_val != commitish:
-                commitish = at_val
             prefix = None
 
         if commitish is None:
@@ -121,38 +83,16 @@ def get_pin_content(args, spec):
     resources = spec.resources_dict()
 
     pinfile = {"SchemaVersion": "3"}
-    if args.source is not None:
-        url, commitish = repo_or_path(args.source)
-        pinfile["Source0"] = {"URL": url}
-        if commitish is not None:
-            pinfile["Source0"]["commitish"] = commitish
+    populate_pinfile(pinfile, resources)
 
-    populate_pinfile(pinfile, args, resources)
-
-    if args.patchqueue is not None:
-        url, commitish = repo_or_path(args.patchqueue)
-        pinfile["PatchQueue0"] = {"URL": url}
-        if commitish is not None:
-            pinfile["PatchQueue0"]["commitish"] = commitish
-            pinfile["PatchQueue0"]["prefix"] = resources["PatchQueue0"].prefix
-
-        # When both a PQ0 and an Archive0 are present, and point to the same
-        # repository, we assume that they are pointing to the same tarball.
-        # Thus, by default, planex-pin will overwrite the Archive0 with
-        # the same content as PatchQueue0. This could fail when multiple
-        # archives are present and the one matching the PQ is not the first
-        # one, but for now I value the simplicity of the code over covering
-        # any possible corner case.
-        if "Archive0" not in resources:
-            return pinfile
-
-        pq_url = urlparse(url)
-        archive = resources["Archive0"]
-        archive_url = urlparse(archive.url)
-        if pq_url.netloc == archive_url.netloc \
-                and pq_url.path == archive_url.path:
-            pinfile["Archive0"] = copy.deepcopy(pinfile["PatchQueue0"])
-            pinfile["Archive0"]["prefix"] = archive.prefix
+    # Apply changes to the URL or commitish to the final resource
+    for resource in ("PatchQueue0", "Archive0", "Source0"):
+        if resource in resources:
+            if args.url:
+                pinfile[resource]["URL"] = args.url
+            if args.commitish:
+                pinfile[resource]["commitish"] = args.commitish
+            break
 
     return pinfile
 
@@ -179,19 +119,10 @@ def parse_args_or_exit(argv=None):
                        help="Path of the pinfile to write. "
                             "It overwrites the file if present.")
 
-    parser.add_argument("--override-source", dest="source", default=None,
-                        help="Path to a tarball or url of a git "
-                             "repository in the form ssh://GitURL#commitish. "
-                             "When used the pin will get rid of any "
-                             "pre-existing source, archive or patchqueue "
-                             "and use the provided path as Source0.")
-    parser.add_argument("--override-patchqueue", dest="patchqueue",
-                        default=None,
-                        help="Path to a tarball or url of a git "
-                             "repository in the form ssh://GitURL#commitish. "
-                             "When used the pin will get rid of any "
-                             "pre-existing patchqueue and use the provided "
-                             "path as PatchQueue0.")
+    parser.add_argument("--url",
+                        help="Replace the URL of the final resource")
+    parser.add_argument("--commitish",
+                        help="Replace the commitish of the final resource")
 
     return parser.parse_args(argv)
 
@@ -208,7 +139,8 @@ def main(argv=None):
     spec = load_spec_and_lnk(xs_path, package_name)
     pin = get_pin_content(args, spec)
 
-    print(json.dumps(pin, indent=2, sort_keys=True))
+    if not args.quiet:
+        print(json.dumps(pin, indent=2, sort_keys=True))
 
     output = args.output
     if args.write:
