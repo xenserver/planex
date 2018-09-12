@@ -5,10 +5,10 @@
 
 DIST ?= .el6
 TOPDIR ?= _build
-SPECS ?= $(wildcard SPECS/*.spec)
-LINKS ?= $(wildcard SPECS/*.lnk)
-DEPS = $(TOPDIR)/deps
 PINSDIR ?= PINS
+SPECS ?= $(wildcard $(PINSDIR)/*.spec SPECS/*.spec)
+LINKS ?= $(wildcard $(PINSDIR)/*.pin $(PINSDIR)/*.lnk SPECS/*.lnk)
+DEPS = $(TOPDIR)/deps
 REPOSDIR ?= repos
 RPM_DEFINES ?= --define="_topdir $(TOPDIR)" \
                --define="dist $(DIST)" \
