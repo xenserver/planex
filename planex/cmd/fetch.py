@@ -180,8 +180,12 @@ def fetch_repo(url, resource):
     with open(resource.path, "wb") as output:
         if resource.prefix is not None:
             prefix = str(resource.prefix)
+            logging.debug("Archiving %s#%s to %s, prefix %s", repo.working_dir,
+                          resource.commitish, resource.path, prefix)
         else:
             prefix = None
+            logging.debug("Archiving %s#%s to %s", repo.working_dir,
+                          resource.commitish, resource.path)
         repo.archive(output, treeish=str(resource.commitish),
                      prefix=prefix)
 
