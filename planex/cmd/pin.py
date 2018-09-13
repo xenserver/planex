@@ -98,14 +98,7 @@ def populate_pinfile(pinfile, args, resources):
             at_val = parse_qs(parsed_url.query).get('at', [None]).pop()
             if at_val is not None and at_val != commitish:
                 commitish = at_val
-            if name == "Source0":
-                prefix = parse_qs(
-                    urlparse(source.url).query
-                ).get("prefix", None)
-                if prefix and isinstance(prefix, list):
-                    prefix = prefix.pop()
-            else:
-                prefix = None
+            prefix = None
 
         if commitish is None:
             pinfile[name] = {"URL": source.url}
