@@ -280,19 +280,46 @@ class GitArchive(Archive):
 class Patchqueue(Archive):
     """A patchqueue archive which will be unpacked into the SRPM"""
 
+    # pylint: disable=too-many-arguments
+    def __init__(self, spec, url, defined_by, prefix):
+        with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
+            super(Patchqueue, self).__init__(spec, url, defined_by, prefix)
+        self._series = None
+
     def __contains__(self, patch):
         # As for the Archive class, this should never be called
         # before the archive has been fetched
-        return patch in self.series()
+        if patch in self.series():
+            return True
+        # files not in the patchqueue
+        return super(Patchqueue, self).__contains__(patch)
 
     def series(self):
         """Return the contents of the patchqueue's series file"""
-        # we cache the extraction of the series to speet up the
+        # we cache the extraction of the series to speed up the
         # self.__contains__ method
-        if self._names is None:
+        if self._series is None:
             with planex.patchqueue.Patchqueue(self.path, self.prefix) as queue:
-                self._names = queue.series()
-        return self._names
+                self._series = queue.series()
+        return self._series
+
+    def extract_sources(self, names, destdir):
+        """
+        Extract all the source [names] to [destdir].   Raises [KeyError]
+        for the first requested source that cannot be found.
+        """
+        with Tarball(self.path) as tarball:
+            # patches within the patchqueue
+            target_paths = [
+                os.path.normpath(os.path.join(self.prefix, name))
+                for name in set(names) & set(self.series())
+            ]
+            # files not in the patchqueue
+            target_paths += [
+                os.path.normpath(name)
+                for name in set(names) - set(self.series())
+            ]
+            tarball.extract(target_paths, destdir)
 
 
 class GitPatchqueue(Patchqueue):
