@@ -9,6 +9,11 @@ import fileinput
 import os
 import re
 import shutil
+
+
+# Important note: shutil's copytree does not do what
+# we need, as the destination dir already exists
+from distutils.dir_util import copy_tree  # pylint: disable=F0401,E0611
 import tarfile
 import tempfile
 
@@ -36,6 +41,8 @@ def parse_args_or_exit(argv=None):
     parser.add_argument("spec", metavar="SPEC", help="Spec file")
     parser.add_argument("sources", metavar="SOURCE/PATCHQUEUE", nargs='*',
                         help="Source and patchqueue files")
+    parser.add_argument("--destdir", dest="destdir", nargs=1,
+                        help="Destination directory for Source RPM")
     argcomplete.autocomplete(parser)
 
     parsed_args = parser.parse_args(argv)
@@ -81,7 +88,7 @@ def rpmbuild(args, tmpdir, specfile):
         cmd.append('--define')
         cmd.append(" ".join(define))
     cmd.append('--define')
-    cmd.append('_sourcedir %s' % tmpdir)
+    cmd.append('_topdir %s' % tmpdir)
     cmd.append('-bs')
     cmd.append(specfile)
 
@@ -191,8 +198,11 @@ def populate_working_directory(tmpdir, spec, link, sources, patchdata):
     """
     Build a working directory containing everything needed to build the SRPM.
     """
+
+    specdst = os.path.join(tmpdir, "SPECS")
+    sourcedst = os.path.join(tmpdir, "SOURCES")
     # Copy spec to working area
-    tmp_specfile = os.path.join(tmpdir, os.path.basename(spec))
+    tmp_specfile = os.path.join(specdst, os.path.basename(spec))
     shutil.copyfile(spec, tmp_specfile)
 
     manifests = {}
@@ -200,7 +210,7 @@ def populate_working_directory(tmpdir, spec, link, sources, patchdata):
     # Copy sources to working area
     for source in sources:
         extract_commit(source, manifests)
-        shutil.copy(source, tmpdir)
+        shutil.copy(source, sourcedst)
 
     if manifests:
         add_manifest_entry(manifests, tmp_specfile)
@@ -218,15 +228,15 @@ def populate_working_directory(tmpdir, spec, link, sources, patchdata):
                 print ('patches %s' % (patch_path))
                 with Patchqueue(patch_path,
                                 branch=link.patchqueue) as patches:
-                    patches.extract_all(tmpdir)
+                    patches.extract_all(sourcedst)
                     patches.add_to_spec(spec, tmp_specfile)
 
             # Extract non-patchqueue sources
             with Tarball(patch_path) as tarball:
-                extract_tarball_patches(tmpdir, spec, tarball, link.sources,
+                extract_tarball_patches(sourcedst, spec, tarball, link.sources,
                                         link.patches)
         elif link.schema_version >= 2:
-            extract_v2_patches(tmpdir, spec, tmp_specfile, link, patchdata)
+            extract_v2_patches(sourcedst, spec, tmp_specfile, link, patchdata)
 
     return tmp_specfile
 
@@ -240,11 +250,17 @@ def main(argv=None):
 
     args = parse_args_or_exit(argv)
     tmpdir = tempfile.mkdtemp(prefix="px-srpm-")
+    for subdir in ['BUILD', 'BUILDROOT', 'RPMS', 'SOURCES', 'SPECS', 'SRPMS']:
+        os.mkdir(os.path.join(tmpdir, subdir))
 
     try:
         specfile = populate_working_directory(tmpdir, args.spec, args.link,
                                               args.sources, args.patchdata)
-        sys.exit(rpmbuild(args, tmpdir, specfile))
+        buildret = rpmbuild(args, tmpdir, specfile)
+        if buildret == 0:
+            copy_tree(os.path.join(tmpdir, "SRPMS"), args.destdir[0])
+
+        sys.exit(buildret)
 
     except (tarfile.TarError, tarfile.ReadError) as exc:
         print("Error when extracting patchqueue from tarfile")
