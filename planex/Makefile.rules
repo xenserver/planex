@@ -10,9 +10,9 @@ LINKS ?= $(wildcard SPECS/*.lnk)
 DEPS = $(TOPDIR)/deps
 PINSDIR ?= PINS
 REPOSDIR ?= repos
-RPM_DEFINES ?= --define="_topdir $(TOPDIR)" \
-               --define="dist $(DIST)" \
-               $(RPM_EXTRA_DEFINES)
+RPM_SOURCEDIR_DEFINE ?= --define "_sourcedir %_topdir/SOURCES/%name"
+RPM_TOPDIR_DEFINE ?= --define="_topdir $(TOPDIR)"
+RPM_DIST_DEFINE ?= --define="dist $(DIST)"
 MOCK_CONFIGDIR ?= /etc/mock
 MOCK_ROOT ?= default
 
@@ -29,24 +29,25 @@ endif
 ############################################################################
 
 FETCH ?= planex-fetch
-FETCH_FLAGS ?= $(RPM_DEFINES) $(FETCH_EXTRA_FLAGS)
+FETCH_FLAGS ?= $(RPM_TOPDIR_DEFINE) $(RPM_SOURCEDIR_DEFINE) $(FETCH_EXTRA_FLAGS)
 
 RPMBUILD ?= planex-make-srpm
-RPMBUILD_FLAGS ?= ${QUIET+--quiet} $(RPM_DEFINES) $(RPMBUILD_EXTRA_FLAGS)
+RPMBUILD_FLAGS ?= ${QUIET+--quiet} $(RPM_DIST_DEFINE) $(RPMBUILD_EXTRA_FLAGS)
 
 CREATEREPO ?= createrepo
 CREATEREPO_FLAGS ?= ${QUIET+--quiet}
 
 MOCK ?= planex-build-mock
 MOCK_FLAGS ?= ${QUIET+--quiet} \
-              $(RPM_DEFINES) \
+              $(RPM_TOPDIR_DEFINE) \
+              $(RPM_DIST_DEFINE) \
               --configdir=$(MOCK_CONFIGDIR) \
               --root=$(MOCK_ROOT) \
               --resultdir=$(@D) \
               $(MOCK_EXTRA_FLAGS)
 
 DEPEND ?= planex-depend
-DEPEND_FLAGS ?= $(RPM_DEFINES) $(DEPEND_EXTRA_FLAGS)
+DEPEND_FLAGS ?= $(RPM_TOPDIR_DEFINE) $(RPM_SOURCEDIR_DEFINE) $(DEPEND_EXTRA_FLAGS)
 
 MANIFEST ?= planex-manifest
 MANIFEST_FLAGS ?=
@@ -121,15 +122,11 @@ $(TOPDIR)/SOURCES/%/patches.tar: $(PINSDIR)/%.pin FORCE
 # RPM build rules
 ############################################################################
 
-# Build a source RPM from a Spec file and a tarball.   We define %dist
-# to ensure that the names of the source RPMs, which are built outside the
-# mock chroot, match the names of the binary RPMs, which are built inside
-# the chroot.	Without this we might generate foo-1.0.fc20.src.rpm
-# (Fedora host) and foo-1.0.el6.x86_64.rpm (CentOS chroot).
+# Build a source RPM from a Spec file and a tarball.
 %.src.rpm:
 	@echo [RPMBUILD] $@ 
 	$(AT) mkdir -p $(@D)
-	$(AT)$(RPMBUILD) $(RPMBUILD_FLAGS) $^
+	$(AT)$(RPMBUILD) $(RPMBUILD_FLAGS) --destdir $(TOPDIR)/SRPMS $^
 
 # Build one or more binary RPMs from a source RPM.   A typical source RPM
 # might produce a base binary RPM, a -devel binary RPM containing library
