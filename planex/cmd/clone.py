@@ -4,7 +4,6 @@ planex-clone: Checkout sources referred to by a pin file
 from __future__ import print_function
 
 import errno
-from string import Template
 import argparse
 from os import symlink
 from os.path import basename, dirname, join, relpath, splitext
@@ -12,7 +11,7 @@ import subprocess
 import sys
 import tarfile
 from textwrap import fill
-
+import json
 import git
 
 from planex.cmd.fetch import fetch_source_dispatch
@@ -43,8 +42,6 @@ def parse_args_or_exit(argv=None):
                            "link the sources and the patchqueue and use "
                            "guilt to apply all the additional patches "
                            "[experimental]")
-    parser.add_argument("--credentials", metavar="CREDS", default="",
-                        help="Credentials")
     parser.add_argument(
         "-r", "--repos", metavar="DIR", default="repos",
         help='Local path to the repositories')
@@ -58,25 +55,13 @@ def repo_name(url):
     return basename(url).rsplit(".git")[0]
 
 
-CHECKOUT_TEMPLATE = Template("""checkout poll: true,
-         scm:[$$class: 'GitSCM',
-              branches: [[name: '$branch']],
-              extensions: [[$$class: 'RelativeTargetDirectory',
-                            relativeTargetDir: '$checkoutdir'],
-                           [$$class: 'LocalBranch']],
-              userRemoteConfigs: [
-                [credentialsId: '$credentials',
-                 url: '$url']]]
-""")
-
-
-def clone_jenkins(url, destination, commitish, credentials):
-    """Print Jenkinsfile fragment to clone repository"""
-    destination = join(destination, repo_name(url))
-    print(CHECKOUT_TEMPLATE.substitute(url=url,
-                                       branch=commitish,
-                                       checkoutdir=destination,
-                                       credentials=credentials))
+def clone_jenkins(gathered):
+    """Print json file containing repositories to clone"""
+    json_dict = {}
+    for url, commitish in gathered:
+        json_dict[repo_name(url)] = {'URL': url, 'commitish': commitish}
+    with open("clone_sources.json", "w+") as clone_sources:
+        clone_sources.write(json.dumps(json_dict))
 
 
 def clone(url, destination, commitish, nodetached=True):
@@ -179,12 +164,12 @@ def clone_all(args, pin):
         sys.exit("error: cloning two git repositories with the same "
                  "name but different commitish is not supported.")
 
-    for url, commitish in gathered:
-        print('echo "Cloning %s#%s"' % (url, commitish))
-        if args.jenkins:
-            clone_jenkins(url, args.repos, commitish, args.credentials)
-        # clone is assumed for all other flags
-        else:
+    if args.jenkins:
+        clone_jenkins(gathered)
+    else:
+        for url, commitish in gathered:
+            print('echo "Cloning %s#%s"' % (url, commitish))
+            # clone is assumed for all other flags
             util.makedirs(args.repos)
             try:
                 nodetached = args.patchqueue or args.repatched
