@@ -30,22 +30,11 @@ def parse_args_or_exit(argv=None):
                       help="Print Jenkinsfile fragment")
     mode.add_argument("--clone", action="store_true",
                       help="Clone all the clonable repositories (default)")
-    mode.add_argument("--assemble-patchqueue", action="store_true",
-                      dest="patchqueue",
-                      help="Clone all the clonable repositories, link the "
-                           "patchqueue in the sources and use guilt to apply "
-                           "all the patches")
-    mode.add_argument("--assemble-repatched", action="store_true",
-                      dest="repatched",
-                      help="Clone all the clonable repositories, apply "
-                           "the patches to the sources and tag that, "
-                           "link the sources and the patchqueue and use "
-                           "guilt to apply all the additional patches "
-                           "[experimental]")
     parser.add_argument(
         "-r", "--repos", metavar="DIR", default="repos",
         help='Local path to the repositories')
     parser.add_argument("pins", metavar="PINS", nargs="*", help="pin file")
+
     return parser.parse_args(argv)
 
 
@@ -132,7 +121,7 @@ def apply_patchqueue(base_repo, pq_repo, pq_dir):
 # pylint: disable=too-many-locals
 
 
-def clone_all(args, pin):
+def clone_all(args, pin, nodetached=False):
     """
     If [args.jenkins] prints the clone string for jenkins else
     it clones all the clonable sources into [args.repos].
@@ -172,7 +161,6 @@ def clone_all(args, pin):
             # clone is assumed for all other flags
             util.makedirs(args.repos)
             try:
-                nodetached = args.patchqueue or args.repatched
                 clone(url, args.repos, commitish, nodetached)
             except git.GitCommandError as gce:
                 print(gce.stderr)
@@ -317,16 +305,19 @@ def main(argv=None):
     for pinpath in args.pins:
         pin = Link(pinpath)
 
-        clone_all(args, pin)
-
-        if args.patchqueue:
-            assemble_patchqueue(args, pin)
-
-        if args.repatched:
-            specname, _ = splitext(basename(pinpath))
-            specpath = "SPECS/{}.spec".format(specname)
-            defines = [
-                ("_topdir", "_build"),
-                ("_sourcedir", "%_topdir/SOURCES/%name")
-            ]
-            assemble_repatched(args, specpath, defines, pin)
+        if args.clone:
+            clone_all(args, pin)
+        else:
+            if "PatchQueue0" in pin.patchqueue_sources:
+                if "Archive0" in pin.archives:
+                    specname, _ = splitext(basename(pinpath))
+                    specpath = "SPECS/{}.spec".format(specname)
+                    defines = [
+                        ("_topdir", "_build"),
+                        ("_sourcedir", "%_topdir/SOURCES/%name")
+                    ]
+                    clone_all(args, pin, nodetached=True)
+                    assemble_repatched(args, specpath, defines, pin)
+                else:
+                    clone_all(args, pin, nodetached=True)
+                    assemble_patchqueue(args, pin)
