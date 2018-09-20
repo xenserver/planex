@@ -5,7 +5,7 @@ from __future__ import print_function
 
 import errno
 import argparse
-from os import symlink
+from os import symlink, getcwd
 from os.path import basename, dirname, join, relpath, splitext
 import subprocess
 import sys
@@ -30,6 +30,9 @@ def parse_args_or_exit(argv=None):
                       help="Print Jenkinsfile fragment")
     mode.add_argument("--clone", action="store_true",
                       help="Clone all the clonable repositories (default)")
+    parser.add_argument("--output", "-o",
+                        default=join(getcwd(), "clone_sources.json"),
+                        help="Choose output name for clone sources json file")
     parser.add_argument(
         "-r", "--repos", metavar="DIR", default="repos",
         help='Local path to the repositories')
@@ -44,12 +47,12 @@ def repo_name(url):
     return basename(url).rsplit(".git")[0]
 
 
-def clone_jenkins(gathered):
+def clone_jenkins(filename, gathered):
     """Print json file containing repositories to clone"""
     json_dict = {}
     for url, commitish in gathered:
         json_dict[repo_name(url)] = {'URL': url, 'commitish': commitish}
-    with open("clone_sources.json", "w+") as clone_sources:
+    with open(filename, "w") as clone_sources:
         clone_sources.write(json.dumps(json_dict))
 
 
@@ -154,7 +157,7 @@ def clone_all(args, pin, nodetached=False):
                  "name but different commitish is not supported.")
 
     if args.jenkins:
-        clone_jenkins(gathered)
+        clone_jenkins(args.output, gathered)
     else:
         for url, commitish in gathered:
             print('echo "Cloning %s#%s"' % (url, commitish))
