@@ -324,3 +324,5 @@ def main(argv=None):
                 else:
                     clone_all(args, pin, nodetached=True)
                     assemble_patchqueue(args, pin)
+            else:
+                clone_all(args, pin)
