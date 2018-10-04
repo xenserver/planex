@@ -25,14 +25,13 @@ def parse_args_or_exit(argv=None):
     Parse command line options
     """
     parser = argparse.ArgumentParser(description='Clone sources')
-    mode = parser.add_mutually_exclusive_group()
-    mode.add_argument("--jenkins", action="store_true",
-                      help="Print Jenkinsfile fragment")
-    mode.add_argument("--clone", action="store_true",
-                      help="Clone all the clonable repositories (default)")
+    parser.add_argument("--jenkins", action="store_true",
+                        help="Print Jenkinsfile fragment")
+    parser.add_argument("--clone", action="store_true",
+                        help="Only clone repositories, do not apply patches")
     parser.add_argument("--output", "-o",
                         default=join(getcwd(), "clone_sources.json"),
-                        help="Choose output name for clone sources json file")
+                        help="Choose output name for clone sources JSON file")
     parser.add_argument(
         "-r", "--repos", metavar="DIR", default="repos",
         help='Local path to the repositories')
@@ -308,7 +307,7 @@ def main(argv=None):
     for pinpath in args.pins:
         pin = Link(pinpath)
 
-        if args.clone:
+        if args.clone or args.jenkins:
             clone_all(args, pin)
         else:
             if "PatchQueue0" in pin.patchqueue_sources:
