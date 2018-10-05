@@ -7,7 +7,7 @@ import errno
 from string import Template
 import argparse
 from os import symlink, getcwd
-from os.path import basename, dirname, join, relpath, splitext
+from os.path import basename, dirname, exists, join, relpath, splitext
 import subprocess
 import sys
 import tarfile
@@ -63,6 +63,9 @@ CHECKOUT_TEMPLATE = Template("""checkout poll: true,
 def clone_jenkins_json(filename, gathered):
     """Print json file containing repositories to clone"""
     json_dict = {}
+    if exists(filename):
+        with open(filename, "r") as clone_sources:
+            json_dict.update(json.load(clone_sources))
     for url, commitish in gathered:
         json_dict[repo_name(url)] = {'URL': url, 'commitish': commitish}
     with open(filename, "w") as clone_sources:
