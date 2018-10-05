@@ -1,7 +1,7 @@
 Summary: RPM build tool
 Name: planex
-Version: 4.0.0
-Release: 1%{?dist}
+Version: 4.1.0
+Release: beta1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
 License: LGPLv2.1
@@ -53,6 +53,23 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Wed Oct 10 2018 Simon Rowe <simon.rowe@citrix.com> - 4.1.0-beta1
+- pin: fix multiple pins not being appended
+- clone Restore groovy file output
+- clone: fix Jenkins/patchqueue interaction
+- clone: fix cloning of plain repositories
+- add output option to planex-clone
+- clone: automatically apply patches and/or patchqueue
+- pin: simplify pinning operation
+- blob: allow patchqueues to contain sources
+- pin: exclude Source0 prefix from pin
+- fetch: add debug when archiving repositories
+- clone: replace planex jenkins file with json
+- Makefile.rules: include pins in SPECS and LINKS
+- spec.py: prepend source directory to sources and patches
+- pin: create output directory if it does not exist
+- Add a configuration class
+
 * Thu Jun 07 2018 Simon Rowe <simon.rowe@citrix.com> - 4.0.0-1
 - pin: simplify repo_or_path()
 - clone: Fix indent disagreement between pylint and pycodestyle
