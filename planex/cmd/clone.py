@@ -4,6 +4,7 @@ planex-clone: Checkout sources referred to by a pin file
 from __future__ import print_function
 
 import errno
+from string import Template
 import argparse
 from os import symlink, getcwd
 from os.path import basename, dirname, join, relpath, splitext
@@ -36,7 +37,8 @@ def parse_args_or_exit(argv=None):
         "-r", "--repos", metavar="DIR", default="repos",
         help='Local path to the repositories')
     parser.add_argument("pins", metavar="PINS", nargs="*", help="pin file")
-
+    parser.add_argument("--credentials", metavar="CREDS", default=None,
+                        help="Credentials")
     return parser.parse_args(argv)
 
 
@@ -46,13 +48,34 @@ def repo_name(url):
     return basename(url).rsplit(".git")[0]
 
 
-def clone_jenkins(filename, gathered):
+CHECKOUT_TEMPLATE = Template("""checkout poll: true,
+         scm:[$$class: 'GitSCM',
+              branches: [[name: '$branch']],
+              extensions: [[$$class: 'RelativeTargetDirectory',
+                            relativeTargetDir: '$checkoutdir'],
+                           [$$class: 'LocalBranch']],
+              userRemoteConfigs: [
+                [credentialsId: '$credentials',
+                 url: '$url']]]
+""")
+
+
+def clone_jenkins_json(filename, gathered):
     """Print json file containing repositories to clone"""
     json_dict = {}
     for url, commitish in gathered:
         json_dict[repo_name(url)] = {'URL': url, 'commitish': commitish}
     with open(filename, "w") as clone_sources:
         clone_sources.write(json.dumps(json_dict))
+
+
+def clone_jenkins_groovy(destination, credentials, url, commitish):
+    """output groovy for backwards compatibility"""
+    destination = join(destination, repo_name(url))
+    print(CHECKOUT_TEMPLATE.substitute(url=url,
+                                       branch=commitish,
+                                       checkoutdir=destination,
+                                       credentials=credentials))
 
 
 def clone(url, destination, commitish, nodetached=True):
@@ -155,17 +178,24 @@ def clone_all(args, pin, nodetached=False):
         sys.exit("error: cloning two git repositories with the same "
                  "name but different commitish is not supported.")
 
-    if args.jenkins:
-        clone_jenkins(args.output, gathered)
+    if args.jenkins and args.credentials is None:
+        clone_jenkins_json(args.output, gathered)
     else:
         for url, commitish in gathered:
             print('echo "Cloning %s#%s"' % (url, commitish))
-            # clone is assumed for all other flags
-            util.makedirs(args.repos)
-            try:
-                clone(url, args.repos, commitish, nodetached)
-            except git.GitCommandError as gce:
-                print(gce.stderr)
+            if args.jenkins and args.credentials:
+                if args.jenkins and args.credentials:
+                    clone_jenkins_groovy(url,
+                                         args.credentials,
+                                         url,
+                                         commitish)
+            else:
+                # clone is assumed for all other flags
+                util.makedirs(args.repos)
+                try:
+                    clone(url, args.repos, commitish, nodetached)
+                except git.GitCommandError as gce:
+                    print(gce.stderr)
 
 
 def assemble_patchqueue(args, pin):
