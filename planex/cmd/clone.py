@@ -188,7 +188,7 @@ def clone_all(args, pin, nodetached=False):
             print('echo "Cloning %s#%s"' % (url, commitish))
             if args.jenkins and args.credentials:
                 if args.jenkins and args.credentials:
-                    clone_jenkins_groovy(url,
+                    clone_jenkins_groovy(args.repos,
                                          args.credentials,
                                          url,
                                          commitish)
