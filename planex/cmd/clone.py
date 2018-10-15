@@ -60,16 +60,16 @@ CHECKOUT_TEMPLATE = Template("""checkout poll: true,
 """)
 
 
-def clone_jenkins_json(filename, gathered):
-    """Print json file containing repositories to clone"""
+def clone_jenkins_json(filename, url, commitish):
+    """Print JSON file containing repositories to clone"""
     json_dict = {}
     if exists(filename):
         with open(filename, "r") as clone_sources:
             json_dict.update(json.load(clone_sources))
-    for url, commitish in gathered:
-        json_dict[repo_name(url)] = {'URL': url, 'commitish': commitish}
+    json_dict[repo_name(url)] = {'URL': url, 'commitish': commitish}
     with open(filename, "w") as clone_sources:
-        clone_sources.write(json.dumps(json_dict))
+        clone_sources.write(json.dumps(json_dict, indent=2, sort_keys=True))
+        print(file=clone_sources)
 
 
 def clone_jenkins_groovy(destination, credentials, url, commitish):
@@ -151,8 +151,7 @@ def apply_patchqueue(base_repo, pq_repo, pq_dir):
 
 def clone_all(args, pin, nodetached=False):
     """
-    If [args.jenkins] prints the clone string for jenkins else
-    it clones all the clonable sources into [args.repos].
+    Clone all the resources described by a pin.
     """
     # The following assumes that the pin file does not use any
     # rpm macro in its fields. We can enable them by using
@@ -171,7 +170,7 @@ def clone_all(args, pin, nodetached=False):
                    for gath in gathered)
 
     if gathered:
-        print('echo "Clones for %s"' % basename(pin.linkpath))
+        print('\nClones for %s' % basename(pin.linkpath))
 
     # this is suboptimal but the sets are very small
     if any(commitish1 != commitish2
@@ -181,24 +180,34 @@ def clone_all(args, pin, nodetached=False):
         sys.exit("error: cloning two git repositories with the same "
                  "name but different commitish is not supported.")
 
-    if args.jenkins and args.credentials is None:
-        clone_jenkins_json(args.output, gathered)
-    else:
-        for url, commitish in gathered:
-            print('echo "Cloning %s#%s"' % (url, commitish))
-            if args.jenkins and args.credentials:
-                if args.jenkins and args.credentials:
-                    clone_jenkins_groovy(args.repos,
-                                         args.credentials,
-                                         url,
-                                         commitish)
+    for url, commitish in gathered:
+        print('Cloning %s#%s' % (url, commitish))
+        util.makedirs(args.repos)
+        try:
+            clone(url, args.repos, commitish, nodetached)
+        except git.GitCommandError as gce:
+            print(gce.stderr)
+
+
+def clone_jenkins(args, pin):
+    """
+    Generate either a JSON object or a Groovy fragment that describes
+    the terminal resource of a pin.
+    """
+    for resource in (pin.patchqueue_sources, pin.archives, pin.sources):
+        if resource:
+            url = resource.values()[0]['URL']
+            commitish = resource.values()[0]['commitish']
+
+            if args.credentials:
+                # output Groovy fragment
+                print('echo "Cloning %s#%s"' % (url, commitish))
+                clone_jenkins_groovy(args.repos, args.credentials, url,
+                                     commitish)
             else:
-                # clone is assumed for all other flags
-                util.makedirs(args.repos)
-                try:
-                    clone(url, args.repos, commitish, nodetached)
-                except git.GitCommandError as gce:
-                    print(gce.stderr)
+                # output JSON object
+                clone_jenkins_json(args.output, url, commitish)
+            break
 
 
 def assemble_patchqueue(args, pin):
@@ -340,8 +349,10 @@ def main(argv=None):
     for pinpath in args.pins:
         pin = Link(pinpath)
 
-        if args.clone or args.jenkins:
+        if args.clone:
             clone_all(args, pin)
+        if args.jenkins:
+            clone_jenkins(args, pin)
         else:
             if "PatchQueue0" in pin.patchqueue_sources:
                 if "Archive0" in pin.archives:
