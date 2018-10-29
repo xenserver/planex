@@ -1,4 +1,5 @@
 argcomplete
 argparse
 gitpython
+pathlib2
 requests
