@@ -19,7 +19,10 @@ import git
 # pylint: disable=relative-import
 from six.moves.urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 
-from pathlib2 import Path
+try:
+    from pathlib2 import Path
+except ImportError:
+    from pathlib import Path
 
 from planex.cmd.args import common_base_parser
 from planex.cmd.fetch import fetch_url

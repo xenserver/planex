@@ -14,6 +14,7 @@ Requires: make
 Requires: mock
 Requires: python-argcomplete
 Requires: python-argparse
+Requires: python-pathlib
 Requires: python-requests
 Requires: python-setuptools
 Requires: rpm-build
