@@ -5,13 +5,13 @@ python-setuptools definition for planex
 from setuptools import setup
 
 setup(name='planex',
-      version='4.1-beta3',
+      version='4.1.0',
       packages=['planex', 'planex.cmd'],
       package_data={'planex': ['Makefile.rules']},
       entry_points={
           'console_scripts': [
               'planex-build-mock = planex.cmd.mock:main',
-              'planex-clone= planex.cmd.clone:main',
+              'planex-clone = planex.cmd.clone:main',
               'planex-create-mock-config = planex.cmd.createmockconfig:main',
               'planex-depend = planex.cmd.depend:main',
               'planex-fetch = planex.cmd.fetch:main',

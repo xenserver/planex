@@ -1,7 +1,7 @@
 Summary: RPM build tool
 Name: planex
 Version: 4.1.0
-Release: beta3%{?dist}
+Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{name}-%{version}.tar.gz
 License: LGPLv2.1
@@ -54,6 +54,9 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Wed Oct 31 2018 Simon Rowe <simon.rowe@citrix.com> - 4.1.0-1
+- Add dependency for pathlib
+
 * Mon Oct 29 2018 Simon Rowe <simon.rowe@citrix.com> - 4.1.0-beta3
 - clone: implement cloning of non-git resources
 
