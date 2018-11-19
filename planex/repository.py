@@ -161,9 +161,9 @@ class Repository(object):
                 if query_path[1] == 'tags':
                     self.tag = query_path[2]
                 elif query_path[1] == 'heads':
-                    self.branch = query_path[2]
+                    self.branch = '/'.join(query_path[2:])
                 else:
-                    self.branch = 'master'
+                    self.branch = query
             else:
                 self.commitish = query
         else:
