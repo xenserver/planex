@@ -8,6 +8,7 @@ import argparse
 import json
 import os
 import sys
+import errno
 
 from planex.blobs import Archive
 from planex.cmd.args import common_base_parser
@@ -118,6 +119,13 @@ def parse_args_or_exit(argv=None):
     write.add_argument("-o", "--output", default=None,
                        help="Path of the pinfile to write. "
                             "It overwrites the file if present.")
+    write.add_argument("-s", "--show",
+                       action="store_true", dest="show",
+                       help="Show the current state of the PIN for"
+                            "the given package.")
+    write.add_argument("-u", "--unpin",
+                       action="store_true", dest="unpin",
+                       help="Remove the PIN for the given package.")
 
     parser.add_argument("--url",
                         help="Replace the URL of the final resource")
@@ -139,15 +147,32 @@ def main(argv=None):
     spec = load_spec_and_lnk(xs_path, package_name)
     pin = get_pin_content(args, spec)
 
-    if not args.quiet:
+    if not (args.quiet or args.show or args.unpin):
         print(json.dumps(pin, indent=2, sort_keys=True))
 
+    default_output = "PINS/{}.pin".format(package_name)
     output = args.output
     if args.write:
-        output = "PINS/{}.pin".format(package_name)
+        output = default_output
 
     if output is not None:
         path = os.path.dirname(output)
         makedirs(path)
         with open(output, "w") as out:
             json.dump(pin, out, indent=2, sort_keys=True)
+
+    if args.show:
+        try:
+            with open(default_output, 'r') as infile:
+                print(infile.read())
+        except IOError as err:
+            if err.errno not in (errno.ENOENT,):
+                raise
+            print("Package '{}' is not pinned".format(package_name))
+
+    if args.unpin:
+        try:
+            os.remove(default_output)
+        except OSError as err:
+            if err.errno not in (errno.ENOENT,):
+                raise
