@@ -76,9 +76,15 @@ srpms: $(SRPMS)
 
 
 .PHONY: clean
-clean:
-	rm -rf $(TOPDIR)
+clean:	scrub
+	rm -rf $(TOPDIR) $(MOCK_CONFIGDIR)
+	rm -f MANIFESTS RPMS
 
+.PHONY: scrub
+scrub:
+ifneq ($(wildcard $(MOCK_CONFIGDIR)/$(MOCK_ROOT).cfg),)
+	mock --configdir=$(MOCK_CONFIGDIR) -r $(MOCK_ROOT) --scrub=all
+endif
 
 ############################################################################
 # Source download rules
