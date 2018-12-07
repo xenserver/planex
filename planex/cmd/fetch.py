@@ -161,7 +161,7 @@ def fetch_url(url, source, retries):
     except requests.RequestException as exn:
         # Download failed
         sys.exit("%s: Failed to fetch %s: %s" %
-                 (sys.argv[0], urlunparse(url), exn.args[1]))
+                 (sys.argv[0], urlunparse(url), str(exn)))
 
     except IOError as exn:
         # IO error saving source file
