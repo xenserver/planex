@@ -1,3 +1,31 @@
+4.1.1
+* Correct error path on RequestException
+* make clean: cleanup RPM / MANIFESTS symbolic links and mock cfg
+* Add "show" and "unpin" options to planex-pin
+* repository: fix Bitbucket branch handling
+* clone: add support for archives containing patches
+
+4.1.0
+* Add dependency for pathlib
+* clone: implement cloning of non-git resources
+* clone: Jenkins form should only process terminal resource
+* clone: fix destination for Groovy clone
+* fix multiple pins not being appended
+* Restore groovy file output
+* clone: fix Jenkins/patchqueue interaction
+* clone: fix cloning of plain repositories
+* add output option to planex-clone
+* clone: automatically apply patches and/or patchqueue
+* pin: simplify pinning operation
+* blob: allow patchqueues to contain sources
+* pin: exclude Source0 prefix from pin
+* fetch: add debug when archiving repositories
+* Replace planex-jenkins clone with json
+* Makefile.rules: includes pin in specs and LINKS
+* spec.py: prepend source directory to soruces and patches
+* pin: create output directory is it does not exist
+* Add a configuration class - support reading config from global, user and local files
+
 4.0.0
 * pin: simplify repo_or_path()
 * clone: Fix indent disagreement between pylint and pycodestyle
