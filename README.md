@@ -3,16 +3,21 @@
 Planex is a toolkit for building medium-sized collections of RPM packages which may depend on each other.
 It fills the gap between tools to build individual RPMs, such as `rpmbuild` and `mock`, and tools to build entire distributions, such as [koji](https://fedoraproject.org/wiki/Koji).
 
-## Installing Planex 
-
-The easiest way to install Planex is to use `pip` in a Python virtualenv.
+## Installing Planex
 
 Planex uses the Python bindings for `librpm`, which must be installed separately using the system package manager.
 ```
 $ dnf install python2-rpm
 ```
 
-If you want to install Planex in a virtualenv, remember to pass the `--system-site-packages` so the `librpm` bindings are available in the virtualenv.
+The easiest way to install Planex is to use `pip` with
+```
+pip install --user git+https://github.com/xenserver/planex.git
+```
+
+If you do not want to install it in a more isolated way, you can do so with a virtual environment.
+Remember to pass the `--system-site-packages` so the `librpm` bindings are available in the virtualenv.
+
 
 ```
 $ virtualenv venv --system-site-packages
@@ -22,26 +27,21 @@ Installing setuptools, pip, wheel...done.
 $ source venv/bin/activate
 ```
 
-Clone the source, install the requirements and install Planex
+Install Planex
 ```
-$ git clone https://github.com/xenserver/planex
-Cloning into 'planex'...
-remote: Counting objects: 11951, done.
-remote: Compressing objects: 100% (78/78), done.
-remote: Total 11951 (delta 143), reused 176 (delta 130), pack-reused 11743
-Receiving objects: 100% (11951/11951), 2.17 MiB | 931.00 KiB/s, done.
-Resolving deltas: 100% (8368/8368), done.
-$ cd planex
-$ pip install -r requirements.txt
-...
-$ python setup.py install
+$ pip install git+https://github.com/xenserver/planex.git
 ```
 
-For development work, also install the test requirements and use `python setup.py develop`, which symlinks the code so you do not have to run `python setup.py install` after every edit.
+If you have `~/.local/bin` in your `$PATH`, you can symlink the binaries of the virtualenv with
+```
+$ ln -s "$PWD"/venv/bin/{planex-build-mock,planex-clone,planex-create-mock-config,planex-depend,planex-fetch,planex-init,planex-make-srpm,planex-pin} ~/.local/bin
+```
+
+For development work, `git clone` the repo, `cd` into it, create a virtualenv and also install the test requirements and install the package in edit mode, which symlinks the code so you do not have to run `pip install .` after every edit.
 ```
 $ pip install -r test-requirements.txt
 ...
-$ python setup.py develop
+$ pip install -e .
 $ nosetests
 ```
 
@@ -54,7 +54,7 @@ We arrived at this structure after previous experience with a monolithic Makefil
 Planex is intended to be a mid-point between these two extremes.
 
 * We use make to figure out which files to rebuild and in what order.   All we need to do is generate the dependency graph, after which we can benefit from features such as incremental, parallel builds with no extra work.
-* Small, single purpose tools are easier to write, understand and maintain than monlithic scripts.  Although the Planex tools are intended to be run by make, they can easily be run by hand for testing and development. 
+* Small, single purpose tools are easier to write, understand and maintain than monlithic scripts.  Although the Planex tools are intended to be run by make, they can easily be run by hand for testing and development.
 * Where make cannot understand part of our build process, we can use small tools to adapt it.   For instance, it is impossible to use a URL as a make prerequisite - make only understands files on disk - so we cannot write a rule which directly downloads a source tarball.   Instead, we have a tool (`planex-fetch`) which downloads a source defined in a spec file.   Make calls `planex-fetch`, passing it the spec and asking it to download the source tarball.   If the spec later changes, the source will be downloaded again.
 
 ### Use standard tools in standard ways (the Stackoverflow test)

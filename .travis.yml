@@ -1,5 +1,5 @@
 language: python
-virtualenv: 
+virtualenv:
   system_site_packages: true
 sudo: required
 services: docker
@@ -9,9 +9,9 @@ addons:
     - yum
     - python-rpm
 install:
-  - pip install --upgrade -r requirements.txt
+  - pip install --upgrade .
   - pip install -r test-requirements.txt
-script: 
+script:
   - pycodestyle --show-source --show-pep8 setup.py planex tests
   - pylint setup.py planex tests
   - nosetests --verbose --with-coverage --cover-inclusive --cover-package=planex

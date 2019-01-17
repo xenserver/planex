@@ -9,7 +9,8 @@ RUN yum -y install yum-plugin-ovl \
 # Install basic prerequisites for building planex
 RUN yum -y install \
   epel-release \
-  yum-utils \
+  yum-utils\
+  && yum -y install python2-pip\
   && yum clean all
 
 # Install sudo and preconfigure the sudoers file for the build user
@@ -31,8 +32,8 @@ RUN yum-builddep -y planex/planex.spec \
 # Copy source, build and install it.
 COPY . planex/
 WORKDIR /usr/src/planex
-RUN python setup.py build \
-  && python setup.py install
+RUN pip install --upgrade pip \
+    && pip install .
 
 WORKDIR /build
 COPY docker/entry /entry

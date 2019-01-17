@@ -17,6 +17,12 @@ def read_version():
 
 setup(name='planex',
       version=read_version(),
+      url='https://github.com/xenserver/planex',
+      maintainer='Simon Rowe',
+      maintainer_email='simon.rowe@citrix.com',
+
+      license='LGPL 2.1',
+
       packages=['planex', 'planex.cmd'],
       package_data={'planex': ['Makefile.rules']},
       entry_points={
@@ -30,4 +36,12 @@ setup(name='planex',
               'planex-make-srpm = planex.cmd.makesrpm:main',
               'planex-pin = planex.cmd.pin:main'
           ]
-      })
+      },
+      install_requires=[
+          'argcomplete',
+          'argparse',
+          'gitpython',
+          'pathlib2',
+          'requests'
+      ],
+      python_requires='==2.7.*')

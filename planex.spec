@@ -14,7 +14,7 @@ URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{pkgname}-%{version}.tar.gz
 License: LGPLv2.1
 BuildArch: noarch
-BuildRequires: python-setuptools
+BuildRequires: python-setuptools >=36.2.0
 Requires: git
 %if 0%{?fedora} >= 27
 Requires: python2-GitPython
@@ -42,7 +42,7 @@ Requires: rpm-build
 Requires: python-argparse
 Requires: python-pathlib
 Requires: python-requests
-Requires: python-setuptools
+Requires: python-setuptools >=36.2.0
 
 %description
 Planex is a tool for building collections of RPMs.
