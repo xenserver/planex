@@ -8,6 +8,7 @@ import json
 import logging
 from os import getcwd, rename, walk
 from os.path import abspath, exists, join, relpath
+import re
 from string import Template
 import shutil
 import subprocess
@@ -318,13 +319,13 @@ def apply_patchqueue(base_repo, pq_repo, prefix):
                               cwd=base_repo.working_dir)
 
 
-def clone_with_patchq(base_dest, base_res, pq_res):
+def clone_with_patchq(repos, base_dest, base_res, pq_res):
     """
     Given a source and patchqueue resource clone repos and apply the patchqueue
     """
     base_repo = clone_resource(base_res, base_dest)
 
-    pq_dest = Path(str(base_dest)+'.pg')
+    pq_dest = Path(repos, re.sub(r'\.git$', '', pq_res.basename))
     pq_repo = clone_resource(pq_res, pq_dest)
     apply_patchqueue(base_repo, pq_repo, pq_res.prefix)
 
@@ -423,6 +424,20 @@ def clone_with_patches(spec_path, base_dest, base_res, patches_res, pq_res):
         shutil.rmtree(str(work_path), ignore_errors=True)
 
 
+def get_non_repo_name(source, package):
+    """
+    Attempt to extract git repository name from archive URL.
+
+    Fallback to package name if no format match found.
+    """
+    match = re.match(r'.*repos/([^/]*)/archive\?', source)
+
+    if match:
+        return match.group(1)
+
+    return package
+
+
 # pylint: disable=too-many-branches
 def main(argv=None):
     """
@@ -456,7 +471,8 @@ def main(argv=None):
                 repo_path = Path(args.repos,
                                  src_res.basename.rsplit(".git")[0])
             else:
-                repo_path = Path(args.repos, package)
+                repo_path = Path(args.repos,
+                                 get_non_repo_name(src_res.url, package))
             if not repo_path.parent.exists():
                 repo_path.parent.mkdir(parents=True)
 
@@ -469,7 +485,8 @@ def main(argv=None):
                                        resources['PatchQueue0'])
                 else:
                     # component with patchqueue
-                    clone_with_patchq(repo_path, resources['Source0'],
+                    clone_with_patchq(args.repos, repo_path,
+                                      resources['Source0'],
                                       resources['PatchQueue0'])
             elif "Archive0" in resources:
                 # component with patches
