@@ -1,3 +1,7 @@
+4.1.2
+*Clone to paths based on repo name and not package
+*Add all files from tarball to initial git repo
+
 4.1.1
 * Correct error path on RequestException
 * make clean: cleanup RPM / MANIFESTS symbolic links and mock cfg
