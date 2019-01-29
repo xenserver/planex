@@ -149,6 +149,9 @@ def clone(url, destination, commitish):
 
     if not destination.parent.exists():
         destination.parent.mkdir(parents=True)
+    if destination.exists():
+        # Take a fresh clone if we are re-cloning
+        shutil.rmtree(str(destination))
 
     repo = git.Repo.clone_from(url, str(destination))
     if commitish in repo.remotes['origin'].refs:
@@ -191,7 +194,7 @@ def extract(url_str, destination):
     archive_file = None
 
     # pylint: disable=no-member
-    destination.mkdir(parents=True)
+    destination.mkdir(parents=True, exist_ok=True)
     repo = git.Repo.init(str(destination))
 
     logging.debug("Extracting %s to new git repo", url_str)
@@ -216,9 +219,10 @@ def extract(url_str, destination):
         fetch_url(url, archive_path, 5)
 
     # extract the archive
-    tara = tarfile.open(archive_path)
-    tara.extractall(str(destination))
-    tara.close()
+    if tarfile.is_tarfile(archive_path):
+        tara = tarfile.open(archive_path)
+        tara.extractall(str(destination))
+        tara.close()
 
     if archive_file:
         # delete temp file
