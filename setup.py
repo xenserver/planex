@@ -2,10 +2,21 @@
 python-setuptools definition for planex
 """
 
+import os
 from setuptools import setup
 
+
+def read_version():
+    """Extract the version number from the version file."""
+    setup_py_path = os.path.dirname(os.path.realpath(__file__))
+    version_file = os.path.join(setup_py_path, 'config', 'version')
+    with open(version_file, 'r') as handle:
+        ver = handle.read().replace('\n', '')
+    return ver
+
+
 setup(name='planex',
-      version='4.1.4',
+      version=read_version(),
       packages=['planex', 'planex.cmd'],
       package_data={'planex': ['Makefile.rules']},
       entry_points={

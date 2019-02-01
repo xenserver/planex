@@ -1,0 +1,4 @@
+include LICENSE
+include CHANGES
+recursive-include planex *
+recursive-include config *

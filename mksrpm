@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+TMPDIR=$(mktemp --tmpdir -d mksrpm.XXXXXXXXX)
+cleanup() {
+    if [ -n "$TMPDIR" ]; then
+        rm -rf "$TMPDIR"
+    fi
+}
+ecleanup() {
+    cleanup
+    exit 1
+}
+trap ecleanup EXIT
+trap ecleanup INT
+trap cleanup TERM
+
+
+set -e
+MOCKCFG=$1; shift
+
+HERE=$(dirname $0)
+cd "$HERE"
+
+SPECVER=$(rpmspec -q --qf '%{version}' "$HERE/planex.spec")
+SRCVER=$(cat "$HERE/config/version")
+
+echo "*** GENERATE PYTHON SOURCE DIST ***"
+python setup.py sdist
+
+echo "*** SET UP RPM SPEC FILE ***"
+cp "$HERE/planex.spec" "$HERE/dist/planex.spec"
+
+if [ "$SPECVER" != "$SRCVER" ]; then
+	echo "**** Forcing planex.spec ($SPECVER) to match source ($SRCVER)"
+	rpmdev-bumpspec -n "$SRCVER" "$HERE/dist/planex.spec"
+fi
+
+echo "*** GENERATE SOURCE RPM ***"
+mkdir -p "$TMPDIR/SRPM"
+mock -r "$MOCKCFG" --buildsrpm \
+    --spec "$HERE/dist/planex.spec" \
+    --source "$HERE/dist" \
+    --resultdir="$TMPDIR/SRPM"
+
+## Build a miniplanex. This is for Koji and other planes where none of
+## the mock/createrepo stuff is ever used.
+mkdir -p "$TMPDIR/RPM"
+echo "*** REBUILD SOURCE RPM ***"
+mock -r "$MOCKCFG" --rebuild \
+    --define "miniplanex 1" \
+    --resultdir="$TMPDIR/RPM" "$TMPDIR/SRPM"/*.src.rpm
+
+echo "*** COPY PACKAGES TO dist/ ***"
+cp -v "$TMPDIR/RPM"/*.rpm "$HERE/dist/"
