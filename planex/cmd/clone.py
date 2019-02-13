@@ -127,7 +127,8 @@ def clone_jenkins_json(package, filename, url, commitish):
             json_dict.update(json.load(clone_sources))
     json_dict[package] = {'URL': url, 'commitish': commitish}
     with open(filename, "w") as clone_sources:
-        clone_sources.write(json.dumps(json_dict, indent=2, sort_keys=True))
+        clone_sources.write(json.dumps(json_dict, indent=2, sort_keys=True,
+                                       separators=(',', ': ')))
         print(file=clone_sources)
 
 

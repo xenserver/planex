@@ -148,7 +148,8 @@ def main(argv=None):
     pin = get_pin_content(args, spec)
 
     if not (args.quiet or args.show or args.unpin):
-        print(json.dumps(pin, indent=2, sort_keys=True))
+        print(json.dumps(pin, indent=2, sort_keys=True,
+                         separators=(',', ': ')))
 
     default_output = "PINS/{}.pin".format(package_name)
     output = args.output
