@@ -217,7 +217,7 @@ def print_to_json(specs, provides_to_rpm):
             }
         }
         deps.update(brs)
-    print(json.dumps(dict(deps), indent=2))
+    print(json.dumps(dict(deps), indent=2, separators=(',', ': ')))
 
 
 def main(argv=None):
