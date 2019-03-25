@@ -22,6 +22,17 @@ class Configuration(object):
         return default
 
     @classmethod
+    def items(cls, section):
+        """
+        Return the list of (name, value) pairs for each option in the given
+        section or an empty list.
+        """
+        config = cls._config()
+        if config.has_section(section):
+            return config.items(section)
+        return []
+
+    @classmethod
     def _config(cls):
         """Return a ConfigParser object"""
         config = RawConfigParser()
