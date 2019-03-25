@@ -20,6 +20,7 @@ from six.moves.urllib.parse import urlparse, urlunparse
 
 from planex.link import Link
 from planex.cmd.args import common_base_parser, rpm_define_parser
+from planex.config import Configuration
 from planex.repository import Repository
 from planex.util import run
 from planex.util import setup_logging
@@ -131,6 +132,12 @@ def fetch_http(url, filename, retries):
     headers.update({
         "user-agent": useragent,
     })
+
+    # See if we have any additional custom headers
+    custom_headers = Configuration.items('Headers')
+    if custom_headers:
+        for header in custom_headers:
+            headers.update({header[0]: header[1]})
 
     # Once we use requests >= 2.18.0, we should change this into
     # with requests.get ... as r:
