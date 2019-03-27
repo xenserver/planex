@@ -8,7 +8,7 @@ Name: miniplanex
 %else
 Name: %{pkgname}
 %endif
-Version: 4.1.2
+Version: 4.2.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{pkgname}-%{version}.tar.gz
@@ -77,6 +77,26 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Wed Mar 27 2019 Mark Syms <mark.syms@citrix.com> - 4.2.0-1
+- Allow planex-fetch to apply custom http headers
+
+* Wed Jan 30 2019 Samuel Connelly <samuel.connelly@citrix.com> - 4.1.4-1
+- Only add commit if tarball is being unpacked. Items in sources directory other than tarball may exist
+
+* Tue Jan 29 2019 Samuel Connelly <samuel.connelly@citrix.com> - 4.1.3-1
+- Fix planex-clone issue where we couldn't clone certain pins due to path issues, as well as files being treated as archives.
+
+* Tue Jan 29 2019 Samuel Connelly <samuel.connelly@citrix.com> - 4.1.2-1
+- Clone to paths based on repo name and not package
+- Add all files from tarball to initial git repo
+
+* Mon Dec 17 2018 Samuel Connelly <samuel.connelly@citrix.com> - 4.1.1-1
+- Correct error path on RequestException
+- make clean: cleanup RPM / MANIFESTS symbolic links and mock cfg
+- Add "show" and "unpin" options to planex-pin
+- repository: fix Bitbucket branch handling
+- clone: add support for archives containing patches
+
 * Wed Oct 31 2018 Simon Rowe <simon.rowe@citrix.com> - 4.1.0-1
 - Add dependency for pathlib
 
