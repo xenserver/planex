@@ -8,7 +8,7 @@ Name: miniplanex
 %else
 Name: %{pkgname}
 %endif
-Version: 4.2.0
+Version: 4.3.0
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{pkgname}-%{version}.tar.gz
@@ -77,6 +77,9 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Mon Apr  1 2019 Mark Syms <mark.syms@citrix.com> - 4.3.0-1
+- Make additional headers host specific
+
 * Wed Mar 27 2019 Mark Syms <mark.syms@citrix.com> - 4.2.0-1
 - Allow planex-fetch to apply custom http headers
 
