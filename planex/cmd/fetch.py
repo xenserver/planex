@@ -3,6 +3,7 @@ planex-fetch: Download sources referred to by a spec file
 """
 
 import argparse
+import json
 import logging
 import os
 import shutil
@@ -134,9 +135,10 @@ def fetch_http(url, filename, retries):
     })
 
     # See if we have any additional custom headers
-    custom_headers = Configuration.items('Headers')
+    custom_headers = Configuration.get(url[1], 'Headers')
     if custom_headers:
-        for header in custom_headers:
+        header_parts = json.loads(custom_headers)
+        for header in header_parts:
             headers.update({header[0]: header[1]})
 
     # Once we use requests >= 2.18.0, we should change this into
