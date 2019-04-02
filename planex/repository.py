@@ -4,10 +4,12 @@
 import logging
 import os.path
 import subprocess
-import re
 import requests
 
+import pkg_resources
+
 import planex.git as git
+from planex.util import add_custom_headers_for_url
 
 # pylint: disable=relative-import
 from six.moves.urllib.parse import parse_qs, urlparse, urlunparse
@@ -27,6 +29,7 @@ class Repository(object):
         self.tag = None
         self.commitish = None
         self.sha1 = None
+        self.archive_at = None
         if self.url.netloc in self.parsers:
             self.parsers[self.url.netloc](self)
             self._populate_sha1()
@@ -70,52 +73,19 @@ class Repository(object):
         If the url is pointing to a tag, this will be the
         SHA1 of the commit tag is pointing to.
         """
-        if self.tag:
-            option = '-t'
-            ref = self.tag
-        elif self.branch:
-            option = '-h'
-            ref = self.branch
-        elif self.commitish and self.url.netloc in self.commitish_to_sha1s:
-            commitish_to_sha1 = self.commitish_to_sha1s[self.url.netloc]
-            self.sha1 = commitish_to_sha1(self, self.commitish)
-            return
-        else:
-            self.sha1 = ''
-            return
+        if self.url.netloc in self.tag_to_sha1s:
+            to_sha1 = self.tag_to_sha1s[self.url.netloc]
+            self.sha1 = to_sha1(self, self.archive_at)
 
-        # Example command:
-        # git ls-remote -t \
-        #     git://hg.uk.xensource.com/carbon/trunk/blktap.git v3.3.0*
-        remote_refs = git.ls_remote(self._query_url, ref + '*', option)
+        if not self.sha1 and self.url.netloc in self.branch_to_sha1s:
+            to_sha1 = self.branch_to_sha1s[self.url.netloc]
+            self.sha1 = to_sha1(self, self.archive_at)
 
-        # Example output of above command:
-        # db8d9edd203460adba4b9175971c2cfc14ac0f64  refs/tags/v3.3.0
-        # ddb48b561342d7742ec1dbd6c4987c1f4add9387  refs/tags/v3.3.0^{}
-        regex = (
-            r'(^[\da-f]{{40}})'     # 40 char hex SHA1 (group(1))
-            r'\trefs\/'             # <tab>refs/
-            r'(?:tags|heads)\/'     # {'tags' or 'heads'}/
-            '({}(\\^{{}})*)$'       # <ref>{0 or more of '^{}'} (group(2))
-        ).format(re.escape(ref))
+        if not self.sha1 and self.url.netloc in self.commitish_to_sha1s:
+            to_sha1 = self.commitish_to_sha1s[self.url.netloc]
+            self.sha1 = to_sha1(self, self.archive_at)
 
-        # list of (<ref_name>, <sha1>) tuples
-        ref_sha1_list = []
-
-        for line in remote_refs.split('\n'):
-            match = re.match(regex, line)
-
-            if match is not None:
-                ref_sha1_list.append((match.group(2), match.group(1)))
-
-        if ref_sha1_list:
-            # Sort in descending order by <ref_name> length;
-            # This way, names with '^{}' will come to the beginning
-            # of the list. Their SHA1 points to the actual commit
-            # instead of the tag object.
-            ref_sha1_list.sort(key=lambda tup: len(tup[0]), reverse=True)
-            self.sha1 = ref_sha1_list[0][1]
-        else:
+        if not self.sha1:
             self.sha1 = ''
 
     def parse_github(self):
@@ -156,6 +126,7 @@ class Repository(object):
         query_dict = parse_qs(self.url.query)
         if 'at' in query_dict:
             query = query_dict['at'][0]
+            self.archive_at = query
             if '/' in query:
                 query_path = query.split('/')
                 if query_path[1] == 'tags':
@@ -169,16 +140,64 @@ class Repository(object):
         else:
             self.branch = 'master'
 
+    @staticmethod
+    def get_requests_headers(netloc):
+        """
+        Gets the HTTP headers for making requests to the specified location
+        """
+        useragent = ("planex-repository/%s" %
+                     pkg_resources.require("planex")[0].version)
+        headers = requests.utils.default_headers()
+        headers.update({
+            "user-agent": useragent,
+        })
+        add_custom_headers_for_url(netloc, headers)
+        return headers
+
     def commitish_to_sha1_bitbucket(self, commitish):
         """Convert a commitish to a full SHA1 using the BitBucket API"""
         path = self.url.path.split('/')
         url = "https://%s/rest/api/1.0/projects/%s/repos/%s/commits/%s" % \
             (self.url.netloc, path[5], path[7], commitish)
         logging.debug("Fetching SHA1 using " + url)
-        api_response = requests.get(url)
+        api_response = requests.get(
+            url,
+            headers=Repository.get_requests_headers(self.url.netloc))
         api_response.raise_for_status()
         data = api_response.json()
         return data['id']
+
+    def branch_to_sha1_bitbucket(self, branch):
+        """Convert a branch id to the full SHA1 of its latest commit using
+        the REST API
+        """
+        path = self.url.path.split('/')
+        url = "https://%s/rest/api/1.0/projects/%s/repos/%s/branches" % \
+            (self.url.netloc, path[5], path[7])
+        logging.debug("Fetching branches using " + url)
+        api_response = requests.get(
+            url,
+            headers=Repository.get_requests_headers(self.url.netloc))
+        api_response.raise_for_status()
+        data = api_response.json()
+        commit = [value['latestCommit'] for value in data['values']
+                  if value['displayId'] == branch]
+        return commit[0] if commit else None
+
+    def tag_to_sha1_bitbucket(self, tag):
+        """Convert a tag id to the full SHA1 of its latest commit using
+        the REST API
+        """
+        path = self.url.path.split('/')
+        url = "https://%s/rest/api/1.0/projects/%s/repos/%s/tags/%s" % \
+            (self.url.netloc, path[5], path[7], tag)
+        logging.debug("Fetching tags using " + url)
+        api_response = requests.get(
+            url,
+            headers=Repository.get_requests_headers(self.url.netloc))
+        api_response.raise_for_status()
+        data = api_response.json()
+        return data['latestCommit']
 
     def parse_gitweb(self):
         """Parse GitWeb source URL"""
@@ -201,6 +220,12 @@ class Repository(object):
         }
     commitish_to_sha1s = {
         'code.citrite.net': commitish_to_sha1_bitbucket
+    }
+    branch_to_sha1s = {
+        'code.citrite.net': branch_to_sha1_bitbucket
+    }
+    tag_to_sha1s = {
+        'code.citrite.net': tag_to_sha1_bitbucket
     }
 
     def repository_url(self):
