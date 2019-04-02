@@ -3,7 +3,6 @@ planex-fetch: Download sources referred to by a spec file
 """
 
 import argparse
-import json
 import logging
 import os
 import shutil
@@ -21,8 +20,8 @@ from six.moves.urllib.parse import urlparse, urlunparse
 
 from planex.link import Link
 from planex.cmd.args import common_base_parser, rpm_define_parser
-from planex.config import Configuration
 from planex.repository import Repository
+from planex.util import add_custom_headers_for_url
 from planex.util import run
 from planex.util import setup_logging
 from planex.util import setup_sigint_handler
@@ -135,11 +134,7 @@ def fetch_http(url, filename, retries):
     })
 
     # See if we have any additional custom headers
-    custom_headers = Configuration.get(url[1], 'Headers')
-    if custom_headers:
-        header_parts = json.loads(custom_headers)
-        for header in header_parts:
-            headers.update({header[0]: header[1]})
+    add_custom_headers_for_url(url[1], headers)
 
     # Once we use requests >= 2.18.0, we should change this into
     # with requests.get ... as r:
@@ -235,7 +230,6 @@ def fetch_source(args):
     """
     Download requested source using URL from spec file.
     """
-
     link = None
     if args.link:
         link = Link(args.link)

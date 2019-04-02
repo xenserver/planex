@@ -3,12 +3,15 @@ Library of generic functions used by other planex components
 """
 
 import errno
+import json
 import logging
 import os
 import pipes
 import signal
 import subprocess
 import sys
+
+from planex.config import Configuration
 
 import __main__
 
@@ -43,6 +46,17 @@ def run(cmd, check=True, env=None, inputtext=None, logfiles=None):
         raise Exception
 
     return {"stdout": stdout, "stderr": stderr, "rc": proc.returncode}
+
+
+def add_custom_headers_for_url(netloc, headers):
+    """
+    Looks up custom headers from rc files and adds to the supplied headers
+    """
+    custom_headers = Configuration.get(netloc, 'Headers')
+    if custom_headers:
+        header_parts = json.loads(custom_headers)
+        for key in header_parts.keys():
+            headers.update({key: header_parts[key]})
 
 
 def setup_sigint_handler():
