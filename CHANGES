@@ -1,3 +1,9 @@
+4.3.1
+* Enumerate dictionary keys and use REST to query archive commit ids
+
+4.3.0
+* Make additional headers host specific
+
 4.2.0
 * Allow planex-fetch to apply custom http headers
 
