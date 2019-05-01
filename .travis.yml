@@ -3,6 +3,7 @@ virtualenv:
   system_site_packages: true
 sudo: required
 services: docker
+python: 2.7
 addons:
   apt:
     packages:
