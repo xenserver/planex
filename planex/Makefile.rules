@@ -92,7 +92,7 @@ endif
 
 # Fetch a source tarball listed in a spec or link file.
 $(TOPDIR)/SOURCES/%:
-	@echo [FETCH] $@
+	@echo [FETCH] `date -u`: $@
 	$(AT) mkdir -p $(@D)
 	$(AT)$(FETCH) $(FETCH_FLAGS) $^ $@
 
@@ -107,7 +107,7 @@ $(TOPDIR)/SOURCES/%:
 # the chroot.	Without this we might generate foo-1.0.fc20.src.rpm
 # (Fedora host) and foo-1.0.el6.x86_64.rpm (CentOS chroot).
 %.src.rpm:
-	@echo [RPMBUILD] $@ 
+	@echo [RPMBUILD] `date -u`: $@ 
 	$(AT) mkdir -p $(@D)
 	$(AT)$(RPMBUILD) $(RPMBUILD_FLAGS) $^
 
@@ -118,7 +118,8 @@ $(TOPDIR)/SOURCES/%:
 # a subsequent mock build for a package which depend on this one is able
 # to find and install it.
 %.rpm:
-	@echo [MOCK] $<
+	@date
+	@echo [MOCK] `date -u`: $<
 	$(AT) mkdir -p $(@D)
 	$(AT)$(MOCK) $(MOCK_FLAGS) --rebuild $<
 
