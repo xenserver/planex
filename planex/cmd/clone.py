@@ -106,6 +106,7 @@ def definitions_for(package):
 
 
 CHECKOUT_TEMPLATE = Template("""checkout poll: true,
+         changelog: true,
          scm: [$$class: 'GitSCM',
                branches: [[name: '$branch']],
                extensions: [[$$class: 'RelativeTargetDirectory',
@@ -125,7 +126,8 @@ def clone_jenkins_json(package, filename, url, commitish):
     if exists(filename):
         with open(filename, "r") as clone_sources:
             json_dict.update(json.load(clone_sources))
-    json_dict[package] = {'URL': url, 'commitish': commitish}
+    json_dict[package] = {'URL': url, 'commitish': commitish,
+                          'watching': 'true'}
     with open(filename, "w") as clone_sources:
         clone_sources.write(json.dumps(json_dict, indent=2, sort_keys=True,
                                        separators=(',', ': ')))
