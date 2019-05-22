@@ -1,3 +1,6 @@
+4.3.2
+* In Jenkins checkout functionality have new target poll by default and be added to changelog.
+
 4.3.1
 * Enumerate dictionary keys and use REST to query archive commit ids
 
