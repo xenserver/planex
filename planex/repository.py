@@ -10,6 +10,7 @@ import pkg_resources
 
 import planex.git as git
 from planex.util import add_custom_headers_for_url
+from planex.config import Configuration
 
 # pylint: disable=relative-import
 from six.moves.urllib.parse import parse_qs, urlparse, urlunparse
@@ -30,8 +31,9 @@ class Repository(object):
         self.commitish = None
         self.sha1 = None
         self.archive_at = None
-        if self.url.netloc in self.parsers:
-            self.parsers[self.url.netloc](self)
+        self.repomgr = self.repomanager_from_netloc()
+        if self.repomgr in self.parsers:
+            self.parsers[self.repomgr](self)
             self._populate_sha1()
 
     def clone(self, topdir, dirname=None):
@@ -73,16 +75,16 @@ class Repository(object):
         If the url is pointing to a tag, this will be the
         SHA1 of the commit tag is pointing to.
         """
-        if self.url.netloc in self.tag_to_sha1s:
-            to_sha1 = self.tag_to_sha1s[self.url.netloc]
+        if self.repomgr in self.tag_to_sha1s:
+            to_sha1 = self.tag_to_sha1s[self.repomgr]
             self.sha1 = to_sha1(self, self.archive_at)
 
-        if not self.sha1 and self.url.netloc in self.branch_to_sha1s:
-            to_sha1 = self.branch_to_sha1s[self.url.netloc]
+        if not self.sha1 and self.repomgr in self.branch_to_sha1s:
+            to_sha1 = self.branch_to_sha1s[self.repomgr]
             self.sha1 = to_sha1(self, self.archive_at)
 
-        if not self.sha1 and self.url.netloc in self.commitish_to_sha1s:
-            to_sha1 = self.commitish_to_sha1s[self.url.netloc]
+        if not self.sha1 and self.repomgr in self.commitish_to_sha1s:
+            to_sha1 = self.commitish_to_sha1s[self.repomgr]
             self.sha1 = to_sha1(self, self.archive_at)
 
         if not self.sha1:
@@ -213,19 +215,35 @@ class Repository(object):
         else:
             self.branch = 'master'
 
+    def repomanager_from_netloc(self):
+        """Get the repository manager for this host
+
+        Allow repository manager for any given host name to be looked up
+        from a section of the config file for a "server-type" value. If
+        nothing is found, default to "bitbucket".
+
+        Valid types are "github", "bitbucket" and "gitweb"
+        """
+        return Configuration.get(self.url.netloc,
+                                 'server-type', 'bitbucket')
+
+    # Maps repository managers to parsers
     parsers = {
-        'github.com': parse_github,
-        'code.citrite.net': parse_bitbucket,
-        'hg.uk.xensource.com': parse_gitweb,
+        'github': parse_github,
+        'bitbucket': parse_bitbucket,
+        'gitweb': parse_gitweb,
         }
+    # Maps repository managers to things-which-turn-commitish-to-sha1
     commitish_to_sha1s = {
-        'code.citrite.net': commitish_to_sha1_bitbucket
+        'bitbucket': commitish_to_sha1_bitbucket
     }
+    # Maps repository managers to things-which-turn-branches-to-sha1
     branch_to_sha1s = {
-        'code.citrite.net': branch_to_sha1_bitbucket
+        'bitbucket': branch_to_sha1_bitbucket
     }
+    # Maps repository managers to things-which-turn-tags-to-sha1
     tag_to_sha1s = {
-        'code.citrite.net': tag_to_sha1_bitbucket
+        'bitbucket': tag_to_sha1_bitbucket
     }
 
     def repository_url(self):

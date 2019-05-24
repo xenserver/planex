@@ -10,6 +10,7 @@ class Configuration(object):
     """Represents a set of configuration options"""
     # pylint: disable=R0903
     searchPath = ('/etc/planexrc',
+                  os.path.expanduser('~/.planex/planexrc'),
                   os.path.expanduser('~/.planexrc'),
                   '.planexrc')
 
