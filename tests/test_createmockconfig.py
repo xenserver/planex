@@ -39,6 +39,7 @@ class MockRepo(object):
     def __init__(self, repoid="", enabled=True):
         self.id = repoid
         self.enabled = enabled
+        self.priority = 99
 
 
 class MockYumBaseRepos(object):

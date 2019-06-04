@@ -93,6 +93,24 @@ def load_mock_reference(fname):
     return config_opts
 
 
+def cmp_repos(one, two):
+    """
+    Compare two repo objects by priority and then by name
+    """
+    onep = one.priority
+    twop = two.priority
+    # The default priority is 80 if not given.
+    # Repos with equal priority are compared lexically by name
+    if onep == twop:
+        if one.name > two.name:
+            return 1
+        if one.name < two.name:
+            return -1
+        return 0
+    # Avoid the use of cmp as python3 will take it away
+    return (onep > twop) - (onep < twop)
+
+
 def load_yum_repos(repo_config_list):
     """
     read in the yum repository configuration
@@ -105,7 +123,9 @@ def load_yum_repos(repo_config_list):
         elif config == "disable":
             repo_set -= set(yum_base.repos.findRepos(pattern))
 
-    return list(repo_set)
+    ret = list(repo_set)
+    ret.sort(cmp=cmp_repos)
+    return ret
 
 
 def update_mock_repos(config, yum_repos, yum_config_opt):
@@ -117,6 +137,7 @@ def update_mock_repos(config, yum_repos, yum_config_opt):
     for repo in yum_repos:
         config.add_section(repo.id)
         config.set(repo.id, 'name', repo.name)
+        config.set(repo.id, 'priority', '%d' % (repo.priority))
         if repo.baseurl:
             config.set(repo.id, 'baseurl', ' '.join(repo.baseurl))
         elif repo.mirrorlist:
@@ -212,6 +233,8 @@ def main(argv=None):
     mock_config_fp.truncate(0)
     mock_repos.write(mock_config_fp)
     config_opts[conf_key] = mock_config_fp.getvalue()
+    # We require the priorities plugin to be enabled in the chroot
+    config_opts['priorities.conf'] = "[main]\nenabled = 1\n"
 
     # write new config
     with open(args.mockconfig, "w") as fileh:
