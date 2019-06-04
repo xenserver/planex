@@ -8,7 +8,7 @@ Name: miniplanex
 %else
 Name: %{pkgname}
 %endif
-Version: 4.3.1
+Version: 4.3.3
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{pkgname}-%{version}.tar.gz
