@@ -21,7 +21,7 @@ class Repository(object):
 
     # pylint: disable=R0902
 
-    def __init__(self, url):
+    def __init__(self, url, skipPopulateHash=False):
         self.url = urlparse(url)
         self.clone_url = None
         self._query_url = None
@@ -32,7 +32,7 @@ class Repository(object):
         self.sha1 = None
         self.archive_at = None
         self.repomgr = self.repomanager_from_netloc()
-        if self.repomgr in self.parsers:
+        if self.repomgr in self.parsers and not skipPopulateHash:
             self.parsers[self.repomgr](self)
             self._populate_sha1()
 
