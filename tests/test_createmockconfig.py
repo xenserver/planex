@@ -36,8 +36,9 @@ class MockYumBase(object):
 class MockRepo(object):
     """mock class for repo"""
     # pylint: disable=R0903,C0103
-    def __init__(self, repoid="", enabled=True):
+    def __init__(self, name="", repoid="", enabled=True):
         self.id = repoid
+        self.name = name
         self.enabled = enabled
         self.priority = 99
 
@@ -46,9 +47,11 @@ class MockYumBaseRepos(object):
     """mock class for yum.YumBase().repos"""
     # pylint: disable=C0103
     def __init__(self):
-        self.repos = [MockRepo("base"), MockRepo("extras"),
-                      MockRepo("updates"), MockRepo("TestAAA", False),
-                      MockRepo("TestBBB", False)]
+        self.repos = [MockRepo("base", "base"),
+                      MockRepo("extras", "extras"),
+                      MockRepo("updates", "updates"),
+                      MockRepo("TestAAA", "TestAAA", False),
+                      MockRepo("TestBBB", "TestBBB", False)]
 
     def listEnabled(self):
         """mock function for yum.YumBase().repos.listEnabled"""
