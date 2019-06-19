@@ -90,6 +90,12 @@ def definitions_for(package):
     """
     Return the package name and paths for link/pin and spec files
     """
+    # *.pin gets passed down
+    # and wildcard expansion has not occured
+    if "*" in package:
+        print("No pin files found")
+        sys.exit(0)
+
     if package.endswith('.pin') or package.endswith('.lnk'):
         # link/pin pathname
         link_pin = Path(package)
