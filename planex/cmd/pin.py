@@ -58,7 +58,7 @@ def populate_pinfile(pinfile, resources):
             commitish = source.commitish
             prefix = source.prefix
         else:
-            repo = Repository(source.url)
+            repo = Repository(source.url, skipPopulateHash=True)
             commitish = repo.commitish_tag_or_branch()
             url = repo.repository_url()
             prefix = None
