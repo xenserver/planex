@@ -108,6 +108,7 @@ def update_with_schema_version_3(spec, link):
         url = value["URL"]
         if url.startswith("ssh://"):
             source = GitBlob(spec, url, link.path,
+                             os.path.basename(spec.source_path(idx)),
                              value.get("prefix"), value.get("commitish"))
         else:
             source = Blob(spec, url, link.path)
@@ -157,6 +158,7 @@ def load(specpath, link=None, check_package_name=True, defines=None):
 
 
 # pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-public-methods
 class Spec(object):
     """Represents an RPM spec file"""
 
@@ -536,3 +538,7 @@ class Spec(object):
         patches_indices = self._patches.keys()
         fallback = (-1,)
         return max(chain(patches_indices, fallback))
+
+    def source_path(self, idx):
+        """Get the path for the specified source index"""
+        return self._sources[idx].path

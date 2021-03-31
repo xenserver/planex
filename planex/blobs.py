@@ -118,7 +118,8 @@ class GitBlob(Blob):
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, spec, url, defined_by, prefix, commitish):
+    def __init__(self, spec, url, defined_by, spec_path, prefix, commitish):
+        self.spec_path = spec_path
         with rpm_macros(spec.macros, nevra(spec.spec.sourceHeader)):
             super(GitBlob, self).__init__(spec, url, defined_by)
             self._prefix = rpm.expandMacro(prefix) if prefix is not None \
@@ -147,15 +148,7 @@ class GitBlob(Blob):
     @expandmacros
     def path(self):
         """ Return the local path to this resource"""
-
-        # RPM only looks at the basename part of the Source URL - the
-        # part after the rightmost /.   We must match this behaviour.
-        #
-        # Examples:
-        #    ssh://git@www.example.com/foo/bar.git -> bar.tar.gz
-
-        (name, _) = os.path.splitext(os.path.basename(self.url))
-        return os.path.join("%_sourcedir", "{}.tar.gz".format(name))
+        return os.path.join("%_sourcedir", self.spec_path)
 
     @property
     def force_rebuild(self):
