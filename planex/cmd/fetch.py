@@ -190,8 +190,12 @@ def fetch_repo(url, resource):
             prefix = None
             logging.debug("Archiving %s#%s to %s", repo.working_dir,
                           resource.commitish, resource.path)
+        arc_format = 'tar'
+        if resource.path.endswith('tar.gz'):
+            arc_format = 'tar.gz'
+
         repo.archive(output, treeish=str(resource.commitish),
-                     prefix=prefix)
+                     prefix=prefix, format=arc_format)
 
     try:
         ref = repo.refs[str(resource.commitish)]
