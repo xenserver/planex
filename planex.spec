@@ -8,7 +8,7 @@ Name: miniplanex
 %else
 Name: %{pkgname}
 %endif
-Version: 4.3.3
+Version: 4.3.4
 Release: 1%{?dist}
 URL: http://github.com/xenserver/planex
 Source0: http://github.com/xenserver/planex/archive/v%{version}/%{pkgname}-%{version}.tar.gz
@@ -77,6 +77,9 @@ sed -i "s/\(version='\)[^'\"]\+/\1%{version}-%{release}/g" setup.py
 %config%{_sysconfdir}/bash_completion.d/planex.bash
 
 %changelog
+* Tue Apr  6 2021 Mark Syms <mark.syms@citrix.com> - 4.3.4-1
+- Update source paths in SRPMs when using PINs
+
 * Wed Apr  3 2019 Mark Syms <mark.syms@citrix.com> - 4.3.1-1
 - Enumerate dictionary keys and use REST to query archive commit ids
 
